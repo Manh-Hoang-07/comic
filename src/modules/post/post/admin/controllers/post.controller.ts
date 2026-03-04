@@ -1,0 +1,73 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ParseIntPipe,
+  ValidationPipe,
+  UseInterceptors,
+} from '@nestjs/common';
+import { PostService } from '@/modules/post/post/admin/services/post.service';
+import { CreatePostDto } from '@/modules/post/post/admin/dtos/create-post.dto';
+import { UpdatePostDto } from '@/modules/post/post/admin/dtos/update-post.dto';
+import { GetPostsDto } from '@/modules/post/post/admin/dtos/get-posts.dto';
+import { prepareQuery } from '@/common/core/utils';
+import { LogRequest } from '@/common/shared/decorators';
+import { Permission } from '@/common/auth/decorators';
+import { CacheInterceptor, CacheEvict } from '@/common/cache';
+
+@Controller('admin/posts')
+@UseInterceptors(CacheInterceptor)
+export class PostController {
+  constructor(private readonly postService: PostService) { }
+
+  @Permission('post.manage')
+  @Get()
+  async getList(@Query(ValidationPipe) query: GetPostsDto) {
+    return this.postService.getList(query);
+  }
+
+  @Permission('post.manage')
+  @Get('simple')
+  async getSimpleList(@Query(ValidationPipe) query: any) {
+    return this.postService.getSimpleList(query);
+  }
+
+  @Permission('post.manage')
+  @Get(':id')
+  async getOne(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.getOne(id);
+  }
+
+  @Permission('post.manage')
+  @LogRequest({ fileBaseName: 'post_create' })
+  @Post()
+  @CacheEvict({ keys: ['posts:list:*', 'posts:featured:*'] })
+  async create(@Body(ValidationPipe) dto: CreatePostDto) {
+    return this.postService.create(dto as any);
+  }
+
+  @Permission('post.manage')
+  @LogRequest({ fileBaseName: 'post_update' })
+  @Put(':id')
+  @CacheEvict({ keys: ['posts:list:*', 'posts:featured:*', 'posts:slug:*'] })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body(ValidationPipe) dto: UpdatePostDto,
+  ) {
+    return this.postService.update(id, dto as any);
+  }
+
+  @Permission('post.manage')
+  @LogRequest({ fileBaseName: 'post_delete' })
+  @Delete(':id')
+  @CacheEvict({ keys: ['posts:list:*', 'posts:featured:*', 'posts:slug:*'] })
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.delete(id);
+  }
+}
+

@@ -1,0 +1,21 @@
+{
+    "contexts": [
+        {
+            "id": 1,
+            "type": "system",
+            "ref_id": null,
+            "name": "System",
+            "code": "system",
+            "status": "active"
+        }
+    ],
+    "groups": [
+        {
+            "type": "system",
+            "code": "system",
+            "name": "System Group",
+            "status": "active",
+            "context_code": "system"
+        }
+    ]
+}

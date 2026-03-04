@@ -1,0 +1,14 @@
+[
+    {
+        "code": "system",
+        "name": "Quản trị viên Hệ thống",
+        "status": "active",
+        "parent_id": null
+    },
+    {
+        "code": "system_manager",
+        "name": "Quản lý Hệ thống",
+        "status": "active",
+        "parent_id": null
+    }
+]

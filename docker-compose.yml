@@ -1,0 +1,86 @@
+services:
+  db:
+    image: mariadb:11.4
+    container_name: comic-db
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+    ports:
+      # Avoid clashing with XAMPP MySQL (often 3306)
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      # Use $$ to avoid compose-time env interpolation
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    container_name: comic-redis
+    ports:
+      # Avoid clashing with local Redis (often 6379)
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: comic-api
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      GLOBAL_PREFIX: ${GLOBAL_PREFIX}
+      CORS_ENABLED: ${CORS_ENABLED}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_CONNECTION_LIMIT: ${DB_CONNECTION_LIMIT}
+
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+
+      STORAGE_TYPE: ${STORAGE_TYPE}
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET}
+      STORAGE_S3_ACCESS_KEY_ID: ${STORAGE_S3_ACCESS_KEY_ID}
+      STORAGE_S3_SECRET_ACCESS_KEY: ${STORAGE_S3_SECRET_ACCESS_KEY}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION}
+      STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT}
+      STORAGE_S3_FORCE_PATH_STYLE: ${STORAGE_S3_FORCE_PATH_STYLE}
+      STORAGE_S3_BASE_URL: ${STORAGE_S3_BASE_URL}
+
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      GOOGLE_FRONTEND_URL: ${GOOGLE_FRONTEND_URL}
+
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    ports:
+      - "8000:8000"
+
+volumes:
+  db_data:

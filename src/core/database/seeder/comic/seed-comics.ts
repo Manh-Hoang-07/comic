@@ -15,9 +15,10 @@ export class SeedComics {
     const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'comic');
     const comicsData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'comics.json'), 'utf8'));
     const cmangaData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'cmanga.json'), 'utf8'));
+    const nettruyenData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'nettruyen.json'), 'utf8'));
 
-    // Combine both data sets
-    const allComicsData = [...comicsData, ...cmangaData];
+    // Combine all data sets (nettruyen data takes priority as featured/realistic data)
+    const allComicsData = [...nettruyenData, ...cmangaData, ...comicsData];
 
     const adminUser = await this.prisma.user.findFirst({ where: { username: 'admin' } });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);

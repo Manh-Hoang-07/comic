@@ -15,6 +15,10 @@ export class SeedChapters {
     const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'comic');
     const config: any = JSON.parse(fs.readFileSync(path.join(baseDir, 'comic-config.json'), 'utf8'));
     const cmangaData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'cmanga.json'), 'utf8'));
+    const nettruyenData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'nettruyen.json'), 'utf8'));
+
+    // Merge nettruyen + cmanga data that have chapter images
+    const allDetailedData = [...nettruyenData, ...cmangaData];
 
     const adminUser = await this.prisma.user.findFirst({ where: { username: 'admin' } });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);
@@ -32,10 +36,10 @@ export class SeedChapters {
     const chapterTitles: Record<string, string[]> = config.chapter_titles;
 
     for (const comic of comics) {
-      const cmangaComic = cmangaData.find(c => c.slug === comic.slug);
+      const detailedComic = allDetailedData.find(c => c.slug === comic.slug);
 
-      if (cmangaComic && cmangaComic.chapters) {
-        for (const chap of cmangaComic.chapters) {
+      if (detailedComic && detailedComic.chapters) {
+        for (const chap of detailedComic.chapters) {
           const pages = chap.images.map((img: string, idx: number) => ({
             page_number: idx + 1,
             image_url: img,

@@ -32,11 +32,11 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     return this.getOne(id);
   }
 
+  /**
+   * [🚀 Centralized] Gọi logic từ RbacService
+   */
   async isSystemAdmin(userId: number): Promise<boolean> {
-    return this.rbacService.userHasPermissionsInGroup(userId, null, [
-      'system.manage',
-      'group.manage',
-    ]);
+    return this.rbacService.isSystemAdmin(userId);
   }
 
   async createGroup(data: any, requesterUserId: number) {
@@ -113,4 +113,3 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     return item;
   }
 }
-

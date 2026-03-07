@@ -67,8 +67,8 @@ export class SeedService {
     try {
       await this.seedPermissions.seed();
       await this.seedRoles.seed();
-      await this.seedUsers.seed();
       await this.seedGroups.seed();
+      await this.seedUsers.seed();
       await this.seedMenus.seed();
       await this.seedBannerLocations.seed();
       await this.seedBanners.seed();
@@ -76,7 +76,6 @@ export class SeedService {
       await this.seedGeneralConfigs.seed();
       await this.seedEmailConfigs.seed();
       await this.seedContentTemplates.seed();
-      await this.seedGroups.seed();
       await this.seedProjects.seed();
       await this.seedAboutSections.seed();
       await this.seedStaff.seed();

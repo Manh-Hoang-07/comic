@@ -7,6 +7,8 @@ import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
+import { ContextType, RbacPermission } from '@/modules/core/rbac/rbac.constants';
+import { PrismaService } from '@/core/database/prisma/prisma.service';
 
 /**
  * Service quản lý RBAC (Role-Based Access Control)
@@ -30,6 +32,7 @@ export class RbacService {
     @Inject(ROLE_REPOSITORY)
     private readonly roleRepo: IRoleRepository,
     private readonly rbacCache: RbacCacheService,
+    private readonly prisma: PrismaService,
   ) { }
 
 
@@ -44,66 +47,15 @@ export class RbacService {
     groupId: number | null,
     required: string[],
   ): Promise<boolean> {
-    // Nếu không cần quyền trong group (system-level)
-    if (groupId === null) {
-      // Check system-level permissions (nếu có)
-      return this.checkSystemPermissions(userId, required);
-    }
+    // 1. Ưu tiên check system-level permissions trước (Global Permissions)
+    const hasSystemPerm = await this.checkSystemPermissions(userId, required);
+    if (hasSystemPerm) return true;
 
-    // Check user thuộc group
-    const userInGroup = await this.userGroupRepo.findUnique(userId, groupId);
+    // Nếu chỉ check ở mức system (groupId = null) -> đã check xong ở trên
+    if (groupId === null) return false;
 
-    if (!userInGroup) {
-      return false; // User không thuộc group → DENY
-    }
-
-    // Try cache first
-    let cached = await this.rbacCache.getUserPermissionsInGroup(userId, groupId);
-    if (!cached) {
-      // Query permissions từ user_role_assignments
-      const assignments = await this.assignmentRepo.findManyRaw({
-        where: {
-          user_id: BigInt(userId),
-          group_id: BigInt(groupId),
-          role: { status: 'active' as any },
-        },
-        select: { role_id: true },
-      });
-
-      if (!assignments.length) {
-        await this.rbacCache.setUserPermissionsInGroup(userId, groupId, []);
-        cached = new Set<string>();
-      } else {
-        const roleIds = Array.from(
-          new Set(assignments.map((a: any) => a.role_id)),
-        );
-
-        const links = await this.roleHasPermRepo.findMany({
-          where: {
-            role_id: { in: roleIds },
-            permission: { status: 'active' as any },
-          },
-          include: {
-            permission: {
-              include: { parent: true },
-            },
-          },
-        });
-
-        const set = new Set<string>();
-        for (const link of links) {
-          const perm = (link as any).permission;
-          if (!perm) continue;
-          if (perm.code) set.add(perm.code);
-          if (perm.parent && perm.parent.code) {
-            set.add(perm.parent.code);
-          }
-        }
-
-        await this.rbacCache.setUserPermissionsInGroup(userId, groupId, set);
-        cached = set;
-      }
-    }
+    // 2. Chuyển sang check local permissions trong group
+    const cached = await this.getLocalPermissionsInGroup(userId, groupId);
 
     // OR logic: chỉ cần 1 permission
     for (const need of required) {
@@ -114,45 +66,139 @@ export class RbacService {
   }
 
   /**
-   * [C3] Check system-level permissions (khi groupId = null)
-   * Đã thêm cache để tránh 4 DB queries mỗi request
+   * [Single Source of Truth] Kiểm tra user có phải System Admin không
    */
-  private async checkSystemPermissions(
+  async isSystemAdmin(userId: number): Promise<boolean> {
+    return this.userHasPermissionsInGroup(userId, null, [
+      RbacPermission.SYSTEM_MANAGE,
+      RbacPermission.GROUP_MANAGE,
+    ]);
+  }
+
+  /**
+   * Lấy tất cả permissions của User (bao gồm Global và Local trong Group)
+   */
+  async getUserPermissions(
     userId: number,
-    required: string[],
-  ): Promise<boolean> {
-    // [C3] Check cache trước
-    const cached = await this.rbacCache.getSystemPermissions(userId);
-    if (cached !== null) {
-      for (const need of required) {
-        if (cached.has(need)) return true;
-      }
-      return false;
+    groupId: number | null,
+  ): Promise<Set<string>> {
+    const globalPerms = await this.getGlobalPermissionsSet(userId);
+    if (groupId === null) return globalPerms;
+
+    const localPerms = await this.getLocalPermissionsInGroup(userId, groupId);
+    return new Set([...globalPerms, ...localPerms]);
+  }
+
+  /**
+   * Helper lấy quyền Global
+   */
+  private async getGlobalPermissionsSet(userId: number): Promise<Set<string>> {
+    let cached = await this.rbacCache.getSystemPermissions(userId);
+    if (cached === null) {
+      await this.checkSystemPermissions(userId, []);
+      cached = await this.rbacCache.getSystemPermissions(userId);
     }
+    return cached || new Set<string>();
+  }
 
-    // Cache miss: query DB
-    const systemAdminGroup = await this.groupRepo.findFirstRaw({
-      where: { code: 'system', status: 'active' as any }
-    });
+  /**
+   * Helper lấy quyền Local trong Group
+   */
+  private async getLocalPermissionsInGroup(userId: number, groupId: number): Promise<Set<string>> {
+    let cached = await this.rbacCache.getUserPermissionsInGroup(userId, groupId);
+    if (cached !== null) return cached;
 
-    if (!systemAdminGroup) {
-      await this.rbacCache.setSystemPermissions(userId, []);
-      return false;
-    }
-
-    // Check user thuộc system group
-    const userInGroup = await this.userGroupRepo.findUnique(userId, Number(systemAdminGroup.id));
-
+    // Check user thuộc group
+    const userInGroup = await this.userGroupRepo.findUnique(userId, groupId);
     if (!userInGroup) {
-      await this.rbacCache.setSystemPermissions(userId, []);
-      return false;
+      const emptySet = new Set<string>();
+      await this.rbacCache.setUserPermissionsInGroup(userId, groupId, emptySet);
+      return emptySet;
     }
 
     // Query permissions từ user_role_assignments
     const assignments = await this.assignmentRepo.findManyRaw({
       where: {
         user_id: BigInt(userId),
-        group_id: systemAdminGroup.id,
+        group_id: BigInt(groupId),
+        role: { status: 'active' as any },
+      },
+      select: { role_id: true },
+    });
+
+    if (!assignments.length) {
+      const emptySet = new Set<string>();
+      await this.rbacCache.setUserPermissionsInGroup(userId, groupId, emptySet);
+      return emptySet;
+    }
+
+    const roleIds = Array.from(new Set(assignments.map((a: any) => a.role_id)));
+    const permissions = await this.getPermissionsByRoleIds(roleIds);
+
+    await this.rbacCache.setUserPermissionsInGroup(userId, groupId, permissions);
+    return permissions;
+  }
+
+  /**
+   * Lấy danh sách permission codes (bao gồm kế thừa) từ danh sách Role IDs
+   */
+  private async getPermissionsByRoleIds(roleIds: bigint[]): Promise<Set<string>> {
+    const links = await this.roleHasPermRepo.findMany({
+      where: {
+        role_id: { in: roleIds },
+        permission: { status: 'active' as any },
+      },
+      include: {
+        permission: {
+          include: {
+            parent: {
+              include: {
+                parent: true
+              }
+            }
+          },
+        },
+      },
+    });
+
+    const set = new Set<string>();
+    for (const link of links) {
+      this.collectPermissionCodes((link as any).permission, set);
+    }
+    return set;
+  }
+
+  /**
+   * Đệ quy thu thập mã quyền từ cây hierarchy (đi ngược lên cha)
+   */
+  private collectPermissionCodes(perm: any, set: Set<string>): void {
+    if (!perm || perm.status !== 'active') return;
+    if (perm.code) set.add(perm.code);
+    if (perm.parent) {
+      this.collectPermissionCodes(perm.parent, set);
+    }
+  }
+
+  /**
+   * Check system-level permissions (Global Permissions)
+   */
+  private async checkSystemPermissions(
+    userId: number,
+    required: string[],
+  ): Promise<boolean> {
+    const cached = await this.rbacCache.getSystemPermissions(userId);
+    if (cached !== null) {
+      if (required.length === 0) return true;
+      return required.some(need => cached.has(need));
+    }
+
+    const assignments = await this.assignmentRepo.findManyRaw({
+      where: {
+        user_id: BigInt(userId),
+        group: {
+          context: { type: ContextType.SYSTEM },
+          status: 'active' as any,
+        },
         role: { status: 'active' as any },
       },
       select: { role_id: true },
@@ -163,40 +209,12 @@ export class RbacService {
       return false;
     }
 
-    const roleIds = Array.from(
-      new Set(assignments.map((a: any) => a.role_id)),
-    );
+    const roleIds = Array.from(new Set(assignments.map((a: any) => a.role_id)));
+    const permissions = await this.getPermissionsByRoleIds(roleIds);
 
-    const links = await this.roleHasPermRepo.findMany({
-      where: {
-        role_id: { in: roleIds },
-        permission: { status: 'active' as any },
-      },
-      include: {
-        permission: {
-          include: { parent: true },
-        },
-      },
-    });
-
-    const set = new Set<string>();
-    for (const link of links) {
-      const perm = (link as any).permission;
-      if (!perm) continue;
-      if (perm.code) set.add(perm.code);
-      if (perm.parent && perm.parent.code) {
-        set.add(perm.parent.code);
-      }
-    }
-
-    // [C3] Lưu vào cache
-    await this.rbacCache.setSystemPermissions(userId, set);
-
-    // OR logic: chỉ cần 1 permission
-    for (const need of required) {
-      if (set.has(need)) return true;
-    }
-    return false;
+    await this.rbacCache.setSystemPermissions(userId, permissions);
+    if (required.length === 0) return true;
+    return required.some(need => permissions.has(need));
   }
 
   /**
@@ -207,21 +225,13 @@ export class RbacService {
     roleId: number,
     groupId: number,
   ): Promise<void> {
-    // Validate: User phải thuộc group
     const userInGroup = await this.userGroupRepo.findUnique(userId, groupId);
-
     if (!userInGroup) {
-      throw new BadRequestException(
-        'User must be a member of the group before assigning role',
-      );
+      throw new BadRequestException('User must be a member of the group before assigning role');
     }
 
-    // Validate: Role được phép trong context của group
     const group = await this.groupRepo.findById(groupId);
-
-    if (!group) {
-      throw new NotFoundException('Group not found');
-    }
+    if (!group) throw new NotFoundException('Group not found');
 
     const roleContext = await this.roleContextRepo.findFirst({
       where: {
@@ -231,35 +241,23 @@ export class RbacService {
     });
 
     if (!roleContext) {
-      throw new BadRequestException(
-        'Role is not allowed in this context',
-      );
+      throw new BadRequestException('Role is not allowed in this context');
     }
 
-    // Check if assignment already exists
     const existing = await this.assignmentRepo.findUnique(userId, roleId, groupId);
+    if (existing) return;
 
-    if (existing) {
-      return; // Already assigned
-    }
-
-    // Insert
     await this.assignmentRepo.create({
       user_id: BigInt(userId),
       role_id: BigInt(roleId),
       group_id: BigInt(groupId),
     });
 
-    // Clear cache
     await this.rbacCache.clearUserPermissionsInGroup(userId, groupId);
   }
 
   /**
-   * Sync roles cho user trong group (thay thế toàn bộ roles hiện tại trong group)
-   * @param userId - ID của user
-   * @param groupId - ID của group
-   * @param roleIds - Mảng role IDs cần gán cho user (nếu rỗng thì xóa hết roles)
-   * @param skipValidation - Bỏ qua validation (chỉ dùng cho system admin)
+   * Sync roles cho user trong group (Sử dụng Transaction để đảm bảo an toàn)
    */
   async syncRolesInGroup(
     userId: number,
@@ -273,16 +271,11 @@ export class RbacService {
     const group = await this.groupRepo.findById(groupId);
     if (!group) throw new NotFoundException('Group not found');
 
-    // Validate: User phải thuộc group
     const userInGroup = await this.userGroupRepo.findUnique(userId, groupId);
-
     if (!userInGroup) {
-      throw new BadRequestException(
-        'User must be a member of the group before assigning roles',
-      );
+      throw new BadRequestException('User must be a member of the group before assigning roles');
     }
 
-    // Validate và fetch roles
     let roles: any[] = [];
     if (roleIds.length > 0) {
       const roleIdsBigInt = roleIds.map((id) => BigInt(id));
@@ -294,7 +287,6 @@ export class RbacService {
         throw new BadRequestException('Some role IDs are invalid');
       }
 
-      // [C2] Validate roles bằng 1 batch query thay vì N+1 loop
       if (!skipValidation) {
         const validContexts = await this.roleContextRepo.findMany({
           where: {
@@ -315,26 +307,24 @@ export class RbacService {
       }
     }
 
-    // Xóa tất cả roles cũ trong group này
-    await this.assignmentRepo.deleteMany({
-      user_id: BigInt(userId),
-      group_id: BigInt(groupId),
+    // Sử dụng Transaction từ PrismaService
+    await this.prisma.$transaction(async (tx) => {
+      await this.assignmentRepo.deleteMany({
+        user_id: BigInt(userId),
+        group_id: BigInt(groupId),
+      });
+
+      if (roles.length > 0) {
+        await this.assignmentRepo.createMany(
+          roles.map(role => ({
+            user_id: BigInt(userId),
+            role_id: BigInt(role.id),
+            group_id: BigInt(groupId),
+          }))
+        );
+      }
     });
 
-    // [H3] Bulk insert thay vì sequential loop (N roles = 1 DB call thay vì N calls)
-    if (roles.length > 0) {
-      await this.assignmentRepo.createMany(
-        roles.map(role => ({
-          user_id: BigInt(userId),
-          role_id: BigInt(role.id),
-          group_id: BigInt(groupId),
-        }))
-      );
-    }
-
-    // Clear cache
     await this.rbacCache.clearUserPermissionsInGroup(userId, groupId);
   }
-
 }
-

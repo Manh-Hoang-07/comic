@@ -3,9 +3,12 @@ import { IContextRepository, CONTEXT_REPOSITORY } from '@/modules/core/context/c
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { BaseService } from '@/common/core/services';
+import { ContextType, SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
 
 @Injectable()
 export class AdminContextService extends BaseService<any, IContextRepository> {
+  private systemContextCache: any = null;
+
   constructor(
     @Inject(CONTEXT_REPOSITORY)
     private readonly contextRepo: IContextRepository,
@@ -21,10 +24,27 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
 
   private async isSystemAdmin(userId: number): Promise<boolean> {
-    return this.rbacService.userHasPermissionsInGroup(userId, null, [
-      'system.manage',
-      'group.manage',
-    ]);
+    return this.rbacService.isSystemAdmin(userId);
+  }
+
+  /**
+   * Lấy System Context (có cache)
+   */
+  async getSystemContext() {
+    if (this.systemContextCache) return this.systemContextCache;
+
+    const context = await this.contextRepo.findByCode(SYSTEM_CONTEXT_CODE);
+    if (!context) {
+      // Fallback: tìm theo type nếu code chưa đúng
+      const byType = await this.contextRepo.findFirstRaw({
+        where: { type: ContextType.SYSTEM, status: 'active' as any }
+      });
+      this.systemContextCache = byType;
+    } else {
+      this.systemContextCache = context;
+    }
+
+    return this.systemContextCache;
   }
 
   async findById(id: number) {
@@ -78,12 +98,12 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   }
 
   protected async beforeUpdate(id: number | bigint, data: any) {
-    if (Number(id) === 1) {
-      throw new BadRequestException('Không thể cập nhật context hệ thống');
-    }
-
     const current = await this.contextRepo.findById(id);
     if (!current) throw new NotFoundException('Context không tồn tại');
+
+    if (current.type === ContextType.SYSTEM || current.code === SYSTEM_CONTEXT_CODE) {
+      throw new BadRequestException('Không thể cập nhật context hệ thống');
+    }
 
     if (data.code && data.code !== current.code) {
       const existing = await this.contextRepo.findByCode(data.code);
@@ -104,7 +124,10 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   }
 
   protected async beforeDelete(id: number | bigint): Promise<boolean> {
-    if (Number(id) === 1) {
+    const current = await this.contextRepo.findById(id);
+    if (!current) throw new NotFoundException('Context không tồn tại');
+
+    if (current.type === ContextType.SYSTEM || current.code === SYSTEM_CONTEXT_CODE) {
       throw new BadRequestException('Không thể xóa context hệ thống');
     }
 

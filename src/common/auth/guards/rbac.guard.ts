@@ -5,6 +5,7 @@ import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { Auth } from '@/common/auth/utils';
 import { RequestContext } from '@/common/shared/utils';
 import { ResponseUtil } from '@/common/shared/utils';
+import { RbacPermission } from '@/modules/core/rbac/rbac.constants';
 
 @Injectable()
 export class RbacGuard implements CanActivate {
@@ -37,16 +38,21 @@ export class RbacGuard implements CanActivate {
     }
 
     // Nếu có @Permission('authenticated') hoặc @Permission('user') → chỉ cần đăng nhập
-    if (requiredPerms.includes('authenticated') || requiredPerms.includes('user')) {
+    if (
+      requiredPerms.includes(RbacPermission.AUTHENTICATED) ||
+      requiredPerms.includes(RbacPermission.USER) ||
+      requiredPerms.includes('authenticated') ||
+      requiredPerms.includes('user')
+    ) {
       return true;
     }
 
-    // ✅ MỚI: Lấy groupId thay vì contextId
-    const groupId = RequestContext.get<number | null>('groupId') ?? null; // Có thể null
+    // Lấy groupId thay vì contextId (đã được set bởi GroupInterceptor)
+    const groupId = RequestContext.get<number | null>('groupId') ?? null;
 
-    // ✅ MỚI: Check permissions trong group
+    // Check permissions trong group
     const ok = await this.rbac.userHasPermissionsInGroup(userId, groupId, requiredPerms);
-    
+
     if (!ok) {
       const response = ResponseUtil.forbidden(
         `Access denied. Required permissions: ${requiredPerms.join(', ')}`
@@ -57,4 +63,3 @@ export class RbacGuard implements CanActivate {
     return true;
   }
 }
-

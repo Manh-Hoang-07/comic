@@ -7,6 +7,7 @@ import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac
 import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
+import { RbacPermission } from '@/modules/core/rbac/rbac.constants';
 
 @Injectable()
 export class UserGroupService {
@@ -33,25 +34,24 @@ export class UserGroupService {
     return group.owner_id != null && Number(group.owner_id) === userId;
   }
 
+  /**
+   * Kiểm tra quyền quản lý Group
+   */
   async canManageGroup(groupId: number, userId: number): Promise<boolean> {
     const group = await this.groupRepo.findById(groupId);
     if (!group) return false;
 
     if (group.owner_id != null && Number(group.owner_id) === userId) return true;
 
-    return this.rbacService.userHasPermissionsInGroup(userId, groupId, [
-      'group.manage',
-      'group.member.add',
-      'group.member.manage',
-    ]);
-  }
+    // Check system admin via centralized RbacService logic
+    const isSystemAdmin = await this.rbacService.isSystemAdmin(userId);
+    if (isSystemAdmin) return true;
 
-  async getGroupContext(groupId: number) {
-    const group = await this.groupRepo.findFirstRaw({
-      where: { id: BigInt(groupId), status: 'active' as any },
-      include: { context: true } as any,
-    });
-    return (group as any)?.context || null;
+    return this.rbacService.userHasPermissionsInGroup(userId, groupId, [
+      RbacPermission.GROUP_MANAGE,
+      RbacPermission.GROUP_MEMBER_ADD,
+      RbacPermission.GROUP_MEMBER_MANAGE,
+    ]);
   }
 
   async addMember(
@@ -81,30 +81,13 @@ export class UserGroupService {
       } as any);
     }
 
-    if (roleIds.length > 0) {
-      const roles = await this.roleRepo.findManyRaw({
-        where: { id: { in: roleIds.map((id) => BigInt(id)) } },
-      });
-      if (roles.length !== roleIds.length) {
-        throw new BadRequestException('Some role IDs are invalid');
-      }
-
-      await this.assignmentRepo.deleteMany({
-        user_id: BigInt(memberUserId),
-        group_id: BigInt(groupId),
-      });
-
-      for (const roleId of roleIds) {
-        await this.rbacService.assignRoleToUser(memberUserId, roleId, groupId);
-      }
-    } else {
-      await this.assignmentRepo.deleteMany({
-        user_id: BigInt(memberUserId),
-        group_id: BigInt(groupId),
-      });
-    }
+    // Sync roles inside group
+    await this.rbacService.syncRolesInGroup(memberUserId, groupId, roleIds);
   }
 
+  /**
+   * Thay thế toàn bộ roles của member trong group
+   */
   async assignRolesToMember(
     groupId: number,
     memberUserId: number,
@@ -117,30 +100,11 @@ export class UserGroupService {
     }
 
     const existingUserGroup = await this.userGroupRepo.findUnique(memberUserId, groupId);
-
     if (!existingUserGroup) {
       throw new BadRequestException('User must be a member of the group before assigning roles');
     }
 
-    await this.assignmentRepo.deleteMany({
-      user_id: BigInt(memberUserId),
-      group_id: BigInt(groupId),
-    });
-
-    if (roleIds.length > 0) {
-      const roles = await this.roleRepo.findManyRaw({
-        where: { id: { in: roleIds.map((id) => BigInt(id)) } },
-      });
-      if (roles.length !== roleIds.length) {
-        throw new BadRequestException('Some role IDs are invalid');
-      }
-
-      for (const roleId of roleIds) {
-        await this.rbacService.assignRoleToUser(memberUserId, roleId, groupId);
-      }
-    }
-
-    await this.rbacCache.clearUserPermissionsInGroup(memberUserId, groupId);
+    await this.rbacService.syncRolesInGroup(memberUserId, groupId, roleIds);
   }
 
   async removeMember(
@@ -173,8 +137,11 @@ export class UserGroupService {
     await this.rbacCache.clearUserPermissionsInGroup(memberUserId, groupId);
   }
 
+  /**
+   * Lấy danh sách thành viên của group
+   */
   async getGroupMembers(groupId: number) {
-    const members = await this.assignmentRepo.findManyRaw({
+    const assignments = await this.assignmentRepo.findManyRaw({
       where: {
         group_id: BigInt(groupId),
       },
@@ -190,77 +157,81 @@ export class UserGroupService {
       },
     });
 
-    return members.map((m: any) => ({
-      user_id: Number(m.user_id),
-      user: m.user
-        ? {
-          id: Number(m.user.id),
-          username: m.user.username,
-          email: m.user.email,
-        }
-        : null,
-      role_id: Number(m.role_id),
-      role: m.role
-        ? {
-          id: Number(m.role.id),
-          code: m.role.code,
-          name: m.role.name,
-        }
-        : null,
-    }));
+    // Gom nhóm assignments theo user_id để tránh trả về duplicate user (vì 1 user có N roles)
+    const userMap = new Map<number, any>();
+    for (const a of assignments) {
+      const userId = Number(a.user_id);
+      if (!userMap.has(userId)) {
+        userMap.set(userId, {
+          user_id: userId,
+          user: a.user ? {
+            id: Number(a.user.id),
+            username: a.user.username,
+            email: a.user.email,
+          } : null,
+          roles: []
+        });
+      }
+      if (a.role) {
+        userMap.get(userId).roles.push({
+          id: Number(a.role.id),
+          code: a.role.code,
+          name: a.role.name,
+        });
+      }
+    }
+
+    return Array.from(userMap.values());
   }
 
+  /**
+   * [🚀 Tối ưu - Fix N+1] Lấy danh sách nhóm của User
+   */
   async getUserGroups(userId: number) {
+    // 1. Fetch UserGroup kèm Group và assignments trong duy nhất 1 query prisma
     const userGroups = await this.userGroupRepo.findManyRaw({
       where: { user_id: BigInt(userId) },
       include: {
-        group: true,
+        group: {
+          include: {
+            context: true,
+            user_role_assignments: {
+              where: { user_id: BigInt(userId) },
+              include: { role: true }
+            }
+          }
+        },
       },
       orderBy: { joined_at: 'desc' } as any,
     });
 
-    const result = await Promise.all(
-      userGroups.map(async (ug: any) => {
-        const group = ug.group;
-        if (!group || group.status !== 'active') return null;
+    return userGroups.map((ug: any) => {
+      const group = ug.group;
+      if (!group || group.status !== 'active') return null;
 
-        const context = await this.getGroupContext(Number(group.id));
-
-        const roleAssignments = await this.assignmentRepo.findManyRaw({
-          where: {
-            user_id: BigInt(userId),
-            group_id: group.id,
-          },
-          include: { role: true },
-        });
-
-        return {
-          id: Number(group.id),
-          code: group.code,
-          name: group.name,
-          type: group.type,
-          description: group.description,
-          context: context
-            ? {
-              id: context.id.toString(),
-              type: context.type,
-              ref_id: context.ref_id ? context.ref_id.toString() : null,
-              name: context.name,
-            }
-            : null,
-          roles: roleAssignments
-            .filter((ra: any) => ra.role)
-            .map((ra: any) => ({
-              id: Number(ra.role.id),
-              code: ra.role.code,
-              name: ra.role.name,
-            })),
-          joined_at: ug.joined_at,
-        };
-      }),
-    );
-
-    return result.filter((item: any) => item !== null);
+      return {
+        id: Number(group.id),
+        code: group.code,
+        name: group.name,
+        type: group.type,
+        description: group.description,
+        context: group.context
+          ? {
+            id: group.context.id.toString(),
+            type: group.context.type,
+            ref_id: group.context.ref_id ? group.context.ref_id.toString() : null,
+            name: group.context.name,
+          }
+          : null,
+        roles: (group.user_role_assignments || [])
+          .filter((ra: any) => ra.role)
+          .map((ra: any) => ({
+            id: Number(ra.role.id),
+            code: ra.role.code,
+            name: ra.role.name,
+          })),
+        joined_at: ug.joined_at,
+      };
+    }).filter(item => item !== null);
   }
 }
-

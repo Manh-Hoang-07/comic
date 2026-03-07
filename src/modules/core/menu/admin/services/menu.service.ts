@@ -129,21 +129,16 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     if (!userId) return []; // Admin menu bắt buộc phải đăng nhập
 
     const groupId = RequestContext.get<number | null>('groupId');
-    const contextType = RequestContext.get<any>('context')?.type || 'system';
 
-    // Lấy danh sách tất cả các permission code cần check từ danh sách menus
-    const requiredPerms = this.getPermissionsFromMenus(menus);
-    const userPerms = new Set<string>();
+    // 1. Lấy TẤT CẢ các quyền của User (Global + Local) qua RbacService một lần duy nhất
+    const userPerms = await this.rbacService.getUserPermissions(Number(userId), groupId ?? null);
 
-    // Kiểm tra quyền của User
-    for (const perm of requiredPerms) {
-      const hasPerm = await this.rbacService.userHasPermissionsInGroup(userId as number, groupId ?? null, [perm]);
-      if (hasPerm) userPerms.add(perm);
-    }
-
-    // Lọc menu theo quyền đã check
+    // 2. Lọc menu theo quyền đã lấy
     let filtered = menus.filter((menu) => {
+      // Menu công khai
       if (menu.is_public) return true;
+
+      // Menu không yêu cầu bất kỳ quyền nào (cực kỳ hiếm trong admin)
       if (!menu.required_permission_id && (!menu.menu_permissions || menu.menu_permissions.length === 0)) return true;
 
       // Check quyền chính
@@ -157,30 +152,15 @@ export class MenuService extends BaseService<any, IMenuRepository> {
       return false;
     });
 
-    // Lọc bỏ menu đặc thù hệ thống nếu không phải context 'system'
-    if (contextType !== 'system') {
-      const systemOnlyCodes = ['roles', 'permissions', 'groups', 'contexts', 'config-general', 'config-email', 'rbac-management', 'config-management'];
-      filtered = filtered.filter(m => !systemOnlyCodes.includes(m.code));
-    }
+    // 3. Tùy chọn: Ẩn menu hệ thống đối với Member thường không có bất kỳ quyền Global nào
+    // (Vì filter admin menus mặc định đã check quyền rồi nên logic này không còn quá quan trọng,
+    // nhưng giúp menu trông sạch gọn hơn cho từng đối tượng).
 
     return filtered;
   }
 
-  /**
-   * Thu thập tập hợp các Permission Code duy nhất từ danh sách Menu
-   */
-  private getPermissionsFromMenus(menus: any[]): Set<string> {
-    const codes = new Set<string>();
-    menus.forEach(m => {
-      if (m.required_permission?.code) codes.add(m.required_permission.code);
-      if (m.menu_permissions?.length) {
-        m.menu_permissions.forEach((mp: any) => {
-          if (mp.permission?.code) codes.add(mp.permission.code);
-        });
-      }
-    });
-    return codes;
-  }
+
+
 
   private preparePayload(data: any): any {
     const payload = { ...data };

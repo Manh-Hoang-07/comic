@@ -96,6 +96,24 @@
         "parent_code": null
     },
     {
+        "code": "group.member.add",
+        "name": "Thêm thành viên vào nhóm",
+        "status": "active",
+        "parent_code": "group.manage"
+    },
+    {
+        "code": "group.member.manage",
+        "name": "Quản lý vai trò thành viên",
+        "status": "active",
+        "parent_code": "group.manage"
+    },
+    {
+        "code": "group.member.remove",
+        "name": "Xóa thành viên khỏi nhóm",
+        "status": "active",
+        "parent_code": "group.manage"
+    },
+    {
         "code": "project.manage",
         "name": "Quản lý Dự án",
         "status": "active",

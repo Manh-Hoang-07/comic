@@ -7,6 +7,7 @@ import { AdminGroupService } from '@/modules/core/context/group/admin/services/g
 import { UserGroupService } from '@/modules/core/context/group/user/services/group.service';
 import { Auth } from '@/common/auth/utils';
 import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators';
+import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 
 @Injectable()
 export class GroupInterceptor implements NestInterceptor {
@@ -15,6 +16,7 @@ export class GroupInterceptor implements NestInterceptor {
     private readonly contextService: AdminContextService,
     private readonly groupService: AdminGroupService,
     private readonly userGroupService: UserGroupService,
+    private readonly rbacService: RbacService,
   ) { }
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
@@ -27,42 +29,41 @@ export class GroupInterceptor implements NestInterceptor {
     ]) || [];
     const isPublicEndpoint = requiredPerms.includes(PUBLIC_PERMISSION);
 
-    // ✅ Chỉ dùng group_id, không cần context_id
-    const groupIdFromHeader = request.headers['x-group-id'] || request.headers['group-id'] || request.headers['group_id'];
-    const groupIdFromQuery = (request.query as any)?.group_id;
+    // 1. Chỉ lấy groupId từ Header (X-Group-Id)
+    const groupIdRaw = request.headers['x-group-id'] || request.headers['group-id'] || request.headers['group_id'];
+    const groupId = groupIdRaw ? Number(groupIdRaw) : null;
 
-    if (groupIdFromHeader || groupIdFromQuery) {
-      // Nếu có group_id trong request
-      const groupId = Number(groupIdFromHeader || groupIdFromQuery);
+    if (groupId) {
+      // TRƯỜNG HỢP CÓ GROUP_ID TRONG HEADER
       let group: any = null;
       try {
-        // AdminGroupService.findById() dùng BaseService.getOne() và có thể throw NotFoundException (404)
         group = await this.groupService.findById(groupId);
       } catch (e) {
         group = null;
       }
 
       if (!group) {
-        // ✅ Nếu là public endpoint, không quăng lỗi nếu group không tồn tại
-        // Fallback về behavior mặc định (system context)
+        // Nếu là public endpoint thì cho qua với System Context, nếu không thì báo lỗi
         if (isPublicEndpoint) {
-          RequestContext.set('contextId', 1);
+          const sysContext = await this.contextService.getSystemContext();
+          RequestContext.set('contextId', sysContext ? Number(sysContext.id) : null);
           RequestContext.set('groupId', null);
           return next.handle();
         }
         throw new BadRequestException('Group not found');
       }
 
-      // Validate user có quyền truy cập group này không
-      // ⚠️ Skip permission check cho public endpoints
+      // Validate quyền truy cập Group
       const userId = Auth.id(context);
       if (userId && !isPublicEndpoint) {
+        // 1. Kiểm tra User có trong nhóm không
         const userGroups = await this.userGroupService.getUserGroups(userId);
-        const groupIdNumber = Number(group.id); // Convert BigInt to number for comparison
-        let hasAccess = userGroups.some((g: any) => g.id === groupIdNumber);
+        const groupIdNumber = Number(group.id);
+        let hasAccess = userGroups.some((g: any) => Number(g.id) === groupIdNumber);
 
+        // 2. Nếu không trong nhóm, kiểm tra xem có phải Global Admin (System Context) không
         if (!hasAccess) {
-          hasAccess = await this.groupService.isSystemAdmin(userId);
+          hasAccess = await this.rbacService.isSystemAdmin(userId);
         }
 
         if (!hasAccess) {
@@ -72,13 +73,12 @@ export class GroupInterceptor implements NestInterceptor {
         }
       }
 
-      // Set group và context từ group
+      // Thiết lập Context và Group ID vào RequestContext
       RequestContext.set('groupId', group.id);
       if (group.context) {
         RequestContext.set('context', group.context);
         RequestContext.set('contextId', Number(group.context.id));
       } else {
-        // Load context nếu chưa có
         const contextEntity = await this.contextService.findById(Number(group.context_id));
         if (contextEntity) {
           RequestContext.set('context', contextEntity);
@@ -86,60 +86,13 @@ export class GroupInterceptor implements NestInterceptor {
         }
       }
     } else {
-      // Không có group_id → tự động resolve group từ user's groups
-      const userId = Auth.id(context);
-
-      if (userId) {
-        // Lấy groups mà user là member
-        const userGroups = await this.userGroupService.getUserGroups(userId);
-
-        if (userGroups.length > 0) {
-          // Ưu tiên group không phải system (ví dụ shop) hơn system group
-          let selectedGroup = userGroups.find((g: any) => g.type !== 'system') || userGroups[0];
-
-          if (selectedGroup) {
-            RequestContext.set('groupId', selectedGroup.id);
-
-            // Load context từ group
-            const group = await this.groupService.findById(selectedGroup.id);
-            if (group && group.context) {
-              RequestContext.set('context', group.context);
-              RequestContext.set('contextId', group.context.id);
-            } else if (selectedGroup.context?.id) {
-              const contextEntity = await this.contextService.findById(Number(selectedGroup.context.id));
-              if (contextEntity) {
-                RequestContext.set('context', contextEntity);
-                RequestContext.set('contextId', contextEntity.id);
-              }
-            }
-          } else {
-            // Fallback: system group
-            const systemGroup = await this.groupService.findByCode('system');
-            if (systemGroup) {
-              RequestContext.set('groupId', systemGroup.id);
-              const systemContext = await this.contextService.findById(1);
-              if (systemContext) {
-                RequestContext.set('context', systemContext);
-                RequestContext.set('contextId', 1);
-              }
-            } else {
-              RequestContext.set('contextId', 1);
-              RequestContext.set('groupId', null);
-            }
-          }
-        } else {
-          // User không có group nào → dùng system context
-          RequestContext.set('contextId', 1);
-          RequestContext.set('groupId', null);
-        }
-      } else {
-        // Chưa authenticated → dùng system context
-        RequestContext.set('contextId', 1);
-        RequestContext.set('groupId', null);
-      }
+      // TRƯỜNG HỢP KHÔNG CÓ GROUP_ID TRONG HEADER
+      // Mặc định về System Context, Group: null
+      const sysContext = await this.contextService.getSystemContext();
+      RequestContext.set('contextId', sysContext ? Number(sysContext.id) : null);
+      RequestContext.set('groupId', null);
     }
 
     return next.handle();
   }
 }
-

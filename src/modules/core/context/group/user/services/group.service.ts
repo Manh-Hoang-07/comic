@@ -146,20 +146,14 @@ export class UserGroupService {
         group_id: BigInt(groupId),
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          }
-        },
+        user: true,
         role: true,
       },
     });
 
     // Gom nhóm assignments theo user_id để tránh trả về duplicate user (vì 1 user có N roles)
     const userMap = new Map<number, any>();
-    for (const a of assignments) {
+    for (const a of (assignments as any[])) {
       const userId = Number(a.user_id);
       if (!userMap.has(userId)) {
         userMap.set(userId, {

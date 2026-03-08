@@ -12,13 +12,14 @@ export class RedisUtil implements OnModuleDestroy {
     if (this.url) {
       this.client = new Redis(this.url, {
         lazyConnect: true,
-        maxRetriesPerRequest: 2,
-        enableReadyCheck: true,
-        retryStrategy: (times) => {
-          // exponential backoff up to ~10s
-          const delay = Math.min(times * 200, 10_000);
-          return delay;
-        },
+        maxRetriesPerRequest: 1,
+        enableReadyCheck: false,
+        retryStrategy: () => null, // Disable reconnection loop
+      });
+
+      // Suppress unhandled error events
+      this.client.on('error', () => {
+        // Silently ignore redis connection errors during startup/seeding
       });
     }
   }

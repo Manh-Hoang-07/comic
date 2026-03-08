@@ -53,12 +53,12 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         JWT_AUDIENCE: Joi.string().allow(''),
 
         // Database
-        DB_TYPE: Joi.string().default('mysql'),
+        DB_TYPE: Joi.string().default('postgresql'),
         DB_HOST: Joi.string().hostname().default('localhost'),
-        DB_PORT: Joi.number().default(3306),
-        DB_USERNAME: Joi.string().required(),
+        DB_PORT: Joi.number().default(5432),
+        DB_USERNAME: Joi.string().allow(''),
         DB_PASSWORD: Joi.string().allow(''),
-        DB_DATABASE: Joi.string().required(),
+        DB_DATABASE: Joi.string().allow(''),
         DB_SYNCHRONIZE: Joi.boolean().truthy('true').falsy('false').default(false),
         DB_LOGGING: Joi.boolean().truthy('true').falsy('false').default(false),
         DB_SSL: Joi.boolean().truthy('true').falsy('false').default(false),
@@ -70,7 +70,7 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         // DB_RECONNECT: Joi.boolean().truthy('true').falsy('false').default(true),
 
         // Prisma
-        DATABASE_URL: Joi.string().uri({ scheme: ['mysql', 'mysqls'] }).optional(),
+        DATABASE_URL: Joi.string().uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] }).optional(),
 
         // Mail (optional but warn if partially provided)
         MAIL_HOST: Joi.string().hostname().default('localhost'),

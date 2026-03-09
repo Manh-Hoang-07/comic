@@ -2,8 +2,9 @@ import { Injectable, Inject, UnauthorizedException, NotFoundException, BadReques
 import { PostComment } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
 import { IPostCommentRepository, POST_COMMENT_REPOSITORY } from '../../domain/post-comment.repository';
-import { RequestContext } from '@/common/shared/utils';
 import { PostNotificationService } from '@/modules/post/shared/services/post-notification.service';
+import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
+import { POST_COMMENT_TREE_INCLUDE, normalizePostCommentFilters } from '../../utils/post-comment-query.helper';
 
 @Injectable()
 export class UserPostCommentsService extends BaseService<PostComment, IPostCommentRepository> {
@@ -15,14 +16,12 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
         super(commentRepository);
     }
 
-    protected override async prepareFilters(filters?: any) {
-        const userId = RequestContext.get<number>('userId');
-        const prepared: any = { ...(filters || {}) };
+    protected override async prepareFilters(filters: any = {}) {
+        const userId = getCurrentUserId();
+        const prepared = normalizePostCommentFilters(filters);
 
-        // Nếu gọi getByUser thì lọc theo user
-        if (prepared.by_current_user) {
+        if (filters.by_current_user) {
             prepared.userId = userId;
-            delete prepared.by_current_user;
         }
 
         return prepared;
@@ -32,42 +31,37 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
         const base = await super.prepareOptions(options);
         return {
             ...base,
-            include: options?.include ?? {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        name: true,
-                        image: true
-                    }
-                },
-                post: {
-                    select: {
-                        id: true,
-                        name: true,
-                        slug: true
-                    }
-                },
-                replies: {
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true
-                            }
-                        }
-                    },
-                    take: 5
-                }
-            },
+            include: options?.include ?? POST_COMMENT_TREE_INCLUDE,
             sort: options?.sort ?? 'created_at:desc',
         };
     }
 
+    // ── Extended Operations ────────────────────────────────────────────────────
+
+    async updateComment(id: number | bigint, content: string) {
+        const userId = getCurrentUserId();
+        if (!userId) throw new UnauthorizedException();
+
+        const comment = await this.repository.findOne({ id, userId: BigInt(userId) });
+        if (!comment) throw new NotFoundException('Comment not found');
+
+        return this.update(id, { content, updated_user_id: userId });
+    }
+
+    async removeComment(id: number | bigint) {
+        const userId = getCurrentUserId();
+        if (!userId) throw new UnauthorizedException();
+
+        const comment = await this.repository.findOne({ id, userId: BigInt(userId) });
+        if (!comment) throw new NotFoundException('Comment not found');
+
+        return this.repository.delete(id);
+    }
+
+    // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
     protected override async beforeCreate(data: any): Promise<any> {
-        const userId = RequestContext.get<number>('userId');
+        const userId = getCurrentUserId();
         if (!userId) throw new UnauthorizedException();
 
         const payload = { ...data };
@@ -86,7 +80,7 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
         return payload;
     }
 
-    protected override async afterCreate(entity: PostComment, data: any): Promise<void> {
+    protected override async afterCreate(entity: PostComment): Promise<void> {
         if (entity.parent_id) {
             await this.notificationService.notifyCommentReply(
                 Number(entity.id),
@@ -94,34 +88,6 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
                 Number(entity.user_id)
             );
         }
-    }
-
-    async updateComment(id: number | bigint, content: string) {
-        const userId = RequestContext.get<number>('userId');
-        if (!userId) throw new UnauthorizedException();
-
-        const comment = await this.repository.findOne({
-            id,
-            userId
-        });
-
-        if (!comment) throw new NotFoundException('Comment not found');
-
-        return this.update(id, { content });
-    }
-
-    async removeComment(id: number | bigint) {
-        const userId = RequestContext.get<number>('userId');
-        if (!userId) throw new UnauthorizedException();
-
-        const comment = await this.repository.findOne({
-            id,
-            userId
-        });
-
-        if (!comment) throw new NotFoundException('Comment not found');
-
-        return this.repository.delete(id);
     }
 
     protected override transform(entity: any): any {

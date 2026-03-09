@@ -1,5 +1,5 @@
 import { Injectable, ConflictException, Inject, NotFoundException } from '@nestjs/common';
-import { IBannerLocationRepository, BANNER_LOCATION_REPOSITORY, BannerLocationFilter } from '@/modules/marketing/banner-location/domain/banner-location.repository';
+import { IBannerLocationRepository, BANNER_LOCATION_REPOSITORY } from '@/modules/marketing/banner-location/domain/banner-location.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { BaseService } from '@/common/core/services';
 import { BannerLocation } from '@prisma/client';
@@ -13,7 +13,6 @@ export class BannerLocationService extends BaseService<BannerLocation, IBannerLo
         super(locationRepo);
     }
 
-
     async getSimpleList(query: any) {
         return this.getList({
             ...query,
@@ -21,32 +20,29 @@ export class BannerLocationService extends BaseService<BannerLocation, IBannerLo
         });
     }
 
-    protected async beforeCreate(data: any) {
-        if (data.code) {
-            const exists = await this.locationRepo.findByCode(data.code);
-            if (exists) {
-                throw new ConflictException(`Mã vị trí banner "${data.code}" đã tồn tại`);
-            }
-        }
-        return data;
-    }
+    // ── Extended Operations ────────────────────────────────────────────────────
 
-    protected async beforeUpdate(id: number, data: any) {
-        const current = await this.locationRepo.findById(id);
-        if (!current) throw new NotFoundException('Banner location not found');
-
-        if (data.code && data.code !== (current as any).code) {
-            const exists = await this.locationRepo.findByCode(data.code);
-            if (exists) {
-                throw new ConflictException(`Mã vị trí banner "${data.code}" đã tồn tại`);
-            }
-        }
-        return data;
-    }
-
-    async changeStatus(id: number, status: BasicStatus) {
+    async changeStatus(id: number | bigint, status: BasicStatus) {
         return this.update(id, { status: status as any });
     }
+
+    // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+    protected override async beforeCreate(data: any) {
+        if (data.code && (await this.locationRepo.findByCode(data.code))) {
+            throw new ConflictException(`Mã vị trí banner "${data.code}" đã tồn tại`);
+        }
+        return data;
+    }
+
+    protected override async beforeUpdate(id: number | bigint, data: any) {
+        const current = await this.getOne(id); // Includes existence check
+
+        if (data.code && data.code !== (current as any).code) {
+            if (await this.locationRepo.findByCode(data.code)) {
+                throw new ConflictException(`Mã vị trí banner "${data.code}" đã tồn tại`);
+            }
+        }
+        return data;
+    }
 }
-
-

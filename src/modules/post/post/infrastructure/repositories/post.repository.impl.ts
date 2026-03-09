@@ -138,6 +138,10 @@ export class PostRepositoryImpl extends PrismaRepository<
         });
     }
 
+    async findBySlug(slug: string): Promise<Post | null> {
+        return this.findOne({ slug });
+    }
+
     async incrementViewCount(id: number | bigint): Promise<void> {
         try {
             if (this.redis.isEnabled()) {

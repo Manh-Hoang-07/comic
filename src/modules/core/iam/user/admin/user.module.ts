@@ -1,14 +1,13 @@
 import { Module } from '@nestjs/common';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
-import { UserService } from '@/modules/core/iam/user/admin/services/user.service';
-import { UserController } from '@/modules/core/iam/user/admin/controllers/user.controller';
+import { UserService } from './services/user.service';
+import { UserActionService } from './services/user-action.service';
+import { UserController } from './controllers/user.controller';
 
 @Module({
   imports: [RbacModule],
-  providers: [UserService],
+  providers: [UserService, UserActionService],
   controllers: [UserController],
-  exports: [UserService],
+  exports: [UserService, UserActionService],
 })
 export class AdminUserModule { }
-
-

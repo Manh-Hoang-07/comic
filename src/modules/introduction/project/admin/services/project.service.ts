@@ -1,7 +1,8 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IProjectRepository, PROJECT_REPOSITORY, ProjectFilter } from '@/modules/introduction/project/domain/project.repository';
+import { Injectable, Inject } from '@nestjs/common';
+import { IProjectRepository, PROJECT_REPOSITORY } from '@/modules/introduction/project/domain/project.repository';
 import { BaseContentService } from '@/common/core/services';
 import { Project } from '@prisma/client';
+import { SlugHelper } from '@/common/core/utils/slug.helper';
 
 @Injectable()
 export class ProjectService extends BaseContentService<Project, IProjectRepository> {
@@ -12,7 +13,6 @@ export class ProjectService extends BaseContentService<Project, IProjectReposito
     super(projectRepo);
   }
 
-
   async getSimpleList(query: any) {
     return this.getList({
       ...query,
@@ -20,30 +20,37 @@ export class ProjectService extends BaseContentService<Project, IProjectReposito
     });
   }
 
-  protected async beforeCreate(data: any) {
-    const payload = { ...data };
-    await this.ensureSlug(payload);
+  // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+  protected override async beforeCreate(data: any) {
+    const payload = await super.beforeCreate(data);
+
+    // Handle Slug
+    if (!payload.slug) {
+      payload.slug = await SlugHelper.uniqueSlug(payload.name, this.projectRepo);
+    }
+
     return payload;
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected override async beforeUpdate(id: number | bigint, data: any) {
     const payload = { ...data };
-    const current = await this.projectRepo.findById(id);
-    if (!current) throw new NotFoundException('Project not found');
 
-    await this.ensureSlug(payload, id, (current as any).slug);
+    // Handle Slug
+    if (payload.name || payload.slug) {
+      payload.slug = await SlugHelper.uniqueSlug(
+        payload.slug || payload.name || '',
+        this.projectRepo,
+        id
+      );
+    }
+
     return payload;
   }
+
+  // ── Operations ─────────────────────────────────────────────────────────────
 
   async incrementViewCount(id: number | bigint) {
     return this.projectRepo.incrementViewCount(id);
   }
-
-  protected transform(project: any) {
-    if (!project) return project;
-    return super.transform(project);
-  }
 }
-
-
-

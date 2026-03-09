@@ -20,10 +20,12 @@ export class ContentTemplateService extends BaseService<ContentTemplate, IConten
         if (!item) {
             throw new NotFoundException(`Content template with code ${code} not found`);
         }
-        return item;
+        return this.transform(item) as ContentTemplate;
     }
 
-    protected async beforeCreate(data: any) {
+    // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+    protected override async beforeCreate(data: any) {
         if (data.code) {
             const existing = await this.repository.findByCode(data.code);
             if (existing) {
@@ -33,7 +35,7 @@ export class ContentTemplateService extends BaseService<ContentTemplate, IConten
         return data;
     }
 
-    protected async beforeUpdate(id: number | string | bigint, data: any) {
+    protected override async beforeUpdate(id: number | string | bigint, data: any) {
         if (data.code) {
             const existing = await this.repository.findByCode(data.code);
             if (existing && String(existing.id) !== String(id)) {
@@ -42,6 +44,10 @@ export class ContentTemplateService extends BaseService<ContentTemplate, IConten
         }
         return data;
     }
+
+    // ── Transformation ─────────────────────────────────────────────────────────
+
+    protected override transform(entity: any): any {
+        return this.deepConvertBigInt(entity);
+    }
 }
-
-

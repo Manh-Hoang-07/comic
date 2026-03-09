@@ -1,7 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PostCategory } from '@prisma/client';
-import { IPostCategoryRepository, POST_CATEGORY_REPOSITORY, PostCategoryFilter } from '@/modules/post/post-category/domain/post-category.repository';
+import { IPostCategoryRepository, POST_CATEGORY_REPOSITORY } from '@/modules/post/post-category/domain/post-category.repository';
 import { BaseContentService } from '@/common/core/services';
+import { SlugHelper } from '@/common/core/utils/slug.helper';
+import { toBigInt } from '@/common/core/utils/data.helper';
 
 @Injectable()
 export class PostCategoryService extends BaseContentService<PostCategory, IPostCategoryRepository> {
@@ -12,7 +14,6 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
     super(categoryRepo);
   }
 
-
   async getSimpleList(query: any) {
     return this.getList({
       ...query,
@@ -21,45 +22,55 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
     });
   }
 
-  protected async beforeCreate(data: any) {
-    const payload = { ...data };
-    await this.ensureSlug(payload);
-    payload.parent_id = this.toBigInt(payload.parent_id);
+  // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+  protected override async beforeCreate(data: any) {
+    const payload = await super.beforeCreate(data);
+
+    // Handle Slug
+    if (!payload.slug) {
+      payload.slug = await SlugHelper.uniqueSlug(payload.name, this.categoryRepo);
+    }
+
+    payload.parent_id = toBigInt(payload.parent_id);
     return payload;
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected override async beforeUpdate(id: number | bigint, data: any) {
     const payload = { ...data };
-    const current = await this.categoryRepo.findById(id);
-    await this.ensureSlug(payload, id, current?.slug);
-    payload.parent_id = this.toBigInt(payload.parent_id);
+
+    // Handle Slug
+    if (payload.name || payload.slug) {
+      payload.slug = await SlugHelper.uniqueSlug(
+        payload.slug || payload.name || '',
+        this.categoryRepo,
+        id
+      );
+    }
+
+    payload.parent_id = toBigInt(payload.parent_id);
     return payload;
   }
 
-  protected transform(category: any) {
+  // ── Transformation ─────────────────────────────────────────────────────────
+
+  protected override transform(category: any) {
     if (!category) return category;
     const item = super.transform(category) as any;
+
     if (item.parent) {
       const { id, name, slug } = item.parent;
       item.parent = { id, name, slug };
     }
+
     if (Array.isArray(item.children)) {
-      item.children = item.children.map((child: any) => {
-        const { id, name, slug } = child;
-        return { id, name, slug };
-      });
+      item.children = item.children.map((child: any) => ({
+        id: child.id,
+        name: child.name,
+        slug: child.slug
+      }));
     }
+
     return item;
   }
-
-  private toBigInt(value?: number | string | bigint | null): bigint | null {
-    if (value === null || value === undefined) return null;
-    if (typeof value === 'bigint') return value;
-    const num = typeof value === 'string' ? Number(value) : value;
-    if (Number.isNaN(num)) return null;
-    return BigInt(num);
-  }
 }
-
-
-

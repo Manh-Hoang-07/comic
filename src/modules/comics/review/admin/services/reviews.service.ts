@@ -1,10 +1,10 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { ComicReview, Prisma } from '@prisma/client';
+import { ComicReview } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
 import { IPaginationOptions } from '@/common/core/repositories';
 import { IReviewRepository, REVIEW_REPOSITORY } from '../../domain/review.repository';
-import { RequestContext } from '@/common/shared/utils/request-context.util';
-import { verifyGroupOwnership } from '@/common/shared/utils/group-ownership.util';
+import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
+import { REVIEW_INCLUDE, normalizeReviewFilters } from '@/modules/comics/review/utils/review-query.helper';
 
 @Injectable()
 export class ReviewsService extends BaseService<ComicReview, IReviewRepository> {
@@ -15,72 +15,20 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     super(reviewRepository);
   }
 
-  protected override async prepareFilters(filters: Record<string, any> = {}): Promise<Record<string, any>> {
-    const prepared = { ...filters };
-
-    if (prepared.rating) {
-      prepared.rating = Number(prepared.rating);
-    }
-
-    if (prepared.rating_min || prepared.rating_max) {
-      prepared.rating = {};
-      if (prepared.rating_min) {
-        prepared.rating.gte = Number(prepared.rating_min);
-        delete prepared.rating_min;
-      }
-      if (prepared.rating_max) {
-        prepared.rating.lte = Number(prepared.rating_max);
-        delete prepared.rating_max;
-      }
-    }
-
-    if (prepared.search) {
-      prepared.content = { contains: prepared.search };
-      delete prepared.search;
-    }
-
-    if (prepared.date_from || prepared.date_to) {
-      prepared.created_at = {};
-      if (prepared.date_from) {
-        prepared.created_at.gte = new Date(prepared.date_from);
-        delete prepared.date_from;
-      }
-      if (prepared.date_to) {
-        prepared.created_at.lte = new Date(prepared.date_to);
-        delete prepared.date_to;
-      }
-    }
-
-    // Gán group_id từ RequestContext
-    if (prepared.group_id === undefined) {
-      Object.assign(prepared, this.getGroupFilter());
-    }
-
-    return prepared;
+  protected override async prepareFilters(filters: any = {}): Promise<any> {
+    const prepared = normalizeReviewFilters(filters);
+    return { ...prepared, ...getGroupFilter() };
   }
 
   protected override async prepareOptions(options: IPaginationOptions): Promise<IPaginationOptions> {
     const normalized = await super.prepareOptions(options);
-    (normalized as any).include = {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-        }
-      },
-      comic: true,
-    };
+    (normalized as any).include = REVIEW_INCLUDE;
     return normalized;
   }
 
-  /**
-   * Get review statistics
-   */
   async getStatistics() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -105,46 +53,48 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
   }
 
   override async getOne(id: string | number | bigint): Promise<ComicReview> {
-    const entity = await super.getOne(id);
-    // Load comic to verify ownership
-    const review = await (this.repository as any).delegate.findFirst({
+    const entity = await (this.repository as any).delegate.findFirst({
       where: { id: (this.repository as any).toPrimaryKey(id) },
       include: { comic: true }
     });
-    if (review?.comic) {
-      verifyGroupOwnership(review.comic as any);
-    }
-    return entity;
-  }
 
-  protected override async beforeUpdate(id: string | number | bigint, data: any): Promise<any> {
-    const entity = await this.repository.findById(id);
     if (!entity) {
       throw new NotFoundException(`Review with ID ${id} not found`);
     }
 
-    // Kiểm tra quyền sở hữu qua comic
-    const review = await (this.repository as any).delegate.findFirst({
-      where: { id: (this.repository as any).toPrimaryKey(id) },
-      include: { comic: true }
-    });
-    if (review?.comic) {
-      verifyGroupOwnership(review.comic as any);
+    if (entity.comic) {
+      verifyGroupOwnership(entity.comic as any);
     }
 
+    return this.transform(entity) as ComicReview;
+  }
+
+  protected override async beforeUpdate(id: string | number | bigint, data: any): Promise<any> {
+    await this.verifyOwnershipAndExistence(id);
     return data;
   }
 
   protected override async beforeDelete(id: string | number | bigint): Promise<boolean> {
+    await this.verifyOwnershipAndExistence(id);
+    return true;
+  }
+
+  private async verifyOwnershipAndExistence(id: string | number | bigint) {
     const review = await (this.repository as any).delegate.findFirst({
       where: { id: (this.repository as any).toPrimaryKey(id) },
       include: { comic: true }
     });
-    if (review?.comic) {
+
+    if (!review) {
+      throw new NotFoundException(`Review with ID ${id} not found`);
+    }
+
+    if (review.comic) {
       verifyGroupOwnership(review.comic as any);
     }
-    return true;
+  }
+
+  protected override transform(entity: any): any {
+    return this.deepConvertBigInt(entity);
   }
 }
-
-

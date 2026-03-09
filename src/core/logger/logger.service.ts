@@ -2,235 +2,214 @@ import { Injectable, LoggerService, LogLevel } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
-import { performance } from 'perf_hooks';
 import { RequestContext } from '@/common/shared/utils';
 import { Auth } from '@/common/auth/utils';
 import { DateUtil } from '@/core/utils/date.util';
+import { LogContext } from './interfaces/log-context.interface';
+import { LogWriteOptions } from './interfaces/log-write-options.interface';
+import { CheckpointTracker } from './checkpoint-tracker';
 
+export { LogWriteOptions } from './interfaces/log-write-options.interface';
+export { CheckpointTracker } from './checkpoint-tracker';
 
-import { LogContext } from '@/core/logger/interfaces/log-context.interface';
+// ─── Noise Filter ────────────────────────────────────────────────────────────
 
-export interface LogWriteOptions {
-  /** Absolute or relative file path. If provided, write to this exact file. */
-  filePath?: string;
-  /** Custom base name; final file becomes <base>.<YYYY-MM-DD>.log if filePath is not provided */
-  fileBaseName?: string;
+const SKIP_PATTERNS = [
+  'Module dependencies initialized',
+  'Mapped {',
+  'Controller {',
+  'Starting Nest application',
+  'Nest application successfully started',
+  'TokenBlacklistService destroyed',
+  'TokenBlacklistService initialized',
+  'Timezone set to',
+];
+
+function shouldSkipMessage(message: any): boolean {
+  if (typeof message !== 'string') return false;
+  return SKIP_PATTERNS.some((p) => message.includes(p));
 }
 
-export class CheckpointTracker {
-  private readonly startTimeMs: number;
-  private readonly checkpoints: Record<string, number> = {};
+// ─── Entry Builder ────────────────────────────────────────────────────────────
 
-  constructor() {
-    this.startTimeMs = performance.now();
+function buildLogEntry(
+  level: LogLevel,
+  message: any,
+  context: LogContext & { trace?: string },
+): Record<string, any> {
+  const raw = {
+    timestamp: DateUtil.formatTimestamp(),
+    level: level.toUpperCase(),
+    message,
+    context: context.context || 'Application',
+    account: { userId: context.userId },
+    api: {
+      method: context.method,
+      url: context.url,
+      requestId: context.requestId,
+    },
+    device: {
+      ip: context.ip,
+      userAgent: context.userAgent,
+    },
+    trace: context.trace,
+    extra: context.extra || {},
+  };
+  return removeEmpty(raw);
+}
+
+function extractErrorInfo(
+  message: any,
+  trace?: string,
+): { errorMessage?: string; stackTrace?: string } | undefined {
+  if (message instanceof Error) {
+    return { errorMessage: message.message, stackTrace: message.stack };
+  }
+  if (trace) {
+    return {
+      errorMessage: typeof message === 'string' ? message : undefined,
+      stackTrace: trace,
+    };
+  }
+  return undefined;
+}
+
+/** Recursively remove null/undefined values and empty objects. */
+function removeEmpty(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object' || obj instanceof Date) return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.length > 0 ? obj : undefined;
   }
 
-  addCheckpoint(key: string): void {
-    const now = performance.now();
-    this.checkpoints[key] = Math.round(now - this.startTimeMs);
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) continue;
+    if (Array.isArray(value)) {
+      if (value.length > 0) cleaned[key] = value;
+      continue;
+    }
+    if (typeof value === 'object') {
+      const nested = removeEmpty(value);
+      if (nested && Object.keys(nested).length > 0) cleaned[key] = nested;
+      continue;
+    }
+    cleaned[key] = value;
   }
+  return cleaned;
+}
 
-  toLogDetails(): Record<string, number> {
-    return { ...this.checkpoints };
+// ─── File Writer ──────────────────────────────────────────────────────────────
+
+function ensureDir(dirPath: string): void {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
   }
 }
+
+function appendLine(filePath: string, line: string): void {
+  ensureDir(path.dirname(filePath));
+  fs.appendFileSync(filePath, line + '\n', { encoding: 'utf8' });
+}
+
+function writeEntryToFiles(
+  logDir: string,
+  level: LogLevel,
+  entry: any,
+  options?: LogWriteOptions,
+): void {
+  const line = JSON.stringify(entry);
+
+  // Custom absolute path: write only there
+  if (options?.filePath) {
+    appendLine(options.filePath, line);
+    return;
+  }
+
+  const date = DateUtil.formatDate(undefined, 'Y-m-d');
+  const dailyDir = path.join(logDir, date);
+  ensureDir(dailyDir);
+
+  // Optional named file (e.g. 'api-requests')
+  if (options?.fileBaseName) {
+    appendLine(path.join(dailyDir, `${options.fileBaseName}.log`), line);
+  }
+
+  // Per-level file + combined app file
+  appendLine(path.join(dailyDir, `${level}.log`), line);
+  appendLine(path.join(dailyDir, 'app.log'), line);
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class CustomLoggerService implements LoggerService {
-  private logDirectory: string;
-  private static _instance: CustomLoggerService | undefined;
+  private readonly logDirectory: string;
   private readonly timezone: string;
+  private static _instance: CustomLoggerService | undefined;
 
   constructor(private readonly configService: ConfigService) {
     this.logDirectory = this.configService.get('LOG_DIR') || './logs';
-    this.timezone = this.configService.get('app.timezone') || process.env.APP_TIMEZONE || 'Asia/Ho_Chi_Minh';
-    this.ensureLogDirectory();
-    // Expose singleton-like instance for static helpers
+    this.timezone =
+      this.configService.get('app.timezone') ||
+      process.env.APP_TIMEZONE ||
+      'Asia/Ho_Chi_Minh';
+    ensureDir(this.logDirectory);
     CustomLoggerService._instance = this;
   }
 
-  private ensureLogDirectory(): void {
-    if (!fs.existsSync(this.logDirectory)) {
-      fs.mkdirSync(this.logDirectory, { recursive: true });
-    }
-  }
-
-  // Minimal API: build structured entry then write
-
-  /**
-   * Check if log message should be skipped (framework noise)
-   */
-  private shouldSkipLog(message: any): boolean {
-    if (typeof message !== 'string') {
-      return false;
-    }
-
-    const skipPatterns = [
-      'Module dependencies initialized',
-      'Mapped {',
-      'Controller {',
-      'Starting Nest application',
-      'Nest application successfully started',
-      'TokenBlacklistService destroyed',
-      'TokenBlacklistService initialized',
-      'Timezone set to',
-    ];
-
-    return skipPatterns.some(pattern => message.includes(pattern));
-  }
-
-  /**
-   * Remove empty objects and null/undefined values from log entry
-   */
-  private cleanLogEntry(entry: any): any {
-    const cleaned: any = {};
-
-    for (const [key, value] of Object.entries(entry)) {
-      if (value === null || value === undefined) {
-        continue;
-      }
-
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        const cleanedObj = this.cleanLogEntry(value);
-        // Only include non-empty objects
-        if (Object.keys(cleanedObj).length > 0) {
-          cleaned[key] = cleanedObj;
-        }
-      } else if (Array.isArray(value)) {
-        if (value.length > 0) {
-          cleaned[key] = value;
-        }
-      } else {
-        cleaned[key] = value;
-      }
-    }
-
-    return cleaned;
-  }
-
-  private buildLogEntry(level: LogLevel, message: any, context?: LogContext & { trace?: string }) {
-    const entry = {
-      timestamp: DateUtil.formatTimestamp(),
-      level: level.toUpperCase(),
-      message,
-      context: context?.context || 'Application',
-      account: {
-        userId: context?.userId,
-      },
-      api: {
-        method: context?.method,
-        url: context?.url,
-        requestId: context?.requestId,
-      },
-      device: {
-        ip: context?.ip,
-        userAgent: context?.userAgent,
-      },
-      trace: context?.trace,
-      extra: context?.extra || {},
-    };
-
-    // Remove empty objects and null values
-    return this.cleanLogEntry(entry);
-  }
-
-  private extractErrorInfo(message: any, trace?: string): { errorMessage?: string; stackTrace?: string } | undefined {
-    if (message instanceof Error) {
-      return {
-        errorMessage: message.message,
-        stackTrace: message.stack,
-      };
-    }
-    if (trace) {
-      return {
-        errorMessage: typeof message === 'string' ? message : undefined,
-        stackTrace: trace,
-      };
-    }
-    return undefined;
-  }
-
-  private writeJsonToFiles(level: LogLevel, entry: any, options?: LogWriteOptions): void {
-    // Convert BigInt to number/string before JSON.stringify to avoid serialization errors
-    // Global patch handles BigInt.prototype.toJSON
-    const line = JSON.stringify(entry);
-    const date = DateUtil.formatDate(undefined, 'Y-m-d'); // YYYY-MM-DD in configured timezone
-
-    // Use per-day subdirectory: logs/YYYY-MM-DD/
-    const dailyDir = path.join(this.logDirectory, date);
-    if (!fs.existsSync(dailyDir)) {
-      fs.mkdirSync(dailyDir, { recursive: true });
-    }
-
-    if (options?.filePath) {
-      const dir = path.dirname(options.filePath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.appendFileSync(options.filePath, line + '\n', { encoding: 'utf8' });
-      return;
-    }
-
-    const base = options?.fileBaseName;
-    if (base) {
-      const customPath = path.join(dailyDir, `${base}.log`);
-      fs.appendFileSync(customPath, line + '\n', { encoding: 'utf8' });
-    }
-
-    const levelFilePath = path.join(dailyDir, `${level}.log`);
-    fs.appendFileSync(levelFilePath, line + '\n', { encoding: 'utf8' });
-
-    const appDailyPath = path.join(dailyDir, `app.log`);
-    fs.appendFileSync(appDailyPath, line + '\n', { encoding: 'utf8' });
-  }
-
-  /**
-   * Generic structured log with metadata and optional custom file path.
-   */
-  public write(level: LogLevel, message: any, context?: LogContext, options?: LogWriteOptions): void {
-    // Skip framework noise logs for 'log' level
-    if (level === 'log' && this.shouldSkipLog(message)) {
-      return;
-    }
-    const mergedContext = { ...this.getDefaultContext(), ...(context || {}) };
-    const entry = this.buildLogEntry(level, message, mergedContext);
-    this.writeJsonToFiles(level, entry, options);
-  }
-
-  /**
-   * Create a new checkpoint tracker to record step timings.
-   */
-  public createTracker(): CheckpointTracker {
-    return new CheckpointTracker();
-  }
+  // ── Public API ─────────────────────────────────────────────────────────────
 
   log(message: any, context?: LogContext, options?: LogWriteOptions): void {
-    // Skip framework noise logs
-    if (this.shouldSkipLog(message)) {
-      return;
-    }
-    const mergedContext = { ...this.getDefaultContext(), ...(context || {}) };
-    const entry = this.buildLogEntry('log', message, mergedContext);
-    this.writeJsonToFiles('log', entry, options);
+    if (shouldSkipMessage(message)) return;
+    const entry = buildLogEntry('log', message, this.buildContext(context));
+    writeEntryToFiles(this.logDirectory, 'log', entry, options);
   }
 
-  error(message: any, trace?: string, context?: LogContext, options?: LogWriteOptions): void {
-    const mergedContext = { ...this.getDefaultContext(), ...(context || {}), trace };
-    const entry = this.buildLogEntry('error', message, mergedContext);
-    const errInfo = this.extractErrorInfo(message, trace);
+  error(
+    message: any,
+    trace?: string,
+    context?: LogContext,
+    options?: LogWriteOptions,
+  ): void {
+    const ctx = { ...this.buildContext(context), trace };
+    const entry = buildLogEntry('error', message, ctx);
+    const errInfo = extractErrorInfo(message, trace);
     if (errInfo) {
       entry.extra = { ...(entry.extra || {}), error: errInfo };
     }
-    this.writeJsonToFiles('error', entry, options);
+    writeEntryToFiles(this.logDirectory, 'error', entry, options);
   }
 
   warn(message: any, context?: LogContext, options?: LogWriteOptions): void {
-    const mergedContext = { ...this.getDefaultContext(), ...(context || {}) };
-    const entry = this.buildLogEntry('warn', message, mergedContext);
-    this.writeJsonToFiles('warn', entry, options);
+    const entry = buildLogEntry('warn', message, this.buildContext(context));
+    writeEntryToFiles(this.logDirectory, 'warn', entry, options);
   }
 
-  private getDefaultContext(): LogContext {
+  /**
+   * Generic write with explicit level selection.
+   * Useful when the caller wants a single entry point.
+   */
+  write(
+    level: LogLevel,
+    message: any,
+    context?: LogContext,
+    options?: LogWriteOptions,
+  ): void {
+    if (level === 'log' && shouldSkipMessage(message)) return;
+    const entry = buildLogEntry(level, message, this.buildContext(context));
+    writeEntryToFiles(this.logDirectory, level, entry, options);
+  }
+
+  /** Create a new checkpoint tracker to measure step timings. */
+  createTracker(): CheckpointTracker {
+    return new CheckpointTracker();
+  }
+
+  // ── Internals ──────────────────────────────────────────────────────────────
+
+  private buildContext(overrides?: LogContext): LogContext {
     return {
       context: 'Application',
       userId: Auth.id(),
@@ -239,23 +218,31 @@ export class CustomLoggerService implements LoggerService {
       url: RequestContext.get('url') as string,
       ip: RequestContext.get('ip') as string,
       userAgent: RequestContext.get('userAgent') as string,
+      ...overrides,
     };
   }
-}
 
-// Static helper methods to allow logging without DI
-export namespace CustomLoggerService {
-  export function instance(): CustomLoggerService | undefined {
-    return (CustomLoggerService as any)._instance as CustomLoggerService | undefined;
+  // ── Static helpers (allow logging without DI) ─────────────────────────────
+
+  static instance(): CustomLoggerService | undefined {
+    return CustomLoggerService._instance;
   }
 
-  // Cực giản: chỉ extra và filePath; mặc định level = 'log', message từ extra.message hoặc 'LOG'
-  export function write(extra?: Record<string, any>, filePath?: string): void {
-    const level: LogLevel = 'log';
-    const message = extra && typeof extra.message !== 'undefined' ? extra.message : 'LOG';
-    const inst = instance();
-    if (inst) return inst.write(level, message, extra ? { extra } : undefined, filePath ? { filePath } : undefined);
-    // Fallback if instance not ready
-    // Removed console.log for production
+  /**
+   * Quick static write for use outside DI context.
+   * Level defaults to 'log'; message is taken from extra.message if present.
+   */
+  static write(extra?: Record<string, any>, filePath?: string): void {
+    const message =
+      extra && typeof extra.message !== 'undefined' ? extra.message : 'LOG';
+    const inst = CustomLoggerService._instance;
+    if (inst) {
+      inst.write(
+        'log',
+        message,
+        extra ? { extra } : undefined,
+        filePath ? { filePath } : undefined,
+      );
+    }
   }
 }

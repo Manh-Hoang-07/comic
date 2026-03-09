@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ChapterController } from './controllers/chapter.controller';
 import { ChapterService } from './services/chapter.service';
+import { ChapterActionService } from './services/chapter-action.service';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { FileUploadModule } from '@/modules/storage/file-upload/file-upload.module';
 import { ComicNotificationService } from '@/modules/comics/shared/services/comic-notification.service';
@@ -21,7 +22,7 @@ import { NotificationRepositoryModule } from '@/modules/core/notification/notifi
     NotificationRepositoryModule,
   ],
   controllers: [ChapterController],
-  providers: [ChapterService, ComicNotificationService],
-  exports: [ChapterService, ComicNotificationService],
+  providers: [ChapterService, ChapterActionService, ComicNotificationService],
+  exports: [ChapterService, ChapterActionService, ComicNotificationService],
 })
 export class AdminChapterModule { }

@@ -2,17 +2,24 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
-import { AuthService } from '@/modules/core/auth/services/auth.service';
-import { AuthController } from '@/modules/core/auth/controllers/auth.controller';
-import jwtConfig from '@/core/config/jwt.config';
-import googleOAuthConfig from '@/core/config/google-oauth.config';
-import { JwtStrategy } from '@/modules/core/auth/strategies/jwt.strategy';
-import { GoogleStrategy } from '@/modules/core/auth/strategies/google.strategy';
-import { TokenService } from '@/modules/core/auth/services/token.service';
-import { RbacModule } from '@/modules/core/rbac/rbac.module';
-import { AppMailModule } from '@/core/mail/mail.module';
 import { BullModule } from '@nestjs/bull';
 
+import jwtConfig from '@/core/config/jwt.config';
+import googleOAuthConfig from '@/core/config/google-oauth.config';
+
+import { AuthController } from './controllers/auth.controller';
+import { AuthService } from './services/auth.service';
+import { TokenService } from './services/token.service';
+import { AuthOtpService } from './services/auth-otp.service';
+import { RegistrationService } from './services/registration.service';
+import { PasswordService } from './services/password.service';
+import { SocialAuthService } from './services/social-auth.service';
+
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
+
+import { RbacModule } from '@/modules/core/rbac/rbac.module';
+import { AppMailModule } from '@/core/mail/mail.module';
 import { ContentTemplateAdminModule } from '@/modules/core/content-template/admin/content-template.module';
 
 @Module({
@@ -31,7 +38,6 @@ import { ContentTemplateAdminModule } from '@/modules/core/content-template/admi
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('jwt.secret'),
         signOptions: {
-          // jsonwebtoken@9 has stricter typings for expiresIn
           expiresIn: (configService.get<string>('jwt.expiresIn') || '60m') as any,
           issuer: configService.get<string>('jwt.issuer'),
           audience: configService.get<string>('jwt.audience'),
@@ -42,12 +48,14 @@ import { ContentTemplateAdminModule } from '@/modules/core/content-template/admi
   controllers: [AuthController],
   providers: [
     AuthService,
+    TokenService,
+    AuthOtpService,
+    RegistrationService,
+    PasswordService,
+    SocialAuthService,
     JwtStrategy,
     GoogleStrategy,
-    TokenService,
   ],
-  exports: [AuthService],
+  exports: [AuthService, TokenService],
 })
 export class AuthModule { }
-
-

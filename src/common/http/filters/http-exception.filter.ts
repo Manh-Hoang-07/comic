@@ -8,140 +8,92 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ResponseUtil } from '@/common/shared/utils';
+import { sanitizeHeaders, sanitizeBody } from './request-sanitizer';
+
+/** URL paths that generate constant 404s (browsers, crawlers) — suppress log noise. */
+const IGNORED_404_PATHS = [
+  '/favicon.ico',
+  '/.well-known/appspecific/com.chrome.devtools.json',
+  '/robots.txt',
+];
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
-  catch(exception: HttpException, host: ArgumentsHost) {
+  catch(exception: HttpException, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
-    // Kiểm tra xem exceptionResponse đã có format ApiResponse chưa (từ ResponseUtil)
-    // Nếu có các trường: success, code, httpStatus, timestamp thì là ApiResponse format
-    if (
-      typeof exceptionResponse === 'object' &&
-      exceptionResponse !== null &&
-      'success' in exceptionResponse &&
-      'code' in exceptionResponse &&
-      'timestamp' in exceptionResponse
-    ) {
-      // Đã là ApiResponse format rồi, dùng luôn
+    // Already in ApiResponse format → send directly
+    if (isApiResponseFormat(exceptionResponse)) {
       response.status(status).json(exceptionResponse);
       return;
     }
 
-    // Extract error details (cho trường hợp exception thông thường)
-    let message = exception.message;
-    let errors: any = null;
+    const { message, errors } = extractErrorDetails(exception, exceptionResponse);
 
-    if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-      const errorObj = exceptionResponse as any;
-      message = errorObj.message || message;
-      errors = errorObj.errors || errorObj.error || null;
-
-      // Handle validation errors from class-validator
-      if (Array.isArray(errorObj.message)) {
-        message = errorObj.message.length > 0 ? errorObj.message[0] : 'Validation failed';
-        errors = errorObj.message;
-      }
-    }
-
-    // Log the error (mask sensitive fields; reduce verbosity in production)
-    const isProd = (process.env.NODE_ENV || '').toLowerCase() === 'production';
-    const logPayload = {
-      path: request.url,
-      method: request.method,
-      userAgent: request.get('User-Agent'),
-      ip: request.ip,
-      body: isProd ? this.sanitizeBody(request.body) : this.sanitizeBody(request.body),
-      params: request.params,
-      query: request.query,
-      headers: this.sanitizeHeaders(request.headers),
-      timestamp: new Date().toISOString(),
-    };
-
-    // Check if we should ignore logging for this request
-    const ignoredPaths = [
-      '/favicon.ico',
-      '/.well-known/appspecific/com.chrome.devtools.json',
-      '/robots.txt'
-    ];
-
-    // Chỉ ignore log nếu là lỗi 404 và nằm trong danh sách ignoredPaths
-    const shouldLog = !(
-      status === HttpStatus.NOT_FOUND &&
-      ignoredPaths.some(path => request.url.includes(path))
-    );
-
-    if (shouldLog) {
+    if (this.shouldLog(status, request.url)) {
       this.logger.error(
-        `HTTP Exception: ${status} - ${message}`,
-        JSON.stringify(logPayload),
+        `HTTP ${status} – ${message}`,
+        JSON.stringify({
+          path: request.url,
+          method: request.method,
+          ip: request.ip,
+          userAgent: request.get('User-Agent'),
+          body: sanitizeBody(request.body),
+          params: request.params,
+          query: request.query,
+          headers: sanitizeHeaders(request.headers as Record<string, any>),
+          timestamp: new Date().toISOString(),
+        }),
         exception.stack,
       );
     }
 
-    // Create standardized error response
-    const errorResponse = ResponseUtil.error(message, 'ERROR', status, errors);
-
-    response.status(status).json(errorResponse);
+    response.status(status).json(ResponseUtil.error(message, 'ERROR', status, errors));
   }
 
-  private sanitizeHeaders(headers: any): any {
-    const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key'];
-    const sanitized = { ...headers };
+  private shouldLog(status: number, url: string): boolean {
+    if (status !== HttpStatus.NOT_FOUND) return true;
+    return !IGNORED_404_PATHS.some((path) => url.includes(path));
+  }
+}
 
-    sensitiveHeaders.forEach(header => {
-      if (sanitized[header]) {
-        sanitized[header] = '[REDACTED]';
-      }
-    });
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-    return sanitized;
+function isApiResponseFormat(res: any): boolean {
+  return (
+    res !== null &&
+    typeof res === 'object' &&
+    'success' in res &&
+    'code' in res &&
+    'timestamp' in res
+  );
+}
+
+function extractErrorDetails(
+  exception: HttpException,
+  exceptionResponse: string | object,
+): { message: string; errors: any } {
+  let message = exception.message;
+  let errors: any = null;
+
+  if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+    const errorObj = exceptionResponse as Record<string, any>;
+    message = errorObj.message || message;
+    errors = errorObj.errors || errorObj.error || null;
+
+    // class-validator sends an array of messages
+    if (Array.isArray(errorObj.message)) {
+      message =
+        errorObj.message.length > 0 ? errorObj.message[0] : 'Validation failed';
+      errors = errorObj.message;
+    }
   }
 
-  private sanitizeBody(body: any): any {
-    if (!body || typeof body !== 'object') return body;
-    const SENSITIVE_KEYS = [
-      'password',
-      'currentPassword',
-      'newPassword',
-      'confirmPassword',
-      'token',
-      'accessToken',
-      'refreshToken',
-      'authorization',
-    ];
-    // Các trường quan trọng cần giữ nguyên giá trị để debug
-    const IMPORTANT_FIELDS = [
-      'gallery',
-      'category_ids',
-      'status',
-      'is_featured',
-      'is_variable',
-      'is_digital'
-    ];
-    const clone: any = Array.isArray(body) ? [] : {};
-    Object.keys(body).forEach((key) => {
-      if (SENSITIVE_KEYS.includes(key)) {
-        clone[key] = '[REDACTED]';
-      } else if (IMPORTANT_FIELDS.includes(key)) {
-        // Giữ nguyên giá trị của các trường quan trọng để debug
-        clone[key] = (body as any)[key];
-      } else {
-        const val = (body as any)[key];
-        if (val && typeof val === 'object') {
-          // shallow mask nested objects
-          clone[key] = '[OBJECT]';
-        } else {
-          clone[key] = val;
-        }
-      }
-    });
-    return clone;
-  }
+  return { message, errors };
 }

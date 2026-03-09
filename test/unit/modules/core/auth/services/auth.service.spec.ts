@@ -7,6 +7,10 @@ import { TokenService } from '@/modules/core/auth/services/token.service';
 import { AttemptLimiterService } from '@/core/security/attempt-limiter.service';
 import { MailService } from '@/core/mail/mail.service';
 import { ContentTemplateExecutionService } from '@/modules/core/content-template/services/content-template-execution.service';
+import { RegistrationService } from '@/modules/core/auth/services/registration.service';
+import { PasswordService } from '@/modules/core/auth/services/password.service';
+import { AuthOtpService } from '@/modules/core/auth/services/auth-otp.service';
+import { SocialAuthService } from '@/modules/core/auth/services/social-auth.service';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import * as bcrypt from 'bcryptjs';
 
@@ -25,6 +29,10 @@ describe('AuthService', () => {
     let mailService: any;
     let contentTemplateService: any;
     let notificationQueue: any;
+    let registrationService: any;
+    let passwordService: any;
+    let otpService: any;
+    let socialAuthService: any;
 
     beforeEach(async () => {
         userRepo = {
@@ -75,6 +83,11 @@ describe('AuthService', () => {
             add: jest.fn().mockResolvedValue({}),
         };
 
+        registrationService = { register: jest.fn() };
+        passwordService = { forgotPassword: jest.fn(), resetPassword: jest.fn() };
+        otpService = { sendRegisterOtp: jest.fn(), sendForgotPasswordOtp: jest.fn() };
+        socialAuthService = { handleGoogleAuth: jest.fn() };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 AuthService,
@@ -86,6 +99,10 @@ describe('AuthService', () => {
                 { provide: MailService, useValue: mailService },
                 { provide: ContentTemplateExecutionService, useValue: contentTemplateService },
                 { provide: 'BullQueue_notification', useValue: notificationQueue }, // MOCK InjectQueue('notification')
+                { provide: RegistrationService, useValue: registrationService },
+                { provide: PasswordService, useValue: passwordService },
+                { provide: AuthOtpService, useValue: otpService },
+                { provide: SocialAuthService, useValue: socialAuthService },
             ],
         }).compile();
 
@@ -158,77 +175,17 @@ describe('AuthService', () => {
     });
 
     describe('register', () => {
-        const dto = {
-            email: 'TEST@test.com',
-            password: 'pass',
-            confirmPassword: 'pass',
-            otp: '123456',
-            name: 'Test',
-            username: 'testuser',
-            phone: '123'
-        };
-        const otpKey = 'otp:register:test@test.com';
-
-        it('should throw if otp is invalid or missing', async () => {
-            redisUtil.get.mockResolvedValue(null);
-            await expect(service.register({ ...dto, otp: '654321' })).rejects.toThrow('Mã OTP không chính xác hoặc đã hết hạn.');
-        });
-
-        it('should throw if email already used', async () => {
-            redisUtil.get.mockResolvedValue('123456');
-            userRepo.findByEmail.mockResolvedValue({ id: 1 });
-            await expect(service.register(dto)).rejects.toThrow('Email đã được sử dụng.');
-        });
-
-        it('should throw if username already used', async () => {
-            redisUtil.get.mockResolvedValue('123456');
-            userRepo.findByEmail.mockResolvedValue(null);
-            userRepo.findByUsername.mockResolvedValue({ id: 1 });
-            await expect(service.register(dto)).rejects.toThrow('Tên đăng nhập đã được sử dụng.');
-        });
-
-        it('should throw if phone already used', async () => {
-            redisUtil.get.mockResolvedValue('123456');
-            userRepo.findByEmail.mockResolvedValue(null);
-            userRepo.findByUsername.mockResolvedValue(null);
-            userRepo.findByPhone.mockResolvedValue({ id: 1 });
-            await expect(service.register(dto)).rejects.toThrow('Số điện thoại đã được sử dụng.');
-        });
-
-        it('should create user, clear otp and queue success email', async () => {
-            redisUtil.get.mockResolvedValue('123456');
-            userRepo.findByEmail.mockResolvedValue(null);
-            userRepo.findByUsername.mockResolvedValue(null);
-            userRepo.findByPhone.mockResolvedValue(null);
-            (bcrypt.hash as jest.Mock).mockResolvedValue('hashedpass');
-
-            const mockCreatedUser = { id: 1, email: 'test@test.com', username: 'testuser', name: 'Test' };
-            userRepo.create.mockResolvedValue(mockCreatedUser);
-
+        it('should delegate to registration service', async () => {
+            const dto: any = { email: 'test@test.com' };
+            registrationService.register.mockResolvedValue('registered');
             const result = await service.register(dto);
-
-            expect(userRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-                email: 'test@test.com',
-                username: 'testuser',
-                password: 'hashedpass',
-                status: UserStatus.active
-            }));
-            expect(redisUtil.del).toHaveBeenCalledWith(otpKey);
-            expect(notificationQueue.add).toHaveBeenCalledWith(
-                'send_email_template',
-                expect.objectContaining({ templateCode: 'registration_success' }),
-                expect.anything()
-            );
-            expect(result.user.id).toBe(1);
-            expect((result.user as any).password).toBeUndefined(); // Assuming safeUser drops password
+            expect(registrationService.register).toHaveBeenCalledWith(dto);
+            expect(result).toBe('registered');
         });
     });
 
     describe('logout', () => {
-        it('should throw if user does not exist', async () => {
-            userRepo.findById.mockResolvedValue(null);
-            await expect(service.logout(1, 'token')).rejects.toThrow('Người dùng không tồn tại');
-        });
+
 
         it('should blacklist token if provided', async () => {
             userRepo.findById.mockResolvedValue({ id: 1 });
@@ -248,13 +205,13 @@ describe('AuthService', () => {
 
         it('should throw if token payload is invalid (missing sub or jti)', async () => {
             tokenService.decodeRefresh.mockReturnValue({ sub: null, jti: null });
-            await expect(service.refreshTokenByValue('valid')).rejects.toThrow('Invalid or expired token');
+            await expect(service.refreshTokenByValue('valid')).rejects.toThrow('Invalid refresh token');
         });
 
         it('should throw if refresh token is revoked/expired in redis', async () => {
             tokenService.decodeRefresh.mockReturnValue({ sub: 1, jti: 'abc' });
             redisUtil.get.mockResolvedValue(null); // Return false
-            await expect(service.refreshTokenByValue('valid')).rejects.toThrow('Invalid or expired token');
+            await expect(service.refreshTokenByValue('valid')).rejects.toThrow('Refresh token revoked or expired');
         });
 
         it('should issue new tokens if valid active refresh token', async () => {
@@ -275,7 +232,7 @@ describe('AuthService', () => {
     describe('me', () => {
         it('should throw if user not found', async () => {
             userRepo.findById.mockResolvedValue(null);
-            await expect(service.me(1)).rejects.toThrow('Không thể lấy thông tin user');
+            await expect(service.me(1)).rejects.toThrow('Không tìm thấy người dùng');
         });
 
         it('should return safe user object', async () => {
@@ -287,54 +244,12 @@ describe('AuthService', () => {
     });
 
     describe('handleGoogleAuth', () => {
-        const googleUser = {
-            googleId: 'g123',
-            email: 'google@test.com',
-            firstName: 'Google',
-            lastName: 'User',
-            picture: 'pic.jpg'
-        };
-
-        it('should block if account inactive', async () => {
-            userRepo.findByEmail.mockResolvedValue({ id: 1, status: UserStatus.inactive });
-            userRepo.update.mockResolvedValue({ id: 1, status: UserStatus.inactive });
-
-            await expect(service.handleGoogleAuth(googleUser)).rejects.toThrow('Tài khoản đã bị khóa hoặc không hoạt động.');
-        });
-
-        it('should update existing user and generate tokens', async () => {
-            userRepo.findByEmail.mockResolvedValue({ id: 1, status: UserStatus.active });
-            userRepo.update.mockResolvedValue({ id: 1, status: UserStatus.active, email: googleUser.email });
-            redisUtil.set.mockResolvedValue({});
-
-            tokenService.generateTokens.mockReturnValue({
-                accessToken: 'acc', refreshToken: 'ref', refreshJti: 'jti', accessTtlSec: 3600
-            });
-            tokenService.getRefreshTtlSec.mockReturnValue(86400);
-
-            const result = await service.handleGoogleAuth(googleUser);
-
-            expect(userRepo.update).toHaveBeenCalled();
-            expect(redisUtil.set).toHaveBeenCalled();
-            expect(result.token).toBe('acc');
-            expect(result.user).toBeDefined();
-        });
-
-        it('should create new user if not exists and generate tokens', async () => {
-            userRepo.findByEmail.mockResolvedValue(null);
-            userRepo.create.mockResolvedValue({ id: 2, status: UserStatus.active, email: googleUser.email });
-            redisUtil.set.mockResolvedValue({});
-
-            tokenService.generateTokens.mockReturnValue({
-                accessToken: 'acc', refreshToken: 'ref', refreshJti: 'jti', accessTtlSec: 3600
-            });
-            tokenService.getRefreshTtlSec.mockReturnValue(86400);
-
-            const result = await service.handleGoogleAuth(googleUser);
-
-            expect(userRepo.create).toHaveBeenCalled();
-            expect(result.token).toBe('acc');
-            expect(result.user).toBeDefined();
+        it('should delegate to socialAuthService', async () => {
+            const profile = { googleId: '123' };
+            socialAuthService.handleGoogleAuth.mockResolvedValue('googleResult');
+            const result = await service.handleGoogleAuth(profile);
+            expect(socialAuthService.handleGoogleAuth).toHaveBeenCalledWith(profile);
+            expect(result).toBe('googleResult');
         });
     });
 });

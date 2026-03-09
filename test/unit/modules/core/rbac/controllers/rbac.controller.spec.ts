@@ -13,6 +13,7 @@ describe('RbacController', () => {
         service = {
             userHasPermissionsInGroup: jest.fn(),
             syncRolesInGroup: jest.fn(),
+            isSystemAdmin: jest.fn().mockResolvedValue(true),
         };
 
         const module: TestingModule = await Test.createTestingModule({

@@ -3,6 +3,7 @@ import { IBannerRepository, BANNER_REPOSITORY } from '@/modules/marketing/banner
 import { IBannerLocationRepository, BANNER_LOCATION_REPOSITORY } from '@/modules/marketing/banner-location/domain/banner-location.repository';
 import { BaseContentService } from '@/common/core/services';
 import { Banner } from '@prisma/client';
+import { toBigInt } from '@/common/core/utils/data.helper';
 
 @Injectable()
 export class BannerService extends BaseContentService<Banner, IBannerRepository> {
@@ -17,7 +18,6 @@ export class BannerService extends BaseContentService<Banner, IBannerRepository>
 
     protected defaultSort = 'sort_order:asc,created_at:desc';
 
-
     async getSimpleList(query: any) {
         return this.getList({
             ...query,
@@ -25,41 +25,48 @@ export class BannerService extends BaseContentService<Banner, IBannerRepository>
         });
     }
 
-    protected async beforeCreate(data: any) {
+    // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+    protected override async beforeCreate(data: any) {
         if (data.location_id) {
-            const location = await this.locationRepo.findById(data.location_id);
-            if (!location) {
-                throw new NotFoundException(`Vị trí banner với ID ${data.location_id} không tồn tại`);
-            }
+            await this.validateLocation(data.location_id);
+            data.location_id = toBigInt(data.location_id);
         }
         return data;
     }
 
-    protected async beforeUpdate(id: number | bigint, data: any) {
-        const current = await this.bannerRepo.findById(id);
-        if (!current) throw new NotFoundException('Banner not found');
+    protected override async beforeUpdate(id: number | bigint, data: any) {
+        const current = await this.getOne(id);
 
-        if (data.location_id && data.location_id !== Number((current as any).location_id)) {
-            const location = await this.locationRepo.findById(data.location_id);
-            if (!location) {
-                throw new NotFoundException(`Vị trí banner với ID ${data.location_id} không tồn tại`);
-            }
+        if (data.location_id && toBigInt(data.location_id) !== toBigInt((current as any).location_id)) {
+            await this.validateLocation(data.location_id);
+            data.location_id = toBigInt(data.location_id);
         }
         return data;
     }
 
-    protected transform(banner: any) {
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    private async validateLocation(locationId: number | bigint) {
+        const location = await this.locationRepo.findById(locationId);
+        if (!location) {
+            throw new NotFoundException(`Vị trí banner với ID ${locationId} không tồn tại`);
+        }
+    }
+
+    // ── Transformation ─────────────────────────────────────────────────────────
+
+    protected override transform(banner: any) {
         if (!banner) return banner;
         const item = super.transform(banner) as any;
-        if (item.location) {
+        if (item.banner_location) {
             item.location = {
-                id: Number(item.location.id),
-                name: item.location.name,
-                code: item.location.code,
+                id: Number(item.banner_location.id),
+                name: item.banner_location.name,
+                code: item.banner_location.code,
             };
+            delete item.banner_location;
         }
         return item;
     }
 }
-
-

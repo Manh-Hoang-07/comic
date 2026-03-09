@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostTagService } from '@/modules/post/post-tag/admin/services/post-tag.service';
 import { POST_TAG_REPOSITORY } from '@/modules/post/post-tag/domain/post-tag.repository';
+import { SlugHelper } from '@/common/core/utils/slug.helper';
+
+jest.mock('@/common/core/utils/slug.helper');
+
 
 describe('PostTagService', () => {
     let service: PostTagService;
@@ -52,56 +56,36 @@ describe('PostTagService', () => {
     });
 
     describe('beforeCreate', () => {
-        it('should clone data and call ensureSlug', async () => {
+        it('should clone data and call SlugHelper', async () => {
             const data = { name: 'Tech', slug: '' };
-            const ensureSlugSpy = jest
-                .spyOn(service as any, 'ensureSlug')
-                .mockResolvedValue(undefined);
+            (SlugHelper.uniqueSlug as jest.Mock).mockResolvedValue('tech-slug');
 
             const result = await (service as any).beforeCreate(data);
 
-            expect(ensureSlugSpy).toHaveBeenCalledTimes(1);
-            const [payloadArg] = ensureSlugSpy.mock.calls[0];
-            expect(payloadArg).toEqual(data);
-            // make sure clone is used
-            expect(payloadArg).not.toBe(data);
-            expect(result).toEqual(payloadArg);
+            expect(SlugHelper.uniqueSlug).toHaveBeenCalledWith('Tech', tagRepo);
+            expect(result.slug).toBe('tech-slug');
         });
     });
 
     describe('beforeUpdate', () => {
-        it('should load current tag and call ensureSlug with current slug', async () => {
-            const current = { id: 1, slug: 'old-slug' };
-            tagRepo.findById.mockResolvedValue(current);
+        it('should call SlugHelper', async () => {
+            const data = { name: 'New name', slug: '' };
+            (SlugHelper.uniqueSlug as jest.Mock).mockResolvedValue('new-slug');
 
-            const data = { name: 'New name' };
-            const ensureSlugSpy = jest
-                .spyOn(service as any, 'ensureSlug')
-                .mockResolvedValue(undefined);
+            const result = await (service as any).beforeUpdate(1n, data);
 
-            const result = await (service as any).beforeUpdate(1, data);
-
-            expect(tagRepo.findById).toHaveBeenCalledWith(1);
-            expect(ensureSlugSpy).toHaveBeenCalledTimes(1);
-            const [payloadArg, idArg, currentSlugArg] = ensureSlugSpy.mock.calls[0];
-            expect(payloadArg).toEqual(data);
-            expect(idArg).toBe(1);
-            expect(currentSlugArg).toBe('old-slug');
-            expect(result).toEqual(payloadArg);
+            expect(SlugHelper.uniqueSlug).toHaveBeenCalledWith('New name', tagRepo, 1n);
+            expect(result.slug).toBe('new-slug');
         });
 
-        it('should call ensureSlug even when current has no slug', async () => {
-            tagRepo.findById.mockResolvedValue({ id: 1 });
+        it('should respect updated slug field instead of name', async () => {
+            const data = { slug: 'provided-slug', name: 'Some Name' };
+            (SlugHelper.uniqueSlug as jest.Mock).mockResolvedValue('unique-slug');
 
-            const data = { name: 'New name' };
-            const ensureSlugSpy = jest
-                .spyOn(service as any, 'ensureSlug')
-                .mockResolvedValue(undefined);
+            const result = await (service as any).beforeUpdate(1n, data);
 
-            await (service as any).beforeUpdate(1, data);
-
-            const [, , currentSlugArg] = ensureSlugSpy.mock.calls[0];
-            expect(currentSlugArg).toBeUndefined();
+            expect(SlugHelper.uniqueSlug).toHaveBeenCalledWith('provided-slug', tagRepo, 1n);
+            expect(result.slug).toBe('unique-slug');
         });
     });
 });

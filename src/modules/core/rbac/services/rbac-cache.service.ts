@@ -27,6 +27,8 @@ export class RbacCacheService implements OnModuleInit {
             this.clearL1ByUser(userId);
           } else if (type === 'specific_key') {
             this.l1Cache.delete(key);
+          } else if (type === 'clear_all') {
+            this.l1Cache.clear();
           }
         } catch (e) { }
       });
@@ -100,5 +102,20 @@ export class RbacCacheService implements OnModuleInit {
     if (!this.redis.isEnabled()) return false;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
     return this.l1Cache.has(key) || (await (this.redis as any).client?.exists(key)) === 1;
+  }
+
+  /**
+   * Invalidate all RBAC caches across the cluster.
+   * Call this when global permissions or roles are changed.
+   */
+  async bumpVersion(): Promise<void> {
+    this.l1Cache.clear();
+    if (this.redis.isEnabled()) {
+      const keys = await this.redis.keys('rbac:*');
+      if (keys.length > 0) {
+        await Promise.all(keys.map((k) => this.redis.del(k)));
+      }
+      await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'clear_all' }));
+    }
   }
 }

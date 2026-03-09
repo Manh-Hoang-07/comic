@@ -1,22 +1,21 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import { RedisUtil } from '@/core/utils/redis.util';
 import { TokenService } from '@/modules/core/auth/services/token.service';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { AttemptLimiterService } from '@/core/security/attempt-limiter.service';
-import { safeUser } from '@/modules/core/auth/utils/user.util';
-import { ForgotPasswordDto } from '@/modules/core/auth/dto/forgot-password.dto';
-import { ResetPasswordDto } from '@/modules/core/auth/dto/reset-password.dto';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
 import { LoginDto } from '@/modules/core/auth/dto/login.dto';
 import { RegisterDto } from '@/modules/core/auth/dto/register.dto';
-import * as crypto from 'crypto';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
-import { MailService } from '@/core/mail/mail.service';
-import { ContentTemplateExecutionService } from '@/modules/core/content-template/services/content-template-execution.service';
+import { ForgotPasswordDto } from '@/modules/core/auth/dto/forgot-password.dto';
+import { ResetPasswordDto } from '@/modules/core/auth/dto/reset-password.dto';
 import { SendOtpDto } from '../dto/send-otp.dto';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import { RegistrationService } from './registration.service';
+import { PasswordService } from './password.service';
+import { AuthOtpService } from './auth-otp.service';
+import { SocialAuthService } from './social-auth.service';
+import { safeUser } from '../utils/user.util';
 
 @Injectable()
 export class AuthService {
@@ -27,134 +26,65 @@ export class AuthService {
     private readonly tokenBlacklistService: TokenBlacklistService,
     private readonly tokenService: TokenService,
     private readonly accountLockoutService: AttemptLimiterService,
-    private readonly mailService: MailService, // Keep for backward compatibility or direct usage if needed
-    private readonly contentTemplateService: ContentTemplateExecutionService,
-    @InjectQueue('notification')
-    private readonly notificationQueue: Queue,
+    private readonly registrationService: RegistrationService,
+    private readonly passwordService: PasswordService,
+    private readonly otpService: AuthOtpService,
+    private readonly socialAuthService: SocialAuthService,
   ) { }
+
+  // ── Authentication ─────────────────────────────────────────────────────────
 
   async login(dto: LoginDto) {
     const identifier = dto.email.toLowerCase();
     const scope = 'auth:login';
-    const lockout = await this.accountLockoutService.check(scope, identifier);
 
+    // 1. Check Lockout
+    const lockout = await this.accountLockoutService.check(scope, identifier);
     if (lockout.isLocked) {
-      throw new Error(
-        `Tài khoản đã bị khóa tạm thời do quá nhiều lần đăng nhập sai. Vui lòng thử lại sau ${lockout.remainingMinutes} phút.`
+      throw new ForbiddenException(
+        `Tài khoản đã bị khóa tạm thời do quá nhiều lần đăng nhập sai. Vui lòng thử lại sau ${lockout.remainingMinutes} phút.`,
       );
     }
 
-    // Tìm user bằng email (case-insensitive) - repo findByEmailForAuth will include password
-    const user = await this.userRepo.findByEmailForAuth(dto.email.toLowerCase());
-
-
-    let authError: string | null = null;
-
+    // 2. Validate Credentials
+    const user = await this.userRepo.findByEmailForAuth(identifier);
     if (!user || !(user as any).password) {
       await this.accountLockoutService.add(scope, identifier);
-      authError = 'Email hoặc mật khẩu không đúng.';
-    } else {
-      const isPasswordValid = await bcrypt.compare(dto.password, (user as any).password);
-      if (!isPasswordValid) {
-        await this.accountLockoutService.add(scope, identifier);
-        authError = 'Email hoặc mật khẩu không đúng.';
-      } else if (user.status !== UserStatus.active) {
-        authError = 'Tài khoản đã bị khóa hoặc không hoạt động.';
-      }
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng.');
     }
 
-    if (authError) {
-      throw new Error(authError);
+    const isPasswordValid = await bcrypt.compare(dto.password, (user as any).password);
+    if (!isPasswordValid) {
+      await this.accountLockoutService.add(scope, identifier);
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng.');
     }
 
+    // 3. Check Account Status
+    if (user.status !== UserStatus.active) {
+      throw new ForbiddenException('Tài khoản đã bị khóa hoặc không hoạt động.');
+    }
+
+    // 4. Success Tasks
     await this.accountLockoutService.reset(scope, identifier);
+    this.userRepo.updateLastLogin(user.id).catch(() => undefined);
 
-    this.userRepo.updateLastLogin(user!.id).catch(() => undefined);
-
-    const numericUserId = Number(user!.id);
-    const { accessToken, refreshToken, refreshJti, accessTtlSec } = this.tokenService.generateTokens(numericUserId, user!.email!);
+    // 5. Issue Tokens
+    const numericUserId = Number(user.id);
+    const { accessToken, refreshToken, refreshJti, accessTtlSec } =
+      this.tokenService.generateTokens(numericUserId, user.email!);
 
     await this.redis
-      .set(this.buildRefreshKey(numericUserId, refreshJti), '1', this.tokenService.getRefreshTtlSec())
+      .set(
+        `auth:refresh:${numericUserId}:${refreshJti}`,
+        '1',
+        this.tokenService.getRefreshTtlSec(),
+      )
       .catch(() => undefined);
 
-    return { token: accessToken, refreshToken: refreshToken, expiresIn: accessTtlSec };
-  }
-
-  async register(dto: RegisterDto) {
-    const email = dto.email.toLowerCase();
-
-    // Verify OTP
-    const otpKey = `otp:register:${email}`;
-    const cachedOtp = await this.redis.get(otpKey);
-    if (!cachedOtp || cachedOtp !== dto.otp) {
-      const isTestEnv = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-      if (isTestEnv && dto.otp === '123456') {
-        // bypass OTP in development/test environments
-      } else {
-        throw new Error('Mã OTP không chính xác hoặc đã hết hạn.');
-      }
-    }
-
-    const existingByEmail = await this.userRepo.findByEmail(email);
-    if (existingByEmail) {
-      throw new Error('Email đã được sử dụng.');
-    }
-
-    if (dto.username) {
-      const existingByUsername = await this.userRepo.findByUsername(dto.username);
-      if (existingByUsername) {
-        throw new Error('Tên đăng nhập đã được sử dụng.');
-      }
-    }
-
-    if (dto.phone) {
-      const existingByPhone = await this.userRepo.findByPhone(dto.phone);
-      if (existingByPhone) {
-        throw new Error('Số điện thoại đã được sử dụng.');
-      }
-    }
-
-    const hashed = await bcrypt.hash(dto.password, 10);
-    const saved = await this.userRepo.create({
-      username: dto.username ?? email,
-      email: email,
-      phone: dto.phone ?? null,
-      password: hashed,
-      name: dto.name,
-      status: UserStatus.active as any,
-    });
-
-    await this.redis.del(otpKey);
-
-    // Send success email via queue (non-critical)
-    this.notificationQueue.add('send_email_template', {
-      templateCode: 'registration_success',
-      options: {
-        to: saved.email!,
-        variables: {
-          name: saved.name || saved.username,
-          username: saved.username,
-          email: saved.email,
-          loginUrl: `${process.env.APP_URL}/auth/login`,
-        },
-      },
-    }, {
-      jobId: `register-success-${saved.id}`,
-      attempts: 3,
-      backoff: 5000,
-      removeOnComplete: true,
-    }).catch(err => console.error('Failed to queue registration success email', err));
-
-    return { user: safeUser(saved) };
+    return { token: accessToken, refreshToken, expiresIn: accessTtlSec };
   }
 
   async logout(userId: number, token?: string) {
-    const user = await this.userRepo.findById(userId);
-    if (!user) {
-      throw new Error('Người dùng không tồn tại');
-    }
-
     if (token) {
       const ttlSeconds = this.tokenService.getAccessTtlSec();
       await this.tokenBlacklistService.add(token, ttlSeconds);
@@ -163,220 +93,69 @@ export class AuthService {
   }
 
   async refreshTokenByValue(refreshToken: string) {
-    try {
-      let refreshError: string | null = null;
-      const decoded = this.tokenService.decodeRefresh(refreshToken);
-      if (!decoded) {
-        refreshError = 'Invalid refresh token';
-      }
+    const decoded = this.tokenService.decodeRefresh(refreshToken);
+    if (!decoded) throw new UnauthorizedException('Invalid or expired token');
 
-      let userId: number | undefined;
-      let jti: string | undefined;
-      if (!refreshError) {
-        userId = Number(decoded!.sub);
-        jti = decoded!.jti as string | undefined;
-        if (!userId || !jti || isNaN(userId)) {
-          refreshError = 'Invalid refresh token';
-        }
-      }
+    const userId = Number(decoded.sub);
+    const jti = decoded.jti as string | undefined;
 
-      if (!refreshError) {
-        const active = !!(await this.redis.get(this.buildRefreshKey(userId!, jti!)));
-        if (!active) {
-          refreshError = 'Refresh token revoked or expired';
-        }
-      }
-
-      if (refreshError) {
-        throw new Error(refreshError);
-      }
-
-      await this.redis.del(this.buildRefreshKey(userId!, jti!));
-
-      const { accessToken, refreshToken: newRt, accessTtlSec } = await this.tokenService.issueAndStoreNewTokens(userId!, (decoded as any).email as string | undefined);
-
-      return { token: accessToken, refreshToken: newRt, expiresIn: accessTtlSec };
-    } catch (error) {
-      throw new Error('Invalid or expired token');
+    if (!userId || !jti || isNaN(userId)) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
-  }
 
-  private buildRefreshKey(userId: number, jti: string): string {
-    return `auth:refresh:${userId}:${jti}`;
+    const refreshKey = `auth:refresh:${userId}:${jti}`;
+    const isActive = await this.redis.get(refreshKey);
+    if (!isActive) throw new UnauthorizedException('Refresh token revoked or expired');
+
+    await this.redis.del(refreshKey);
+
+    const tokens = await this.tokenService.issueAndStoreNewTokens(
+      userId,
+      (decoded as any).email as string | undefined,
+    );
+
+    return {
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.accessTtlSec,
+    };
   }
 
   async me(userId: number) {
     const user = await this.userRepo.findById(userId);
-    if (!user) throw new Error('Không thể lấy thông tin user');
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     return safeUser(user);
   }
 
-  async forgotPassword(dto: ForgotPasswordDto) {
-    const user = await this.userRepo.findOne({ email: dto.email.toLowerCase() });
-    if (!user) {
-      throw new Error('Email không tồn tại trong hệ thống.');
-    }
+  // ── Delegated Flows (Forwarders) ───────────────────────────────────────────
 
-    return this.sendOtpForForgotPassword({ email: dto.email });
+  async register(dto: RegisterDto) {
+    return this.registrationService.register(dto);
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    return this.passwordService.forgotPassword(dto);
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    return this.passwordService.resetPassword(dto);
   }
 
   async sendOtpForRegister(dto: SendOtpDto) {
-    const email = dto.email.toLowerCase();
-    const user = await this.userRepo.findByEmail(email);
-    if (user) {
-      throw new Error('Email đã được sử dụng.');
-    }
+    // Basic check before sending OTP
+    const existing = await this.userRepo.findByEmail(dto.email.toLowerCase());
+    if (existing) throw new BadRequestException('Email đã được sử dụng.');
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const key = `otp:register:${email}`;
-
-    await this.redis.set(key, otp, 300); // 5 minutes
-
-    await this.redis.set(key, otp, 300); // 5 minutes
-
-    // Use Content Template
-    await this.contentTemplateService.execute('send_otp_register', {
-      to: email,
-      variables: { otp },
-    });
-
+    await this.otpService.sendRegisterOtp(dto.email);
     return { message: 'Mã OTP đã được gửi đến email của bạn.' };
   }
 
   async sendOtpForForgotPassword(dto: SendOtpDto) {
-    const email = dto.email.toLowerCase();
-    const user = await this.userRepo.findOne({ email });
-    if (!user) {
-      throw new Error('Email không tồn tại trong hệ thống.');
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const key = `otp:forgot-password:${email}`;
-
-    await this.redis.set(key, otp, 300); // 5 minutes
-
-    await this.redis.set(key, otp, 300); // 5 minutes
-
-    // Use Content Template
-    await this.contentTemplateService.execute('send_otp_forgot_password', {
-      to: email,
-      variables: { otp },
-    });
-
+    await this.otpService.sendForgotPasswordOtp(dto.email);
     return { message: 'Mã OTP đã được gửi đến email của bạn.' };
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
-    const email = dto.email.toLowerCase();
-    if (dto.password !== dto.confirmPassword) {
-      throw new Error('Mật khẩu xác nhận không khớp.');
-    }
-
-    // Verify OTP
-    const otpKey = `otp:forgot-password:${email}`;
-    const cachedOtp = await this.redis.get(otpKey);
-    if (!cachedOtp || cachedOtp !== dto.otp) {
-      throw new Error('Mã OTP không chính xác hoặc đã hết hạn.');
-    }
-
-    const user = await this.userRepo.findOne({ email });
-    if (!user) {
-      throw new Error('Người dùng không tồn tại.');
-    }
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    await this.userRepo.update(user.id, { password: hashedPassword });
-    await this.redis.del(otpKey);
-    await this.accountLockoutService.reset('auth:login', email);
-
-    // Send success email via queue (non-critical)
-    this.notificationQueue.add('send_email_template', {
-      templateCode: 'reset_password_success',
-      options: {
-        to: user.email!,
-        variables: {
-          name: user.name || user.username,
-          time: new Date().toLocaleString('vi-VN'),
-          loginUrl: `${process.env.APP_URL}/login`,
-        },
-      },
-    }, {
-      jobId: `reset-password-success-${user.id}`,
-      attempts: 3,
-      backoff: 5000,
-      removeOnComplete: true,
-    }).catch(err => console.error('Failed to queue reset password success email', err));
-
-    return { message: 'Đổi mật khẩu thành công.' };
-  }
-
-  async handleGoogleAuth(user: {
-    googleId: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    picture?: string;
-  }) {
-    const email = user.email.toLowerCase();
-
-    // Chuẩn hóa data một lần
-    const fullName =
-      [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-      email.split('@')[0];
-
-    const username =
-      email.split('@')[0] + '_' + Date.now().toString().slice(-6);
-
-    const now = new Date();
-
-    // Dùng upsert
-    let dbUser = await this.userRepo.findByEmail(email);
-    const userData = {
-      name: fullName,
-      image: user.picture ?? null,
-      status: UserStatus.active as any,
-      googleId: user.googleId,
-      email_verified_at: now,
-      last_login_at: now,
-    };
-
-    if (dbUser) {
-      dbUser = await this.userRepo.update(dbUser.id, userData);
-    } else {
-      dbUser = await this.userRepo.create({
-        ...userData,
-        email,
-        username,
-      });
-    }
-
-    // Kiểm tra status
-    if (dbUser.status !== UserStatus.active) {
-      throw new Error('Tài khoản đã bị khóa hoặc không hoạt động.');
-    }
-
-    // Tạo token
-    const numericUserId = Number(dbUser.id);
-    const {
-      accessToken,
-      refreshToken,
-      refreshJti,
-      accessTtlSec,
-    } = this.tokenService.generateTokens(numericUserId, dbUser.email!);
-
-    await this.redis
-      .set(
-        this.buildRefreshKey(numericUserId, refreshJti),
-        '1',
-        this.tokenService.getRefreshTtlSec(),
-      )
-      .catch(() => undefined);
-
-    return {
-      token: accessToken,
-      refreshToken,
-      expiresIn: accessTtlSec,
-      user: safeUser(dbUser as any),
-    };
+  async handleGoogleAuth(profile: any) {
+    return this.socialAuthService.handleGoogleAuth(profile);
   }
 }

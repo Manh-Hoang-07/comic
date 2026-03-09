@@ -38,7 +38,7 @@ export class RoleController {
     if (!userId) {
       throw new Error('User not authenticated');
     }
-    return this.service.createWithAudit(dto, userId);
+    return this.service.create(dto);
   }
 
   @LogRequest()
@@ -52,15 +52,14 @@ export class RoleController {
     if (!this.auth.isLogin()) {
       throw new Error('User not authenticated');
     }
-    const userId = this.auth.id();
-    return this.service.updateWithAudit(id, dto, userId!);
+    return this.service.update(id, dto);
   }
 
   @LogRequest()
   @Permission('role.manage')
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number) {
-    return this.service.deleteById(id);
+    return this.service.delete(id);
   }
 
   @LogRequest()

@@ -1,162 +1,72 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
+import { TokenLocalStore } from './token-local-store';
+
+const MAX_ENTRIES = 10_000;
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const REDIS_KEY_PREFIX = 'auth:blacklist:';
 
 @Injectable()
 export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TokenBlacklistService.name);
-  
-  // Local fallback with TTL (token -> expiresAt in epoch seconds)
-  private readonly localMap = new Map<string, number>();
-  
-  // Configuration
-  private readonly MAX_ENTRIES = 10000; // Giới hạn số lượng tokens trong memory
+  private readonly localStore = new TokenLocalStore(MAX_ENTRIES);
   private cleanupInterval?: NodeJS.Timeout;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly redis: RedisUtil,
-  ) {}
+  constructor(private readonly redis: RedisUtil) { }
 
-  /**
-   * Initialize cleanup interval khi module start
-   */
-  onModuleInit() {
-    // Cleanup expired tokens mỗi 5 phút
+  onModuleInit(): void {
     this.cleanupInterval = setInterval(() => {
-      this.cleanupExpired();
-    }, 5 * 60 * 1000);
-    
-    this.logger.log('TokenBlacklistService initialized with automatic cleanup');
+      const removed = this.localStore.cleanup();
+      if (removed > 0) {
+        this.logger.log(
+          `Token blacklist cleanup: removed ${removed} expired entries. ` +
+          `Current size: ${this.localStore.size}/${MAX_ENTRIES}`,
+        );
+      }
+    }, CLEANUP_INTERVAL_MS);
   }
 
-  /**
-   * Cleanup khi module destroy
-   */
-  onModuleDestroy() {
+  onModuleDestroy(): void {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = undefined;
     }
-    
-    // Clear all entries
-    this.localMap.clear();
-    this.logger.log('TokenBlacklistService destroyed');
   }
 
-  /**
-   * Cleanup expired tokens và enforce size limit
-   */
-  private cleanupExpired(): void {
-    const now = Math.floor(Date.now() / 1000);
-    let removed = 0;
-    
-    // Remove expired tokens
-    for (const [token, exp] of this.localMap.entries()) {
-      if (exp <= now) {
-        this.localMap.delete(token);
-        removed++;
-      }
-    }
-    
-    // Enforce size limit using LRU eviction
-    if (this.localMap.size > this.MAX_ENTRIES) {
-      const toRemove = this.localMap.size - this.MAX_ENTRIES;
-      
-      // Sort by expiry time (oldest first)
-      const entries = Array.from(this.localMap.entries())
-        .sort((a, b) => a[1] - b[1]);
-      
-      // Remove oldest entries
-      for (let i = 0; i < toRemove; i++) {
-        this.localMap.delete(entries[i][0]);
-        removed++;
-      }
-      
-      this.logger.warn(
-        `Token blacklist exceeded max size (${this.MAX_ENTRIES}). ` +
-        `Evicted ${toRemove} oldest entries.`
-      );
-    }
-    
-    if (removed > 0) {
-      this.logger.log(
-        `Cleaned up ${removed} tokens. ` +
-        `Current size: ${this.localMap.size}/${this.MAX_ENTRIES}`
-      );
-    }
-  }
+  // ── Public API ─────────────────────────────────────────────────────────────
 
-  private buildKey(token: string): string {
-    return `auth:blacklist:${token}`;
-  }
-
-  /**
-   * Add a token to blacklist with TTL
-   */
+  /** Add a token to the blacklist with a TTL (seconds). */
   async add(token: string, ttlSeconds: number): Promise<void> {
-    const key = this.buildKey(token);
-    if (this.redis && this.redis.isEnabled()) {
-      await this.redis.set(key, '1', ttlSeconds).catch(() => this.addLocal(token, ttlSeconds));
+    if (this.redis?.isEnabled()) {
+      await this.redis
+        .set(this.redisKey(token), '1', ttlSeconds)
+        .catch(() => this.localStore.add(token, ttlSeconds));
     } else {
-      this.addLocal(token, ttlSeconds);
+      this.localStore.add(token, ttlSeconds);
     }
   }
 
   /**
-   * Check blacklist in-memory only (fast path)
+   * Fast synchronous check against in-memory store only.
+   * Use this in hot paths where you don't need Redis consistency.
    */
   isBlacklisted(token: string): boolean {
-    const now = Math.floor(Date.now() / 1000);
-    const exp = this.localMap.get(token);
-    if (!exp) return false;
-    if (exp <= now) {
-      this.localMap.delete(token);
-      return false;
-    }
-    return true;
+    return this.localStore.has(token);
   }
 
   /**
-   * Check blacklist with Redis (fallback to in-memory)
+   * Full check: Redis first, then in-memory fallback.
+   * Use this when cross-instance consistency matters (e.g. in the auth guard).
    */
   async has(token: string): Promise<boolean> {
-    if (this.redis && this.redis.isEnabled()) {
-      const key = this.buildKey(token);
-      const val = await this.redis.get(key);
+    if (this.redis?.isEnabled()) {
+      const val = await this.redis.get(this.redisKey(token));
       if (val) return true;
     }
-    return this.isBlacklisted(token);
+    return this.localStore.has(token);
   }
 
-  private addLocal(token: string, ttlSeconds: number): void {
-    // Check size limit trước khi add
-    if (this.localMap.size >= this.MAX_ENTRIES) {
-      // Force cleanup nếu đạt limit
-      this.cleanupExpired();
-      
-      // Nếu vẫn đầy sau cleanup, xóa entry cũ nhất
-      if (this.localMap.size >= this.MAX_ENTRIES) {
-        const oldestEntry = Array.from(this.localMap.entries())
-          .sort((a, b) => a[1] - b[1])[0];
-        
-        if (oldestEntry) {
-          this.localMap.delete(oldestEntry[0]);
-          this.logger.warn(
-            `Evicted oldest token to make room. ` +
-            `Size: ${this.localMap.size}/${this.MAX_ENTRIES}`
-          );
-        }
-      }
-    }
-    
-    const now = Math.floor(Date.now() / 1000);
-    this.localMap.set(token, now + Math.max(1, ttlSeconds | 0));
-  }
-
-  /**
-   * Get current blacklist statistics (for monitoring)
-   */
+  /** Return stats for monitoring/health endpoints. */
   getStats(): {
     size: number;
     maxSize: number;
@@ -164,12 +74,14 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
     redisEnabled: boolean;
   } {
     return {
-      size: this.localMap.size,
-      maxSize: this.MAX_ENTRIES,
-      utilizationPercent: (this.localMap.size / this.MAX_ENTRIES) * 100,
+      ...this.localStore.stats(MAX_ENTRIES),
       redisEnabled: this.redis?.isEnabled() || false,
     };
   }
+
+  // ── Private ────────────────────────────────────────────────────────────────
+
+  private redisKey(token: string): string {
+    return `${REDIS_KEY_PREFIX}${token}`;
+  }
 }
-
-

@@ -98,16 +98,6 @@ describe('BannerLocationService', () => {
     });
 
     describe('beforeUpdate', () => {
-        it('should throw NotFoundException if location does not exist', async () => {
-            locationRepo.findById.mockResolvedValue(null);
-
-            await expect(
-                (service as any).beforeUpdate(1, { name: 'Updated' }),
-            ).rejects.toThrow(NotFoundException);
-
-            expect(locationRepo.findById).toHaveBeenCalledWith(1);
-        });
-
         it('should throw ConflictException if new code already exists', async () => {
             locationRepo.findById.mockResolvedValue({ id: 1, code: 'OLD' });
             locationRepo.findByCode.mockResolvedValue({ id: 2, code: 'NEW' });
@@ -116,18 +106,16 @@ describe('BannerLocationService', () => {
                 (service as any).beforeUpdate(1, { code: 'NEW' }),
             ).rejects.toThrow(ConflictException);
 
-            expect(locationRepo.findById).toHaveBeenCalledWith(1);
             expect(locationRepo.findByCode).toHaveBeenCalledWith('NEW');
         });
 
         it('should return data if validation passes and code is unchanged', async () => {
             locationRepo.findById.mockResolvedValue({ id: 1, code: 'SAME' });
-            // When code is the same as current, repository.findByCode should not be called
+            locationRepo.findByCode.mockResolvedValue({ id: 1, code: 'SAME' });
 
             const data = { code: 'SAME', name: 'Updated Name' };
             const result = await (service as any).beforeUpdate(1, data);
 
-            expect(locationRepo.findById).toHaveBeenCalledWith(1);
             expect(locationRepo.findByCode).not.toHaveBeenCalled();
             expect(result).toEqual(data);
         });
@@ -139,9 +127,15 @@ describe('BannerLocationService', () => {
             const data = { code: 'NEW', name: 'Updated Name' };
             const result = await (service as any).beforeUpdate(1, data);
 
-            expect(locationRepo.findById).toHaveBeenCalledWith(1);
             expect(locationRepo.findByCode).toHaveBeenCalledWith('NEW');
             expect(result).toEqual(data);
+        });
+    });
+
+    describe('transform', () => {
+        it('should correctly convert BigInt fields', () => {
+            const result = (service as any).transform({ id: 1n, name: 'Home' });
+            expect(result.id).toBe(1);
         });
     });
 

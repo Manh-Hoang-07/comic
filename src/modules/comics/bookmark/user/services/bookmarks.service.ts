@@ -2,7 +2,7 @@ import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { Bookmark } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
 import { IBookmarkRepository, BOOKMARK_REPOSITORY } from '../../domain/bookmark.repository';
-import { RequestContext } from '@/common/shared/utils';
+import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
 export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository> {
@@ -14,11 +14,7 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
   }
 
   protected override async prepareFilters(filters?: any) {
-    const userId = RequestContext.get<number>('userId');
-    return {
-      ...(filters || {}),
-      user_id: userId,
-    };
+    return { ...(filters || {}), user_id: getCurrentUserId() };
   }
 
   protected override async prepareOptions(options: any = {}) {
@@ -26,17 +22,13 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
     return {
       ...base,
       include: options?.include ?? {
-        chapter: {
-          include: {
-            comic: true,
-          },
-        },
+        chapter: { include: { comic: true } },
       },
     };
   }
 
   async createBookmark(chapterId: number | bigint, pageNumber: number) {
-    const userId = RequestContext.get<number>('userId');
+    const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
     const saved = await this.repository.create({
@@ -49,14 +41,10 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
   }
 
   async removeBookmark(id: number | bigint) {
-    const userId = RequestContext.get<number>('userId');
+    const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
-    const bookmark = await this.repository.findOne({
-      id,
-      user_id: userId,
-    });
-
+    const bookmark = await this.repository.findOne({ id, user_id: userId });
     if (bookmark) {
       await this.repository.delete(id);
     }
@@ -68,8 +56,3 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
     return this.deepConvertBigInt(entity);
   }
 }
-
-
-
-
-

@@ -52,11 +52,12 @@ describe('BannerService', () => {
             await expect((service as any).beforeCreate({ location_id: 1 })).rejects.toThrow(NotFoundException);
         });
 
-        it('should return data if location_id exists or is not provided', async () => {
+        it('should return data with BigInt location_id if exists', async () => {
             locationRepo.findById.mockResolvedValue({ id: 1 });
             const data = { location_id: 1, name: 'Test' };
             const result = await (service as any).beforeCreate(data);
-            expect(result).toEqual(data);
+            expect(result.location_id).toBe(1n);
+            expect(result.name).toBe('Test');
         });
     });
 
@@ -72,12 +73,28 @@ describe('BannerService', () => {
             await expect((service as any).beforeUpdate(1n, { location_id: 2 })).rejects.toThrow(NotFoundException);
         });
 
-        it('should return data if validation passes', async () => {
+        it('should return data and convert BigInt if validation passes', async () => {
             bannerRepo.findById.mockResolvedValue({ id: 1n, location_id: 100 });
             locationRepo.findById.mockResolvedValue({ id: 2n });
-            const data = { location_id: 2 };
+            const data = { location_id: 2, name: 'T' };
             const result = await (service as any).beforeUpdate(1n, data);
-            expect(result).toEqual(data);
+            expect(result.location_id).toBe(2n);
+            expect(result.name).toBe('T');
+        });
+    });
+
+    describe('transform', () => {
+        it('should correctly convert BigInt and map banner location', () => {
+            const data = {
+                id: 1n,
+                location_id: 2n,
+                banner_location: { id: 2n, code: 'home' }
+            };
+            const result = (service as any).transform(data);
+            expect(result.id).toBe(1);
+            expect(result.location_id).toBe(2);
+            expect(result.location).toEqual({ id: 2, code: 'home' });
+            expect(result.banner_location).toBeUndefined();
         });
     });
 });

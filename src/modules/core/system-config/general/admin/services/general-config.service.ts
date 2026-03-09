@@ -1,12 +1,14 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, InternalServerErrorException } from '@nestjs/common';
 import { IGeneralConfigRepository, GENERAL_CONFIG_REPOSITORY } from '../../domain/repositories/general-config.repository';
 import { UpdateGeneralConfigDto } from '../dtos/update-general-config.dto';
 import { CacheService } from '@/common/cache/services';
 import { BaseService } from '@/common/core/services';
+import { buildConfigPayload } from '@/modules/core/system-config/utils/config-payload.helper';
+import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
 export class GeneralConfigService extends BaseService<any, IGeneralConfigRepository> {
-  private readonly CACHE_KEY = 'public:general-config';
+  private readonly PUBLIC_CACHE_KEY = 'public:general-config';
 
   constructor(
     @Inject(GENERAL_CONFIG_REPOSITORY)
@@ -22,101 +24,49 @@ export class GeneralConfigService extends BaseService<any, IGeneralConfigReposit
   }
 
   /**
-   * Cập nhật cấu hình chung
-   * Nếu chưa có thì tạo mới, nếu có thì update
+   * Upsert general configuration.
    */
-  async updateConfig(dto: UpdateGeneralConfigDto, updatedBy?: number): Promise<any> {
+  async updateConfig(dto: UpdateGeneralConfigDto): Promise<any> {
+    const userId = getCurrentUserId();
     const existing = await this.generalConfigRepo.getConfig();
 
+    const bigIntFields = [
+      'site_country_id',
+      'site_province_id',
+      'site_ward_id',
+    ];
+
+    const payload = buildConfigPayload(dto, bigIntFields, userId as number, existing);
+
     let result: any;
-
     if (!existing) {
-      // Tạo mới từ DTO (không tạo mặc định cứng)
-      const payload: any = {
-        site_name: dto.site_name || 'My Website',
-        site_description: dto.site_description,
-        site_logo: dto.site_logo,
-        site_favicon: dto.site_favicon,
-        site_email: dto.site_email,
-        site_phone: dto.site_phone,
-        site_address: dto.site_address,
-        site_country_id: dto.site_country_id ? BigInt(dto.site_country_id) : null,
-        site_province_id: dto.site_province_id ? BigInt(dto.site_province_id) : null,
-        site_ward_id: dto.site_ward_id ? BigInt(dto.site_ward_id) : null,
-        site_copyright: dto.site_copyright,
-        timezone: dto.timezone || 'Asia/Ho_Chi_Minh',
-        locale: dto.locale || 'vi',
-        currency: dto.currency || 'VND',
-        meta_title: dto.meta_title,
-        meta_keywords: dto.meta_keywords,
-        og_title: dto.og_title,
-        og_description: dto.og_description,
-        og_image: dto.og_image,
-        canonical_url: dto.canonical_url,
-        google_analytics_id: dto.google_analytics_id,
-        google_search_console: dto.google_search_console,
-        facebook_pixel_id: dto.facebook_pixel_id,
-        twitter_site: dto.twitter_site,
-        created_user_id: updatedBy ? BigInt(updatedBy) : null,
-        updated_user_id: updatedBy ? BigInt(updatedBy) : null,
-        contact_channels: dto.contact_channels || {},
-      };
-
-      result = await this.generalConfigRepo.create(payload);
+      result = await this.generalConfigRepo.create({
+        ...payload,
+        site_name: payload.site_name || 'My Website',
+        timezone: payload.timezone || 'Asia/Ho_Chi_Minh',
+        locale: payload.locale || 'vi',
+        currency: payload.currency || 'VND',
+      });
     } else {
-      // Update record hiện có
-      const updateData: any = {
-        site_name: dto.site_name,
-        site_description: dto.site_description,
-        site_logo: dto.site_logo,
-        site_favicon: dto.site_favicon,
-        site_email: dto.site_email,
-        site_phone: dto.site_phone,
-        site_address: dto.site_address,
-        site_copyright: dto.site_copyright,
-        timezone: dto.timezone,
-        locale: dto.locale,
-        currency: dto.currency,
-        meta_title: dto.meta_title,
-        meta_keywords: dto.meta_keywords,
-        og_title: dto.og_title,
-        og_description: dto.og_description,
-        og_image: dto.og_image,
-        canonical_url: dto.canonical_url,
-        google_analytics_id: dto.google_analytics_id,
-        google_search_console: dto.google_search_console,
-        facebook_pixel_id: dto.facebook_pixel_id,
-        twitter_site: dto.twitter_site,
-        updated_user_id: updatedBy ? BigInt(updatedBy) : existing.updated_user_id,
-      };
-
-      // Chỉ set các field location nếu DTO có gửi lên (tránh phụ thuộc type existing)
-      if (dto.site_country_id !== undefined) {
-        updateData.site_country_id = dto.site_country_id ? BigInt(dto.site_country_id) : null;
-      }
-      if (dto.site_province_id !== undefined) {
-        updateData.site_province_id = dto.site_province_id ? BigInt(dto.site_province_id) : null;
-      }
-      if (dto.site_ward_id !== undefined) {
-        updateData.site_ward_id = dto.site_ward_id ? BigInt(dto.site_ward_id) : null;
-      }
-
-      if (dto.contact_channels !== undefined) {
-        updateData.contact_channels = dto.contact_channels;
-      }
-
-      result = await this.generalConfigRepo.update(existing.id, updateData);
+      result = await this.generalConfigRepo.update(existing.id, payload);
     }
 
     if (!result) {
-      throw new Error('Failed to create or update general config');
+      throw new InternalServerErrorException('Failed to create or update general config');
     }
 
-    // Invalidate cache sau khi update
-    if (this.cacheService && typeof this.cacheService.del === 'function') {
-      await this.cacheService.del(this.CACHE_KEY);
-    }
+    await this.invalidateCache();
 
     return this.transform(result);
+  }
+
+  private async invalidateCache(): Promise<void> {
+    if (this.cacheService?.del) {
+      await this.cacheService.del(this.PUBLIC_CACHE_KEY).catch(() => undefined);
+    }
+  }
+
+  protected override transform(entity: any): any {
+    return this.deepConvertBigInt(entity);
   }
 }

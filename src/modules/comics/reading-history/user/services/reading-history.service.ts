@@ -2,7 +2,7 @@ import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { ReadingHistory } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
 import { IReadingHistoryRepository, READING_HISTORY_REPOSITORY } from '../../domain/reading-history.repository';
-import { RequestContext } from '@/common/shared/utils';
+import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
 export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingHistoryRepository> {
@@ -14,59 +14,38 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
   }
 
   protected override async prepareFilters(filters?: any) {
-    const userId = RequestContext.get<number>('userId');
-    return {
-      ...(filters || {}),
-      user_id: userId,
-    };
+    return { ...(filters || {}), user_id: getCurrentUserId() };
   }
 
   protected override async prepareOptions(options: any = {}) {
     const base = await super.prepareOptions(options);
     return {
       ...base,
-      include: options?.include ?? {
-        comic: true,
-        chapter: true,
-      },
+      include: options?.include ?? { comic: true, chapter: true },
       sort: options?.sort ?? 'updated_at:desc',
     };
   }
 
   async updateOrCreate(comicId: number | bigint, chapterId: number | bigint) {
-    const userId = RequestContext.get<number>('userId');
+    const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
-    const existing = await this.repository.findOne({
-      user_id: userId,
-      comic_id: comicId,
-    });
+    const existing = await this.repository.findOne({ user_id: userId, comic_id: comicId });
 
     if (existing) {
-      const updated = await this.repository.update(existing.id, {
-        chapter_id: chapterId,
-      });
+      const updated = await this.repository.update(existing.id, { chapter_id: chapterId });
       return this.transform(updated);
     }
 
-    const created = await this.repository.create({
-      user_id: userId,
-      comic_id: comicId,
-      chapter_id: chapterId,
-    });
-
+    const created = await this.repository.create({ user_id: userId, comic_id: comicId, chapter_id: chapterId });
     return this.transform(created);
   }
 
   async clearHistory(comicId: number | bigint) {
-    const userId = RequestContext.get<number>('userId');
+    const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
-    await this.repository.deleteMany({
-      user_id: userId,
-      comic_id: comicId,
-    });
-
+    await this.repository.deleteMany({ user_id: userId, comic_id: comicId });
     return { success: true };
   }
 
@@ -74,8 +53,3 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
     return this.deepConvertBigInt(entity);
   }
 }
-
-
-
-
-

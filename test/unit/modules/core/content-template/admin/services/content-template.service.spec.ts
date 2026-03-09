@@ -31,10 +31,11 @@ describe('ContentTemplateService', () => {
     });
 
     describe('findByCode', () => {
-        it('should return item if found', async () => {
-            repository.findByCode.mockResolvedValue({ id: 1, code: 'T1' });
+        it('should return item and convert BigInt if found', async () => {
+            repository.findByCode.mockResolvedValue({ id: 1n, code: 'T1' });
             const result = await service.findByCode('T1');
             expect(result.code).toBe('T1');
+            expect(result.id).toBe(1);
         });
 
         it('should throw NotFoundException if not found', async () => {
@@ -45,7 +46,7 @@ describe('ContentTemplateService', () => {
 
     describe('beforeCreate', () => {
         it('should throw ConflictException if code exists', async () => {
-            repository.findByCode.mockResolvedValue({ id: 2 });
+            repository.findByCode.mockResolvedValue({ id: 2n });
             await expect((service as any).beforeCreate({ code: 'CODE' })).rejects.toThrow(ConflictException);
         });
 

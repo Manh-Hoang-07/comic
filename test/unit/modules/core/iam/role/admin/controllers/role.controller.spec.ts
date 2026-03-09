@@ -13,9 +13,9 @@ describe('RoleController', () => {
             getList: jest.fn(),
             getSimpleList: jest.fn(),
             getOne: jest.fn(),
-            createWithAudit: jest.fn(),
-            updateWithAudit: jest.fn(),
-            deleteById: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
             assignPermissions: jest.fn(),
         };
 
@@ -40,10 +40,10 @@ describe('RoleController', () => {
     });
 
     describe('create', () => {
-        it('should call createWithAudit', async () => {
+        it('should call create', async () => {
             const dto = { name: 'Admin' };
-            await controller.create(dto);
-            expect(service.createWithAudit).toHaveBeenCalledWith(dto, 1);
+            await controller.create(dto as any);
+            expect(service.create).toHaveBeenCalledWith(dto);
         });
 
         it('should throw error if not authenticated', async () => {

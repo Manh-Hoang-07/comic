@@ -18,7 +18,7 @@ describe('ProfileController', () => {
     beforeEach(async () => {
         userService = {
             getOne: jest.fn(),
-            updateById: jest.fn(),
+            update: jest.fn(),
             userChangePassword: jest.fn(),
         };
 
@@ -64,7 +64,7 @@ describe('ProfileController', () => {
 
             await controller.updateMe(dto as any);
 
-            expect(userService.updateById).toHaveBeenCalledWith(1, {
+            expect(userService.update).toHaveBeenCalledWith(1, {
                 name: 'New Name',
                 profile: {
                     birthday: '1990-01-01',

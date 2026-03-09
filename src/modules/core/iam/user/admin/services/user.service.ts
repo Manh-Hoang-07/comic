@@ -1,54 +1,48 @@
-import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  BadRequestException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { RequestContext } from '@/common/shared/utils';
-import { RbacService } from '@/modules/core/rbac/services/rbac.service';
-import { ChangePasswordDto } from '@/modules/core/iam/user/admin/dtos/change-password.dto';
-import { IUserRepository, USER_REPOSITORY, UserFilter } from '@/modules/core/iam/user/domain/user.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/iam/user/domain/user.repository';
 import { BaseService } from '@/common/core/services';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
+import { ChangePasswordDto } from '../dtos/change-password.dto';
+import { UserActionService } from './user-action.service';
+import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
 export class UserService extends BaseService<any, IUserRepository> {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
-    private readonly rbacService: RbacService,
+    private readonly userActionService: UserActionService,
   ) {
     super(userRepo);
   }
 
-  protected async prepareFilters(filter: any) {
+  protected override async prepareFilters(filter: any) {
     const groupFilter = getGroupFilter();
     if (groupFilter.group_id) {
       return { ...filter, groupId: groupFilter.group_id };
     }
-
     return filter;
   }
 
+  // ── Password Management ────────────────────────────────────────────────────
 
-  /**
-   * Alias for update
-   */
-  async updateById(id: number, data: any) {
-    return this.update(id, data);
-  }
-
-  /**
-   * Alias for delete
-   */
-  async deleteById(id: number) {
-    return this.delete(id);
-  }
-
-  async changePassword(id: number, dto: ChangePasswordDto) {
-    const user = await this.getOne(id);
-    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+  async changePassword(id: number | bigint, dto: ChangePasswordDto) {
+    const user = await this.verifyUserExistence(id);
     const hashed = await bcrypt.hash(dto.password, 10);
     await this.userRepo.update(id, { password: hashed });
   }
 
-  async userChangePassword(id: number, oldPassword: string, newPassword: string) {
+  async userChangePassword(id: number | bigint, oldPassword: string, newPassword: string) {
     const user = await this.userRepo.findByIdForAuth(id);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
@@ -61,112 +55,92 @@ export class UserService extends BaseService<any, IUserRepository> {
     await this.userRepo.update(id, { password: hashed });
   }
 
+  // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
-  protected async beforeCreate(data: any) {
+  protected override async beforeCreate(data: any) {
     const payload = { ...data };
+    payload.created_user_id = getCurrentUserId();
+    payload.updated_user_id = payload.created_user_id;
 
-    // Hash password
     if (payload.password) {
       payload.password = await bcrypt.hash(payload.password, 10);
     }
 
-    // Unique Checks
-    if (payload.email && !(await this.userRepo.checkUnique('email', payload.email))) {
-      throw new BadRequestException('Email đã được sử dụng.');
-    }
-    if (payload.phone && !(await this.userRepo.checkUnique('phone', payload.phone))) {
-      throw new BadRequestException('Số điện thoại đã được sử dụng.');
-    }
-    if (payload.username && !(await this.userRepo.checkUnique('username', payload.username))) {
-      throw new BadRequestException('Tên đăng nhập đã được sử dụng.');
-    }
+    await this.validateUniqueness(payload);
 
-    // Tách dữ liệu quan hệ để xử lý trong afterCreate
+    // Relationships are handled in overridden create()
     delete payload.role_ids;
     delete payload.profile;
 
     return payload;
   }
 
-  protected async afterCreate(user: any, data: any) {
-    const id = (user as any).id;
-
-    // Xử lý Profile
-    if (data.profile) {
-      await this.userRepo.upsertProfile(id, data.profile);
-    }
-
-    // Xử lý Roles
-    const roleIds = this.normalizeIdArray(data.role_ids);
-    if (roleIds && roleIds.length > 0) {
-      const groupId = RequestContext.get<number | null>('groupId');
-      if (groupId) {
-        await this.rbacService.syncRolesInGroup(Number(id), groupId, roleIds, true);
-      }
-    }
+  async create(data: any) {
+    const user = await super.create(data);
+    await this.userActionService.syncRelations(Number(user.id), data);
+    return this.getOne(user.id);
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected override async beforeUpdate(id: number | bigint, data: any) {
     const payload = { ...data };
+    payload.updated_user_id = getCurrentUserId();
 
-    // Hash password if present
     if (payload.password) {
       payload.password = await bcrypt.hash(payload.password, 10);
     } else {
       delete payload.password;
     }
 
-    // Unique Checks (exclude current user)
-    if (payload.email && !(await this.userRepo.checkUnique('email', payload.email, Number(id)))) {
-      throw new BadRequestException('Email đã được sử dụng.');
-    }
-    if (payload.phone && !(await this.userRepo.checkUnique('phone', payload.phone, Number(id)))) {
-      throw new BadRequestException('Số điện thoại đã được sử dụng.');
-    }
-    if (payload.username && !(await this.userRepo.checkUnique('username', payload.username, Number(id)))) {
-      throw new BadRequestException('Tên đăng nhập đã được sử dụng.');
-    }
+    await this.validateUniqueness(payload, Number(id));
 
-    // Tách dữ liệu quan hệ để xử lý trong afterUpdate
     delete payload.role_ids;
     delete payload.profile;
 
     return payload;
   }
 
-  protected async afterUpdate(user: any, data: any) {
-    const id = (user as any).id;
+  async update(id: number | bigint, data: any) {
+    await super.update(id, data);
+    await this.userActionService.syncRelations(Number(id), data);
+    return this.getOne(id);
+  }
 
-    // Xử lý Profile
-    if (data.profile) {
-      await this.userRepo.upsertProfile(id, data.profile);
-    }
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
-    // Xử lý Roles
-    const roleIds = this.normalizeIdArray(data.role_ids);
-    if (roleIds !== null) {
-      const groupId = RequestContext.get<number | null>('groupId');
-      if (groupId) {
-        await this.rbacService.syncRolesInGroup(Number(id), groupId, roleIds, true);
+  private async verifyUserExistence(id: number | bigint) {
+    const user = await this.userRepo.findById(id);
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+    return user;
+  }
+
+  private async validateUniqueness(payload: any, excludeId?: number): Promise<void> {
+    const fields = ['email', 'phone', 'username'] as const;
+    const labels = {
+      email: 'Email',
+      phone: 'Số điện thoại',
+      username: 'Tên đăng nhập',
+    };
+
+    for (const field of fields) {
+      if (payload[field]) {
+        const isUnique = await this.userRepo.checkUnique(field, payload[field], excludeId);
+        if (!isUnique) {
+          throw new BadRequestException(`${labels[field]} đã được sử dụng.`);
+        }
       }
     }
   }
 
-  private normalizeIdArray(input: any): number[] | null {
-    if (input === undefined) return null;
-    if (!Array.isArray(input)) return [];
-    return input.map((id: any) => Number(id)).filter((id) => !Number.isNaN(id));
-  }
-
-  protected transform(user: any) {
+  protected override transform(user: any) {
     if (!user) return user;
-    const u = super.transform(user) as any;
+    const u = this.deepConvertBigInt(user) as any;
     const groupId = RequestContext.get<number | null>('groupId');
 
+    // Filter roles for current group context
     if (groupId && u.user_role_assignments) {
       u.role_ids = (u.user_role_assignments as any[])
-        .filter((ura: any) => ura.group_id === groupId)
-        .map((ura: any) => ura.role_id);
+        .filter((ura: any) => Number(ura.group_id) === Number(groupId))
+        .map((ura: any) => Number(ura.role_id));
     } else {
       u.role_ids = u.role_ids || [];
     }

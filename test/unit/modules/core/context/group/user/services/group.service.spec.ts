@@ -31,6 +31,8 @@ describe('UserGroupService', () => {
         rbacService = {
             userHasPermissionsInGroup: jest.fn(),
             assignRoleToUser: jest.fn(),
+            isSystemAdmin: jest.fn().mockResolvedValue(false),
+            syncRolesInGroup: jest.fn().mockResolvedValue(undefined),
         };
         rbacCache = {
             clearUserPermissionsInGroup: jest.fn(),

@@ -1,86 +1,44 @@
-
 import { IRepository, IPaginationOptions, IPaginatedResult } from './repository.interface';
 import { createPaginationMeta } from '@/common/core/utils';
+import { toPrimaryKey, parseSort, resolveQuerySelection } from './prisma-query.helper';
 
-// Generic Delegate to cover most Prisma Client Delegates
-export type PrismaDelegate = {
+// Generic Delegate for Prisma Client models
+export interface PrismaDelegate {
     findMany: (args: any) => Promise<any[]>;
     findFirst: (args: any) => Promise<any | null>;
-    findUnique?: (args: any) => Promise<any | null>; // Some models use findUnique
+    findUnique?: (args: any) => Promise<any | null>;
     count: (args: any) => Promise<number>;
     create: (args: any) => Promise<any>;
-    createMany?: (args: any) => Promise<any>; // Optional because not all models support it (e.g. SQLite limitations or specific models)
     update: (args: any) => Promise<any>;
     updateMany: (args: any) => Promise<{ count: number }>;
     upsert: (args: any) => Promise<any>;
     delete: (args: any) => Promise<any>;
     deleteMany: (args: any) => Promise<{ count: number }>;
-};
+}
 
+/**
+ * Base Prisma Repository.
+ */
 export abstract class PrismaRepository<
     Model,
     WhereInput = any,
-    CreateInput = any,
-    UpdateInput = any,
+    _CreateInput = any,
+    _UpdateInput = any,
     OrderByInput = any
 > implements IRepository<Model> {
-
     protected isSoftDelete = false;
     protected defaultSelect: any = undefined;
     protected defaultInclude: any = undefined;
 
     constructor(
         protected readonly delegate: PrismaDelegate,
-        protected readonly defaultSort: string = 'created_at:desc'
+        protected readonly defaultSort: string = 'created_at:desc',
     ) { }
 
-    /**
-     * Must be implemented by subclasses to transform abstract filters to Prisma WhereInput
-     */
+    /** Must be implemented by subclasses to transform abstract filters to Prisma WhereInput. */
     protected abstract buildWhere(filter: Record<string, any>): WhereInput;
 
-    /**
-     * Helper to parse sort string "field:dir" to Prisma OrderBy
-     */
-    protected parseSort(sortStr: string): OrderByInput[] {
-        const sorts = sortStr.split(',');
-        return sorts.map((s) => {
-            const [field, dir] = s.split(':');
-            return { [field]: dir ? dir.toLowerCase() : 'desc' } as any;
-        });
-    }
-
-    /**
-     * Helper to convert input to primary key type (default BigInt)
-     */
-    protected toPrimaryKey(id: any): any {
-        // Defensive: some callers accidentally pass `{ id: ... }` instead of the raw PK
-        // which would produce `where: { id: { id: ... } }` and Prisma will throw.
-        if (id && typeof id === 'object' && 'id' in id) {
-            return this.toPrimaryKey((id as any).id);
-        }
-
-        if (typeof id === 'bigint') return id;
-        if (typeof id === 'number') {
-            try {
-                return BigInt(id);
-            } catch {
-                return id;
-            }
-        }
-        // For string, validate it's a valid number string
-        if (typeof id === 'string') {
-            if (!/^\d+$/.test(id)) {
-                throw new Error(`Invalid ID format: ${id}. Expected a numeric string.`);
-            }
-            try {
-                return BigInt(id);
-            } catch {
-                throw new Error(`Invalid ID format: ${id}. Cannot convert to BigInt.`);
-            }
-        }
-        return id;
-    }
+    // ── Query Operations ───────────────────────────────────────────────────────
 
     async findAll(options: IPaginationOptions = {}): Promise<IPaginatedResult<Model>> {
         const page = Math.max(Number(options.page) || 1, 1);
@@ -89,57 +47,25 @@ export abstract class PrismaRepository<
         const filter = options.filter || {};
 
         const where: any = this.buildWhere(filter);
-        const orderBy = this.parseSort(sort);
+        const orderBy = parseSort(sort) as unknown as OrderByInput[];
 
-        // Prisma doesn't allow using both select and include at the same time.
-        // Precedence:
-        // - if request provides `select` -> use select
-        // - else if request provides `include` -> use include (and ignore defaultSelect)
-        // - else use defaults
-        const hasRequestSelect = Object.prototype.hasOwnProperty.call(options as any, 'select');
-        const hasRequestInclude = Object.prototype.hasOwnProperty.call(options as any, 'include');
-        const requestSelect = (options as any).select;
-        const requestInclude = (options as any).include;
+        const selectionFlat = resolveQuerySelection(options, {
+            select: this.defaultSelect,
+            include: this.defaultInclude,
+        });
 
-        const effectiveSelect =
-            hasRequestSelect ? requestSelect
-                : hasRequestInclude ? undefined
-                    : this.defaultSelect;
-
-        const effectiveInclude =
-            hasRequestInclude ? requestInclude : this.defaultInclude;
-
-        const select = effectiveSelect ? effectiveSelect : undefined;
-        const include = !select && effectiveInclude ? effectiveInclude : undefined;
-
-        // [M6] skipCount: bỏ qua count query khi không cần phân trang (ví dụ: dropdown, tree)
         const skipCount = (options as any).skipCount === true;
-
-        if (skipCount) {
-            const data = await this.delegate.findMany({
-                where,
-                orderBy,
-                skip: (page - 1) * limit,
-                take: limit,
-                select,
-                include,
-            });
-            return {
-                data,
-                meta: createPaginationMeta(page, limit, data.length),
-            };
-        }
+        const queryArgs = {
+            where,
+            orderBy,
+            skip: (page - 1) * limit,
+            take: limit,
+            ...selectionFlat,
+        };
 
         const [data, total] = await Promise.all([
-            this.delegate.findMany({
-                where,
-                orderBy,
-                skip: (page - 1) * limit,
-                take: limit,
-                select,
-                include,
-            }),
-            this.delegate.count({ where }),
+            this.delegate.findMany(queryArgs),
+            skipCount ? Promise.resolve(0) : this.delegate.count({ where }),
         ]);
 
         return {
@@ -149,84 +75,86 @@ export abstract class PrismaRepository<
     }
 
     async findById(id: string | number | bigint): Promise<Model | null> {
-        const select = this.defaultSelect ? this.defaultSelect : undefined;
-        const include = !select && this.defaultInclude ? this.defaultInclude : undefined;
-        return this.delegate.findFirst({
-            where: { id: this.toPrimaryKey(id) } as any,
-            select,
-            include,
+        const selection = resolveQuerySelection(
+            {},
+            { select: this.defaultSelect, include: this.defaultInclude },
+        );
+
+        // Some models don't have findUnique (usually many-to-many or specific schemas)
+        const finder = this.delegate.findUnique || this.delegate.findFirst;
+
+        return finder({
+            where: { id: toPrimaryKey(id) } as any,
+            ...selection,
         });
     }
 
     async findManyByIds(ids: (string | number | bigint)[]): Promise<Model[]> {
-        const select = this.defaultSelect ? this.defaultSelect : undefined;
-        const include = !select && this.defaultInclude ? this.defaultInclude : undefined;
+        if (!ids?.length) return [];
+        const selection = resolveQuerySelection(
+            {},
+            { select: this.defaultSelect, include: this.defaultInclude },
+        );
+
         return this.delegate.findMany({
-            where: { id: { in: ids.map(id => this.toPrimaryKey(id)) } } as any,
-            select,
-            include,
+            where: { id: { in: ids.map(toPrimaryKey) } } as any,
+            ...selection,
         });
     }
 
     async findOne(filter: Record<string, any>): Promise<Model | null> {
-        const where: any = this.buildWhere(filter);
-        const select = this.defaultSelect ? this.defaultSelect : undefined;
-        const include = !select && this.defaultInclude ? this.defaultInclude : undefined;
+        const selection = resolveQuerySelection(
+            {},
+            { select: this.defaultSelect, include: this.defaultInclude },
+        );
+
         return this.delegate.findFirst({
-            where,
-            select,
-            include,
+            where: this.buildWhere(filter),
+            ...selection,
         });
     }
 
-    async findMany(filter: Record<string, any> = {}, options: IPaginationOptions = {}): Promise<Model[]> {
-        const where: any = this.buildWhere(filter);
-        const orderBy = options.sort ? this.parseSort(options.sort) : undefined;
-
-        const hasRequestSelect = Object.prototype.hasOwnProperty.call(options as any, 'select');
-        const hasRequestInclude = Object.prototype.hasOwnProperty.call(options as any, 'include');
-        const requestSelect = (options as any).select;
-        const requestInclude = (options as any).include;
-
-        const effectiveSelect =
-            hasRequestSelect ? requestSelect
-                : hasRequestInclude ? undefined
-                    : this.defaultSelect;
-
-        const effectiveInclude =
-            hasRequestInclude ? requestInclude : this.defaultInclude;
-
-        const select = effectiveSelect ? effectiveSelect : undefined;
-        const include = !select && effectiveInclude ? effectiveInclude : undefined;
+    async findMany(
+        filter: Record<string, any> = {},
+        options: IPaginationOptions = {},
+    ): Promise<Model[]> {
+        const selectionFlat = resolveQuerySelection(options, {
+            select: this.defaultSelect,
+            include: this.defaultInclude,
+        });
 
         return this.delegate.findMany({
-            where,
-            orderBy,
+            where: this.buildWhere(filter),
+            orderBy: options.sort ? parseSort(options.sort) : undefined,
             take: options.limit,
-            skip: options.page && options.limit ? (options.page - 1) * options.limit : undefined,
-            select,
-            include,
+            skip:
+                options.page && options.limit ? (options.page - 1) * options.limit : undefined,
+            ...selectionFlat,
         });
     }
 
-    async create(data: CreateInput): Promise<Model> {
+    // ── Mutation Operations ────────────────────────────────────────────────────
+
+    async create(data: any): Promise<Model> {
         return this.delegate.create({ data });
     }
 
-    async update(id: string | number | bigint, data: UpdateInput): Promise<Model> {
+    async update(id: string | number | bigint, data: any): Promise<Model> {
         return this.delegate.update({
-            where: { id: this.toPrimaryKey(id) } as any,
+            where: { id: toPrimaryKey(id) } as any,
             data,
         });
     }
 
-    async updateMany(filter: Record<string, any>, data: UpdateInput): Promise<{ count: number }> {
-        const where = this.buildWhere(filter);
-        return this.delegate.updateMany({ where, data });
+    async updateMany(filter: Record<string, any>, data: any): Promise<{ count: number }> {
+        return this.delegate.updateMany({
+            where: this.buildWhere(filter),
+            data,
+        });
     }
 
     async upsert(id: string | number | bigint, data: any): Promise<Model> {
-        const pk = this.toPrimaryKey(id);
+        const pk = toPrimaryKey(id);
         return this.delegate.upsert({
             where: { id: pk } as any,
             create: { ...data, id: pk },
@@ -236,29 +164,33 @@ export abstract class PrismaRepository<
 
     async delete(id: string | number | bigint): Promise<boolean> {
         try {
-            const pk = this.toPrimaryKey(id);
-            await this.delegate.delete({ where: { id: pk } as any });
+            await this.delegate.delete({
+                where: { id: toPrimaryKey(id) } as any,
+            });
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
 
+    async deleteMany(filter: Record<string, any>): Promise<{ count: number }> {
+        return this.delegate.deleteMany({
+            where: this.buildWhere(filter),
+        });
+    }
+
+    // ── Utility Operations ─────────────────────────────────────────────────────
+
     async exists(filter: Record<string, any>): Promise<boolean> {
-        const where: any = this.buildWhere(filter);
-        const count = await this.delegate.count({ where });
+        const count = await this.delegate.count({ where: this.buildWhere(filter) });
         return count > 0;
     }
 
     async count(filter: Record<string, any> = {}): Promise<number> {
-        const where: any = this.buildWhere(filter);
-        return this.delegate.count({ where });
+        return this.delegate.count({ where: this.buildWhere(filter) });
     }
 
-    async deleteMany(filter: Record<string, any>): Promise<{ count: number }> {
-        const where: any = this.buildWhere(filter);
-        return this.delegate.deleteMany({ where });
-    }
+    // ── Low-level Access ───────────────────────────────────────────────────────
 
     async findFirstRaw(options: any): Promise<Model | null> {
         return this.delegate.findFirst(options);
@@ -266,5 +198,15 @@ export abstract class PrismaRepository<
 
     async findManyRaw(options: any): Promise<Model[]> {
         return this.delegate.findMany(options);
+    }
+
+    // ── Internal Helpers (Backward Compatibility Delegates) ────────────────────
+
+    protected toPrimaryKey(id: any): any {
+        return toPrimaryKey(id);
+    }
+
+    protected parseSort(sortStr: string): OrderByInput[] {
+        return parseSort(sortStr) as unknown as OrderByInput[];
     }
 }

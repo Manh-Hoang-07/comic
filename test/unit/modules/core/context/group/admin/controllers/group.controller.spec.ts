@@ -15,7 +15,7 @@ describe('AdminGroupController', () => {
             getList: jest.fn(),
             findById: jest.fn(),
             isSystemAdmin: jest.fn(),
-            updateGroup: jest.fn(),
+            update: jest.fn(),
             deleteGroup: jest.fn(),
         };
         auth = { id: jest.fn().mockReturnValue(1) };
@@ -54,10 +54,10 @@ describe('AdminGroupController', () => {
             await expect(controller.updateGroup(10, { name: 'New' })).rejects.toThrow(ForbiddenException);
         });
 
-        it('should call updateGroup if system admin', async () => {
+        it('should call update if system admin', async () => {
             service.isSystemAdmin.mockResolvedValue(true);
             await controller.updateGroup(10, { name: 'New' });
-            expect(service.updateGroup).toHaveBeenCalledWith(10, { name: 'New' });
+            expect(service.update).toHaveBeenCalledWith(10, { name: 'New' });
         });
     });
 });

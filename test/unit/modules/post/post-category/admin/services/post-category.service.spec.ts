@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostCategoryService } from '@/modules/post/post-category/admin/services/post-category.service';
 import { POST_CATEGORY_REPOSITORY } from '@/modules/post/post-category/domain/post-category.repository';
+import { SlugHelper } from '@/common/core/utils/slug.helper';
+
+jest.mock('@/common/core/utils/slug.helper');
+
 
 describe('PostCategoryService', () => {
     let service: PostCategoryService;
@@ -65,24 +69,20 @@ describe('PostCategoryService', () => {
     });
 
     describe('beforeCreate', () => {
-        it('should call ensureSlug and convert parent_id to bigint', async () => {
+        it('should call SlugHelper and convert parent_id to bigint', async () => {
             const data = { name: 'Tech', parent_id: '5' };
-            const ensureSlugSpy = jest
-                .spyOn(service as any, 'ensureSlug')
-                .mockResolvedValue(undefined);
+            (SlugHelper.uniqueSlug as jest.Mock).mockResolvedValue('tech-slug');
 
             const result = await (service as any).beforeCreate(data);
 
-            expect(ensureSlugSpy).toHaveBeenCalledTimes(1);
-            const [payloadArg] = ensureSlugSpy.mock.calls[0];
-            expect((payloadArg as any).name).toBe('Tech');
-            expect(typeof result.parent_id).toBe('bigint');
-            expect(result.parent_id?.toString()).toBe('5');
+            expect(SlugHelper.uniqueSlug).toHaveBeenCalledWith('Tech', categoryRepo);
+            expect(result.slug).toBe('tech-slug');
+            expect(result.parent_id).toBe(5n);
         });
 
-        it('should set parent_id to null when invalid', async () => {
+        it('should set parent_id to undefined when invalid', async () => {
             const data = { name: 'Tech', parent_id: 'invalid' };
-            jest.spyOn(service as any, 'ensureSlug').mockResolvedValue(undefined);
+            (SlugHelper.uniqueSlug as jest.Mock).mockResolvedValue('tech-slug');
 
             const result = await (service as any).beforeCreate(data);
 
@@ -91,26 +91,15 @@ describe('PostCategoryService', () => {
     });
 
     describe('beforeUpdate', () => {
-        it('should load current category and call ensureSlug with current slug', async () => {
-            const current = { id: 1, slug: 'old-slug' };
-            categoryRepo.findById.mockResolvedValue(current);
-
+        it('should call SlugHelper and handle parent_id', async () => {
             const data = { name: 'New', parent_id: '2' };
-            const ensureSlugSpy = jest
-                .spyOn(service as any, 'ensureSlug')
-                .mockResolvedValue(undefined);
+            (SlugHelper.uniqueSlug as jest.Mock).mockResolvedValue('new-slug');
 
-            const result = await (service as any).beforeUpdate(1, data);
+            const result = await (service as any).beforeUpdate(1n, data);
 
-            expect(categoryRepo.findById).toHaveBeenCalledWith(1);
-            expect(ensureSlugSpy).toHaveBeenCalledTimes(1);
-
-            const [payloadArg, idArg, currentSlugArg] = ensureSlugSpy.mock.calls[0];
-            expect((payloadArg as any).name).toBe('New');
-            expect(idArg).toBe(1);
-            expect(currentSlugArg).toBe('old-slug');
-            expect(typeof result.parent_id).toBe('bigint');
-            expect(result.parent_id?.toString()).toBe('2');
+            expect(SlugHelper.uniqueSlug).toHaveBeenCalledWith('New', categoryRepo, 1n);
+            expect(result.slug).toBe('new-slug');
+            expect(result.parent_id).toBe(2n);
         });
     });
 

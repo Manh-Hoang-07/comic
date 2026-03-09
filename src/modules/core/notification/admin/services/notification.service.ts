@@ -2,6 +2,8 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { INotificationRepository, NOTIFICATION_REPOSITORY, NotificationFilter } from '@/modules/core/notification/domain/notification.repository';
 import { BaseService } from '@/common/core/services';
 
+import { toBigInt } from '@/common/core/utils/data.helper';
+
 @Injectable()
 export class NotificationService extends BaseService<any, INotificationRepository> {
   constructor(
@@ -35,12 +37,12 @@ export class NotificationService extends BaseService<any, INotificationRepositor
   }
 
   protected async beforeCreate(data: any) {
-    if (data.user_id) data.user_id = BigInt(data.user_id);
+    if (data.user_id) data.user_id = toBigInt(data.user_id);
     return data;
   }
 
   protected async beforeUpdate(id: number | bigint, data: any) {
-    if (data.user_id) data.user_id = BigInt(data.user_id);
+    if (data.user_id) data.user_id = toBigInt(data.user_id);
     return data;
   }
 

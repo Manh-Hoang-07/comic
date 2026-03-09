@@ -50,7 +50,7 @@ export class ProfileController {
             updatePayload.profile = profileData;
         }
 
-        return this.userService.updateById(Number(userId), updatePayload);
+        return this.userService.update(Number(userId), updatePayload);
     }
 
     @Permission('authenticated')

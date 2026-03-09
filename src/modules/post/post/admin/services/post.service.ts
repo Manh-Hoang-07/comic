@@ -1,126 +1,96 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Post } from '@prisma/client';
 import { verifyGroupOwnership } from '@/common/shared/utils';
-import { IPostRepository, POST_REPOSITORY, PostFilter } from '@/modules/post/post/domain/post.repository';
-import { GetPostsDto } from '../dtos/get-posts.dto';
+import { IPostRepository, POST_REPOSITORY } from '@/modules/post/post/domain/post.repository';
 import { BaseContentService } from '@/common/core/services';
+import { SlugHelper } from '@/common/core/utils/slug.helper';
+import { toBigInt, normalizeDate } from '@/common/core/utils/data.helper';
+import { PostActionService } from './post-action.service';
 
 @Injectable()
 export class PostService extends BaseContentService<Post, IPostRepository> {
   constructor(
     @Inject(POST_REPOSITORY)
     private readonly postRepo: IPostRepository,
+    private readonly actionService: PostActionService,
   ) {
     super(postRepo);
     this.autoAddGroupId = true;
   }
 
-
-  private _temp_tagIds: number[] | null = null;
-  private _temp_categoryIds: number[] | null = null;
-
   async getSimpleList(query: any) {
-    return this.getList({
-      page: 1,
-      limit: 1000,
-      search: query.search
-    } as any);
+    return this.getList({ page: 1, limit: 1000, search: query.search } as any);
   }
 
-  protected async beforeCreate(data: any) {
-    // 1. Gọi super để lấy logic chuẩn (bao gồm auto group_id = number)
+  // ── CRUD Overrides ────────────────────────────────────────────────────────
+
+  override async getOne(id: string | number | bigint): Promise<Post> {
+    const entity = await super.getOne(id);
+    verifyGroupOwnership({ group_id: entity.group_id ? Number(entity.group_id) : null });
+    return entity;
+  }
+
+  async create(data: any): Promise<Post> {
+    const payload = await this.beforeCreate(data);
+    const entity = await this.repository.create(payload);
+    await this.actionService.syncRelations(entity.id, data);
+    return this.getOne(entity.id);
+  }
+
+  async update(id: string | number | bigint, data: any): Promise<Post> {
+    const payload = await this.beforeUpdate(Number(id), data);
+    const entity = await this.repository.update(id, payload);
+    await this.actionService.syncRelations(Number(id), data);
+    return this.getOne(id);
+  }
+
+  // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+  protected override async beforeCreate(data: any) {
     const payload = await super.beforeCreate(data);
 
-    await this.ensureSlug(payload);
+    // Handle Slug
+    payload.slug = await SlugHelper.uniqueSlug(payload.title, this.postRepo);
 
-    payload.primary_postcategory_id = this.toBigInt(payload.primary_postcategory_id);
+    // Normalize Fields
+    payload.primary_postcategory_id = toBigInt(payload.primary_postcategory_id);
+    payload.published_at = normalizeDate(payload.published_at);
+    if (payload.group_id) payload.group_id = toBigInt(payload.group_id);
 
-    // Nếu có group_id (từ autoAddGroupId hoặc input), convert sang BigInt
-    if (payload.group_id) {
-      payload.group_id = this.toBigInt(payload.group_id);
-    }
-
-    payload.published_at = this.normalizeDate(payload.published_at);
-
-    // Temp store relations, handled in afterCreate
-    this._temp_tagIds = this.normalizeIdArray(payload.tag_ids);
-    this._temp_categoryIds = this.normalizeIdArray(payload.category_ids);
+    // Relations handled in create() override
     delete payload.tag_ids;
     delete payload.category_ids;
 
     return payload;
   }
 
-  protected async afterCreate(post: Post, data: any) {
-    const tagIds = this._temp_tagIds;
-    const categoryIds = this._temp_categoryIds;
-    if (tagIds || categoryIds) {
-      await this.postRepo.syncRelations(post.id, tagIds || [], categoryIds || []);
-    }
-  }
-
-  protected async beforeUpdate(id: number, data: any) {
-    const current = await this.postRepo.findById(id);
-    if (!current) throw new BadRequestException('Post not found');
-
-    verifyGroupOwnership({ group_id: (current as any).group_id ? Number((current as any).group_id) : null });
+  protected override async beforeUpdate(id: number, data: any) {
+    const current = await this.getOne(id); // Includes ownership check
 
     const payload = { ...data };
-    await this.ensureSlug(payload, id, (current as any).slug);
 
-    payload.primary_postcategory_id = this.toBigInt(payload.primary_postcategory_id);
-    payload.published_at = this.normalizeDate(payload.published_at);
+    // Handle Slug
+    if (payload.title || payload.slug) {
+      payload.slug = await SlugHelper.uniqueSlug(
+        payload.slug || payload.title || '',
+        this.postRepo,
+        id
+      );
+    }
 
-    // Temp store relations
-    this._temp_tagIds = this.normalizeIdArray(payload.tag_ids);
-    this._temp_categoryIds = this.normalizeIdArray(payload.category_ids);
+    payload.primary_postcategory_id = toBigInt(payload.primary_postcategory_id);
+    payload.published_at = normalizeDate(payload.published_at);
+
+    // Relations handled in update() override
     delete payload.tag_ids;
     delete payload.category_ids;
 
     return payload;
   }
 
-  protected async afterUpdate(post: Post, data: any) {
-    const tagIds = this._temp_tagIds;
-    const categoryIds = this._temp_categoryIds;
-    if (tagIds || categoryIds) {
-      await this.postRepo.syncRelations(post.id, tagIds || undefined, categoryIds || undefined);
-    }
-  }
+  // ── Transformation ─────────────────────────────────────────────────────────
 
-  async delete(id: number): Promise<boolean> {
-    const current = await this.postRepo.findById(id);
-    if (!current) return false;
-
-    verifyGroupOwnership({ group_id: (current as any).group_id ? Number((current as any).group_id) : null });
-
-    return super.delete(id);
-  }
-
-  // Helpers
-  private normalizeDate(input: any): Date | null | undefined {
-    if (input === null) return null;
-    if (input === undefined) return undefined;
-    if (input instanceof Date) return input;
-    const d = new Date(input);
-    return Number.isNaN(d.getTime()) ? undefined : d;
-  }
-
-  private normalizeIdArray(input: any): number[] | null {
-    if (input === undefined) return null;
-    if (!Array.isArray(input)) return [];
-    return input.map((id: any) => Number(id)).filter((id) => !Number.isNaN(id));
-  }
-
-  private toBigInt(value?: number | string | bigint | null): bigint | null {
-    if (value === null || value === undefined) return null;
-    if (typeof value === 'bigint') return value;
-    const num = typeof value === 'string' ? Number(value) : value;
-    if (Number.isNaN(num)) return null;
-    return BigInt(num);
-  }
-
-  protected transform(post: any) {
+  protected override transform(post: any) {
     if (!post) return post;
     const p = super.transform(post) as any;
 
@@ -128,20 +98,21 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
       const { id, name, slug } = p.primary_category;
       p.primary_category = { id, name, slug };
     }
+
     if (p.categories) {
       p.categories = (p.categories as any[])
         .map((link) => link?.category)
         .filter(Boolean)
         .map((cat: any) => ({ id: cat.id, name: cat.name, slug: cat.slug }));
     }
+
     if (p.tags) {
       p.tags = (p.tags as any[])
         .map((link) => link?.tag)
         .filter(Boolean)
         .map((tag: any) => ({ id: tag.id, name: tag.name, slug: tag.slug }));
     }
+
     return p;
   }
 }
-
-

@@ -7,10 +7,11 @@ import {
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Request, Response } from 'express';
+import { Reflector } from '@nestjs/core';
 import { CustomLoggerService } from '@/core/logger/logger.service';
 import { Auth } from '@/common/auth/utils';
-import { Reflector } from '@nestjs/core';
 import { LOG_REQUEST_KEY, LogRequestOptions } from '@/common/shared/decorators';
+import { extractRequestId, resolveLogTarget } from './logging.helper';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -20,162 +21,85 @@ export class LoggingInterceptor implements NestInterceptor {
   ) { }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    if (context.getType() !== 'http') {
-      return next.handle();
-    }
+    if (context.getType() !== 'http') return next.handle();
 
-    // Check if this route has @LogRequest() decorator
-    // Check both handler (method) and class (controller) level
-    const logOptions = this.reflector.getAllAndOverride<LogRequestOptions>(LOG_REQUEST_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
-    // Mặc định không log, chỉ log khi có decorator @LogRequest() với options
-    if (!logOptions) {
-      return next.handle();
-    }
-
-    const logConfig: LogRequestOptions = logOptions;
+    // Only log when the route has @LogRequest()
+    const logConfig = this.reflector.getAllAndOverride<LogRequestOptions>(
+      LOG_REQUEST_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (!logConfig) return next.handle();
 
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
-    const { method, url, body, params, query, headers } = request;
-    const userAgent = request.get('User-Agent') || '';
-    const ip = request.ip;
-    const startTime = Date.now();
 
-    // Generate unique request ID if not present
-    const ridHeader = headers['x-request-id'] as unknown;
-    const requestId = Array.isArray(ridHeader)
-      ? (ridHeader[0] as string)
-      : (typeof ridHeader === 'string' && ridHeader.length > 0
-        ? ridHeader
-        : this.generateRequestId());
-
-    // Add request ID to response headers
+    const requestId = extractRequestId(request);
     response.setHeader('X-Request-ID', requestId);
 
-    // Xác định file log: ưu tiên header > decorator options > tự động tạo từ class_method
-    const filePathHeader = (headers['x-log-file'] as string) || undefined;
-    const fileBaseNameHeader = (headers['x-log-base-name'] as string) || undefined;
-
-    // Tạo file path dựa trên options
-    let logFilePath: string | undefined;
-    let logFileBaseName: string | undefined;
-
-    if (filePathHeader) {
-      // Nếu có filePath từ header, dùng trực tiếp
-      logFilePath = filePathHeader;
-    } else if (logConfig.filePath) {
-      // Nếu có filePath từ decorator, dùng nó
-      logFilePath = logConfig.filePath;
-    } else {
-      // Lấy fileBaseName: ưu tiên header > decorator options (bắt buộc phải có)
-      if (fileBaseNameHeader) {
-        logFileBaseName = fileBaseNameHeader;
-      } else if (logConfig.fileBaseName) {
-        logFileBaseName = logConfig.fileBaseName;
-      } else {
-        // Nếu không có fileBaseName, không log (hoặc có thể throw error)
-        // Tạm thời dùng mặc định để tránh lỗi
-        logFileBaseName = 'api-requests';
-      }
-    }
+    const logTarget = resolveLogTarget(request, logConfig);
+    const logFileOptions = logTarget.filePath
+      ? { filePath: logTarget.filePath }
+      : logTarget.fileBaseName
+        ? { fileBaseName: logTarget.fileBaseName }
+        : undefined;
 
     const user = Auth.user(context);
-    const contextBase = {
+    const baseContext = {
       context: 'HTTP',
       requestId,
-      method,
-      url,
-      userAgent,
-      ip,
-      // Account info if framework/auth puts it on request
+      method: request.method,
+      url: request.url,
+      userAgent: request.get('User-Agent') || '',
+      ip: request.ip,
       userId: Auth.id(context),
       username: user?.username || user?.email || null,
       extra: {
-        params: Object.keys(params || {}).length ? params : undefined,
-        query: Object.keys(query || {}).length ? query : undefined,
-        // [M4] Đọc Content-Length header thay vì JSON.stringify toàn bộ body để tính size
+        params: hasKeys(request.params) ? request.params : undefined,
+        query: hasKeys(request.query) ? request.query : undefined,
         bodySize: parseInt(request.get('content-length') || '0', 10) || 0,
       },
     } as const;
 
+    const startTime = Date.now();
+
     return next.handle().pipe(
       tap(() => {
         const duration = Date.now() - startTime;
-        const { statusCode } = response;
-
         this.logger.log(
-          `Outgoing Response`,
+          'Outgoing Response',
           {
-            ...contextBase,
+            ...baseContext,
             extra: {
-              ...contextBase.extra,
-              statusCode,
+              ...baseContext.extra,
+              statusCode: response.statusCode,
               durationMs: duration,
-              logDetails: { end: duration },
             },
           },
-          logFilePath
-            ? { filePath: logFilePath }
-            : logFileBaseName
-              ? { fileBaseName: logFileBaseName }
-              : undefined,
+          logFileOptions,
         );
       }),
       catchError((error) => {
         const duration = Date.now() - startTime;
-
         this.logger.error(
-          `Error Response`,
+          'Error Response',
           error?.stack,
           {
-            ...contextBase,
+            ...baseContext,
             extra: {
-              ...contextBase.extra,
+              ...baseContext.extra,
               statusCode: (error as any)?.status || 500,
               durationMs: duration,
               errorMessage: error?.message,
-              logDetails: { end: duration },
             },
           },
-          logFilePath
-            ? { filePath: logFilePath }
-            : logFileBaseName
-              ? { fileBaseName: logFileBaseName }
-              : undefined,
+          logFileOptions,
         );
-
         throw error;
       }),
     );
   }
+}
 
-  private generateRequestId(): string {
-    // [L2] Dùng crypto.randomUUID() thay Math.random + substr (deprecated)
-    const uuid = typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID().replace(/-/g, '').substring(0, 9)
-      : Math.random().toString(36).substring(2, 11);
-    return `req_${Date.now()}_${uuid}`;
-  }
-
-
-  // private sanitizeBody(body: any): any {
-  //   if (!body || typeof body !== 'object') {
-  //     return body;
-  //   }
-
-  //   const sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization'];
-  //   const sanitized = { ...body };
-
-  //   for (const field of sensitiveFields) {
-  //     if (sanitized[field]) {
-  //       sanitized[field] = '[REDACTED]';
-  //     }
-  //   }
-
-  //   return sanitized;
-  // }
+function hasKeys(obj: object | undefined): boolean {
+  return !!obj && Object.keys(obj).length > 0;
 }

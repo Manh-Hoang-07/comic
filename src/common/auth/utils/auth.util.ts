@@ -1,80 +1,57 @@
 import { ExecutionContext } from '@nestjs/common';
-import { AuthUser } from '@/common/auth/interfaces';
-import { RequestContext } from '@/common/shared/utils';
+import {
+  getCurrentUser,
+  getCurrentUserId,
+  isAuthenticated,
+  getUserProperty,
+  AuthenticatedUser,
+} from './auth-context.helper';
 
 /**
- * Auth Helper Functions
- * Tương tự Laravel's Auth::user(), Auth::id()
- * 
- * @example
- * ```typescript
- * // Trong guard/interceptor
- * const userId = Auth.id(context);
- * const user = Auth.user(context);
- * if (Auth.check(context)) { ... }
- * ```
+ * Singleton-style Utility for Auth.
+ * Acts as a wrapper for auth-context helpers.
  */
 export class Auth {
-  /**
-   * Lấy user hiện tại từ ExecutionContext
-   * Tương tự Auth::user()
-   */
-  static user(context?: ExecutionContext): AuthUser | null {
-    const userFromCtx = RequestContext.get<AuthUser>('user');
-    if (userFromCtx) return userFromCtx;
-    if (context) {
-      const request = context.switchToHttp().getRequest();
-      return (request as any)?.user || null;
-    }
-    return null;
+  /** Get current user object. */
+  static user(context?: ExecutionContext): AuthenticatedUser | null {
+    return getCurrentUser(context);
   }
 
-  /**
-   * Lấy user ID hiện tại từ ExecutionContext
-   * Tương tự Auth::id()
-   */
+  /** Get current user ID. */
   static id(context?: ExecutionContext): number | null {
-    const user = this.user(context);
-    return user?.id || null;
+    return getCurrentUserId(context);
   }
 
-  /**
-   * Kiểm tra user có đăng nhập không
-   * Tương tự Auth::check()
-   */
+  /** Check if user is logged in. */
   static check(context?: ExecutionContext): boolean {
-    return !!this.user(context);
+    return isAuthenticated(context);
   }
 
-  /**
-   * Kiểm tra user có đăng nhập không
-   * Tương tự Auth::isLogin()
-   */
+  /** Alias for check(). */
   static isLogin(context?: ExecutionContext): boolean {
-    return this.check(context);
+    return isAuthenticated(context);
   }
 
-  /**
-   * Kiểm tra user chưa đăng nhập
-   * Tương tự Auth::guest()
-   */
+  /** Alias for check(). */
   static guest(context?: ExecutionContext): boolean {
-    return !this.check(context);
+    return !isAuthenticated(context);
   }
 
-  /**
-   * Lấy property của user hiện tại
-   * Tương tự Auth::user()->email
-   * 
-   * @example
-   * ```typescript
-   * const email = Auth.get(context, 'email');
-   * const status = Auth.get(context, 'status');
-   * ```
-   */
-  static get<K extends keyof AuthUser>(context: ExecutionContext | undefined, key: K): AuthUser[K] | undefined {
-    const user = this.user(context);
-    return user?.[key];
+  /** Access current user properties dynamicallly. */
+  static email(context?: ExecutionContext): string | null {
+    return getUserProperty<string>('email', context);
+  }
+
+  static username(context?: ExecutionContext): string | null {
+    return getUserProperty<string>('username', context);
+  }
+
+  static status(context?: ExecutionContext): string | null {
+    return getUserProperty<string>('status', context);
+  }
+
+  /** Generic getter for any user field. */
+  static get<T = any>(key: string, context?: ExecutionContext): T | null {
+    return getUserProperty<T>(key, context);
   }
 }
-

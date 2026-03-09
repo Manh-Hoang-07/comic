@@ -25,6 +25,7 @@ describe('AdminContextService', () => {
 
         rbacService = {
             userHasPermissionsInGroup: jest.fn(),
+            isSystemAdmin: jest.fn().mockResolvedValue(true),
         };
 
         groupRepo = {
@@ -58,6 +59,7 @@ describe('AdminContextService', () => {
 
     describe('createContext', () => {
         it('should throw ForbiddenException if user is not system admin', async () => {
+            rbacService.isSystemAdmin.mockResolvedValue(false);
             rbacService.userHasPermissionsInGroup.mockResolvedValue(false);
             await expect(service.createContext({}, 1)).rejects.toThrow(ForbiddenException);
         });
@@ -99,6 +101,7 @@ describe('AdminContextService', () => {
 
     describe('beforeUpdate', () => {
         it('should throw BadRequestException for system context (ID=1)', async () => {
+            contextRepo.findById.mockResolvedValue({ id: 1, type: 'system', code: 'SYSTEM_CONTEXT' });
             await expect((service as any).beforeUpdate(1, {})).rejects.toThrow(BadRequestException);
         });
 
@@ -110,15 +113,18 @@ describe('AdminContextService', () => {
 
     describe('beforeDelete', () => {
         it('should throw BadRequestException for system context', async () => {
+            contextRepo.findById.mockResolvedValue({ id: 1, type: 'system' });
             await expect((service as any).beforeDelete(1)).rejects.toThrow(BadRequestException);
         });
 
         it('should throw BadRequestException if context is used by groups', async () => {
+            contextRepo.findById.mockResolvedValue({ id: 2, type: 'custom' });
             groupRepo.findManyRaw.mockResolvedValue([{ id: 1 }]);
             await expect((service as any).beforeDelete(2)).rejects.toThrow(BadRequestException);
         });
 
         it('should return true if safe to delete', async () => {
+            contextRepo.findById.mockResolvedValue({ id: 2, type: 'custom' });
             groupRepo.findManyRaw.mockResolvedValue([]);
             const result = await (service as any).beforeDelete(2);
             expect(result).toBe(true);

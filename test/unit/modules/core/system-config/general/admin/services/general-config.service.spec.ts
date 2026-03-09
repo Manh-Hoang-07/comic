@@ -2,6 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GeneralConfigService } from '@/modules/core/system-config/general/admin/services/general-config.service';
 import { GENERAL_CONFIG_REPOSITORY } from '@/modules/core/system-config/general/domain/repositories/general-config.repository';
 import { CacheService } from '@/common/cache/services';
+import * as authContextHelper from '@/common/auth/utils/auth-context.helper';
+
+jest.mock('@/common/auth/utils/auth-context.helper');
+
 
 describe('GeneralConfigService', () => {
     let service: GeneralConfigService;
@@ -17,7 +21,7 @@ describe('GeneralConfigService', () => {
         };
 
         cacheService = {
-            del: jest.fn(),
+            del: jest.fn().mockResolvedValue(undefined),
         };
 
         const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +33,7 @@ describe('GeneralConfigService', () => {
         }).compile();
 
         service = module.get<GeneralConfigService>(GeneralConfigService);
+        (authContextHelper.getCurrentUserId as jest.Mock).mockReturnValue(100);
     });
 
     it('should be defined', () => {
@@ -36,27 +41,29 @@ describe('GeneralConfigService', () => {
     });
 
     describe('getConfig', () => {
-        it('should return config from repo', async () => {
-            const mockConfig = { id: 1, site_name: 'Test' };
+        it('should return config from repo and convert BigInt', async () => {
+            const mockConfig = { id: 1n, site_name: 'Test' };
             generalConfigRepo.getConfig.mockResolvedValue(mockConfig);
             const result = await service.getConfig();
             expect(result.site_name).toBe('Test');
+            expect(result.id).toBe(1);
         });
     });
 
     describe('updateConfig', () => {
         it('should create new config and invalidate cache', async () => {
             generalConfigRepo.getConfig.mockResolvedValue(null);
-            generalConfigRepo.create.mockResolvedValue({ id: 1, site_name: 'New' });
+            generalConfigRepo.create.mockResolvedValue({ id: 1n, site_name: 'New' });
 
-            await service.updateConfig({ site_name: 'New' } as any);
+            const result = await service.updateConfig({ site_name: 'New' } as any);
 
             expect(generalConfigRepo.create).toHaveBeenCalled();
+            expect(result.id).toBe(1);
             expect(cacheService.del).toHaveBeenCalledWith('public:general-config');
         });
 
         it('should update existing config and invalidate cache', async () => {
-            const existing = { id: 1, site_name: 'Old' };
+            const existing = { id: 1n, site_name: 'Old' };
             generalConfigRepo.getConfig.mockResolvedValue(existing);
             generalConfigRepo.update.mockResolvedValue({ ...existing, site_name: 'Updated' });
 

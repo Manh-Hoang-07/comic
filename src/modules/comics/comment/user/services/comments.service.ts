@@ -2,8 +2,9 @@ import { Injectable, Inject, UnauthorizedException, NotFoundException, BadReques
 import { ComicComment } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
 import { ICommentRepository, COMMENT_REPOSITORY } from '../../domain/comment.repository';
-import { RequestContext } from '@/common/shared/utils';
 import { ComicNotificationService } from '@/modules/comics/shared/services/comic-notification.service';
+import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
+import { COMMENT_TREE_INCLUDE } from '../utils/comment-query.helper';
 
 @Injectable()
 export class UserCommentsService extends BaseService<ComicComment, ICommentRepository> {
@@ -15,11 +16,10 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
     super(commentRepository);
   }
 
-  protected override async prepareFilters(filters?: any) {
-    const userId = RequestContext.get<number>('userId');
-    const prepared: any = { ...(filters || {}) };
+  protected override async prepareFilters(filters: any = {}) {
+    const userId = getCurrentUserId();
+    const prepared: any = { ...filters };
 
-    // Nếu gọi getByUser thì lọc theo user, nếu không thì tùy controller pass qua
     if (prepared.by_current_user) {
       prepared.user_id = userId;
       delete prepared.by_current_user;
@@ -32,42 +32,41 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
     const base = await super.prepareOptions(options);
     return {
       ...base,
-      include: options?.include ?? {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true
-          }
-        },
-        comic: true,
-        chapter: true,
-        replies: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                name: true,
-                image: true
-              }
-            }
-          },
-          take: 5
-        }
-      },
+      include: options?.include ?? COMMENT_TREE_INCLUDE,
       sort: options?.sort ?? 'created_at:desc',
     };
   }
 
+  // ── Extended Operations ────────────────────────────────────────────────────
+
+  async updateComment(id: number | bigint, content: string) {
+    const userId = getCurrentUserId();
+    if (!userId) throw new UnauthorizedException();
+
+    const comment = await this.repository.findOne({ id, user_id: userId });
+    if (!comment) throw new NotFoundException('Comment not found');
+
+    return this.update(id, { content, updated_user_id: userId });
+  }
+
+  async removeComment(id: number | bigint) {
+    const userId = getCurrentUserId();
+    if (!userId) throw new UnauthorizedException();
+
+    const comment = await this.repository.findOne({ id, user_id: userId });
+    if (!comment) throw new NotFoundException('Comment not found');
+
+    return this.repository.delete(id);
+  }
+
+  // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
   protected override async beforeCreate(data: any): Promise<any> {
-    const userId = RequestContext.get<number>('userId');
+    const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
     const payload = { ...data };
     payload.user_id = userId;
-    payload.created_user_id = userId;
     payload.status = 'visible';
 
     // Validate parent
@@ -82,7 +81,7 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
     return payload;
   }
 
-  protected override async afterCreate(entity: ComicComment, data: any): Promise<void> {
+  protected override async afterCreate(entity: ComicComment): Promise<void> {
     if (entity.parent_id) {
       await this.notificationService.notifyCommentReply(
         Number(entity.id),
@@ -92,38 +91,7 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
     }
   }
 
-  async updateComment(id: number | bigint, content: string) {
-    const userId = RequestContext.get<number>('userId');
-    if (!userId) throw new UnauthorizedException();
-
-    const comment = await this.repository.findOne({
-      id,
-      user_id: userId
-    });
-
-    if (!comment) throw new NotFoundException('Comment not found');
-
-    return this.update(id, { content, updated_user_id: userId });
-  }
-
-  async removeComment(id: number | bigint) {
-    const userId = RequestContext.get<number>('userId');
-    if (!userId) throw new UnauthorizedException();
-
-    const comment = await this.repository.findOne({
-      id,
-      user_id: userId
-    });
-
-    if (!comment) throw new NotFoundException('Comment not found');
-
-    return this.repository.delete(id);
-  }
-
   protected override transform(entity: any): any {
     return this.deepConvertBigInt(entity);
   }
 }
-
-
-

@@ -77,7 +77,7 @@ export class AdminGroupController {
   @Permission('public')
   @Get(':id')
   async getGroup(@Param('id', ParseIntPipe) id: number) {
-    return this.groupService.findById(id);
+    return this.groupService.getOne(id);
   }
 
   /**
@@ -100,7 +100,7 @@ export class AdminGroupController {
       throw new ForbiddenException('Only system admin can update group');
     }
 
-    return this.groupService.updateGroup(id, body);
+    return this.groupService.update(id, body);
   }
 
   /**
@@ -120,7 +120,7 @@ export class AdminGroupController {
       throw new ForbiddenException('Only system admin can delete group');
     }
 
-    await this.groupService.deleteGroup(id);
+    await this.groupService.delete(id);
     return { message: 'Group deleted successfully' };
   }
 }

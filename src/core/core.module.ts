@@ -42,7 +42,9 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         ).optional(),
 
         // Redis (optional)
+        CACHE_DRIVER: Joi.string().valid('redis', 'memory').default('memory'),
         REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).optional(),
+
 
         // JWT (required)
         JWT_SECRET: Joi.string().min(16).required(),

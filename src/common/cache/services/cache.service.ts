@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { RedisUtil } from '@/core/utils/redis.util';
 
@@ -8,12 +9,31 @@ export class CacheService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly redis: RedisUtil,
-  ) {}
+    private readonly configService: ConfigService,
+  ) { }
+
+
+  /**
+   * Kiểm tra driver đang sử dụng
+   */
+  private useRedis(): boolean {
+    const driver = this.configService.get<string>('CACHE_DRIVER') || 'memory';
+    return driver === 'redis' && this.redis?.isEnabled();
+  }
 
   /**
    * Lấy giá trị từ cache
    */
   async get<T>(key: string): Promise<T | undefined> {
+    if (this.useRedis()) {
+      const val = await this.redis.get(key);
+      if (val === null) return undefined;
+      try {
+        return JSON.parse(val) as T;
+      } catch (e) {
+        return val as any;
+      }
+    }
     return await this.cacheManager.get<T>(key);
   }
 
@@ -21,6 +41,11 @@ export class CacheService {
    * Lưu giá trị vào cache
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
+    if (this.useRedis()) {
+      const val = typeof value === 'string' ? value : JSON.stringify(value);
+      await this.redis.set(key, val, ttl);
+    }
+    // Vẫn set vào cacheManager để đảm bảo tính tương thích
     await this.cacheManager.set(key, value, ttl);
   }
 
@@ -29,49 +54,17 @@ export class CacheService {
    */
   async del(key: string): Promise<void> {
     try {
-      // Ưu tiên dùng Redis nếu có (vì Redis có method del chắc chắn)
+      // Xóa trong Redis
       if (this.redis?.isEnabled()) {
         await this.redis.del(key);
       }
-      
-      // Sau đó xóa trong cache manager nếu có
-      if (!this.cacheManager) {
-        return;
-      }
-      
-      const cacheManagerAny = this.cacheManager as any;
-      
-      // Debug: log available methods trong development
-      // Removed console.log for production
-      
-      // Kiểm tra xem method del có tồn tại không (có thể bị wrap bởi NestJS)
-      if (cacheManagerAny.del && typeof cacheManagerAny.del === 'function') {
-        await cacheManagerAny.del(key);
-        return;
-      }
-      
-      // Fallback: thử dùng stores nếu có (cache-manager v7+)
-      if (cacheManagerAny.stores && Array.isArray(cacheManagerAny.stores)) {
-        for (const store of cacheManagerAny.stores) {
-          if (store && typeof store.delete === 'function') {
-            await store.delete(key);
-          } else if (store && typeof store.del === 'function') {
-            await store.del(key);
-          }
-        }
-        return;
-      }
-      
-      // Fallback: thử set giá trị undefined với TTL 0 như một workaround
-      if (cacheManagerAny.set && typeof cacheManagerAny.set === 'function') {
-        await cacheManagerAny.set(key, undefined, 0);
+
+      // Xóa trong cache manager
+      if (this.cacheManager) {
+        await this.cacheManager.del(key);
       }
     } catch (error) {
-      // Log error nhưng không throw để không làm gián đoạn flow
-      // Chỉ log trong development để debug
-      if (process.env.NODE_ENV === 'development') {
-        // Removed console.warn for production
-      }
+      // Silent error
     }
   }
 
@@ -79,6 +72,10 @@ export class CacheService {
    * Xóa tất cả cache
    */
   async reset(): Promise<void> {
+    if (this.useRedis()) {
+      // Cẩn thận: flushall có thể xóa sạch data khác trong Redis nếu dùng chung
+      // Ở đây ta chỉ nên clear các key theo pattern của app nếu cần
+    }
     await this.cacheManager.clear();
   }
 
@@ -113,6 +110,7 @@ export class CacheService {
     await this.set(key, value, ttl);
     return value;
   }
+
 
   /**
    * Xóa cache theo pattern (prefix)

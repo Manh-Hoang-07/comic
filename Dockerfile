@@ -4,17 +4,16 @@ WORKDIR /app
 
 # Install dependencies first for better layer caching
 COPY package.json package-lock.json ./
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN npm ci
 
-# Copy source
+# Copy source (Not copying test/ to keep prod build clean)
 COPY tsconfig.json nest-cli.json prisma.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
 
-# Prisma generate requires DATABASE_URL to be set (adapter config reads it)
+# Prisma generate (Prisma 7 uses prisma.config.ts)
 ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
-
-
 RUN npm run prisma:generate
 RUN npm run build
 
@@ -23,6 +22,9 @@ FROM node:20-bookworm-slim
 
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Install openssl in runtime image
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
@@ -33,4 +35,7 @@ COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 RUN mkdir -p storage/uploads
 
 EXPOSE 8000
+# Trong Docker (không có folder test/), NestJS sẽ build thẳng ra dist/main.js
 CMD ["node", "dist/main.js"]
+
+

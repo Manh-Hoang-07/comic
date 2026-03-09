@@ -17,7 +17,7 @@ export class CacheService {
    * Kiểm tra driver đang sử dụng
    */
   private useRedis(): boolean {
-    const driver = this.configService.get<string>('CACHE_DRIVER') || 'memory';
+    const driver = this.configService.get<string>('CACHE_DRIVER') || process.env.CACHE_DRIVER || 'memory';
     return driver === 'redis' && this.redis?.isEnabled();
   }
 
@@ -26,12 +26,16 @@ export class CacheService {
    */
   async get<T>(key: string): Promise<T | undefined> {
     if (this.useRedis()) {
-      const val = await this.redis.get(key);
-      if (val === null) return undefined;
       try {
-        return JSON.parse(val) as T;
+        const val = await this.redis.get(key);
+        if (val === null || val === 'null') return undefined;
+        try {
+          return JSON.parse(val) as T;
+        } catch (e) {
+          return val as any;
+        }
       } catch (e) {
-        return val as any;
+        // Fallback to memory
       }
     }
     return await this.cacheManager.get<T>(key);
@@ -41,13 +45,39 @@ export class CacheService {
    * Lưu giá trị vào cache
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
-    if (this.useRedis()) {
-      const val = typeof value === 'string' ? value : JSON.stringify(value);
-      await this.redis.set(key, val, ttl);
+    const isRedis = this.useRedis();
+
+    if (isRedis) {
+      try {
+        const cache = new Set();
+        const val = typeof value === 'string'
+          ? value
+          : JSON.stringify(value, (k, v) => {
+            if (typeof v === 'bigint') return v.toString();
+            if (typeof v === 'object' && v !== null) {
+              if (cache.has(v)) return '[Circular]';
+              cache.add(v);
+            }
+            return v;
+          });
+
+        if (val) {
+          await this.redis.set(key, val, ttl);
+        }
+      } catch (e) {
+        // Silent error
+      }
     }
-    // Vẫn set vào cacheManager để đảm bảo tính tương thích
-    await this.cacheManager.set(key, value, ttl);
+
+    const ttlMs = ttl ? ttl * 1000 : undefined;
+    try {
+      await this.cacheManager.set(key, value, ttlMs);
+    } catch (e) {
+      // Silent error
+    }
   }
+
+
 
   /**
    * Xóa giá trị khỏi cache

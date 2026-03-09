@@ -6,60 +6,26 @@ import { Auth } from '@/common/auth/utils';
 import { RequestContext } from '@/common/shared/utils';
 import { ResponseUtil } from '@/common/shared/utils';
 import { RbacPermission } from '@/modules/core/rbac/rbac.constants';
+import { CustomLoggerService } from '@/core/logger/logger.service';
 
 @Injectable()
 export class RbacGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private rbac: RbacService,
-  ) { }
+  constructor(private reflector: Reflector, private rbac: RbacService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredPerms = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]) || [];
+    const permissions = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [context.getHandler(), context.getClass()]) || [];
+    if (!permissions.length) throw new HttpException(ResponseUtil.forbidden('Access denied.'), 403);
+    if (permissions.includes(PUBLIC_PERMISSION)) return true;
 
-    // Secure-by-default: nếu không có @Permission() → chặn truy cập
-    if (requiredPerms.length === 0) {
-      const response = ResponseUtil.forbidden('Access denied.');
-      throw new HttpException(response, response.httpStatus || HttpStatus.FORBIDDEN);
-    }
-
-    // Nếu có @Permission('public') → không cần check quyền
-    if (requiredPerms.includes(PUBLIC_PERMISSION)) return true;
-
-    // Lấy userId từ context (đã được set bởi JwtAuthGuard nếu có token hợp lệ)
     const userId = Auth.id(context);
+    if (!userId) throw new HttpException(ResponseUtil.unauthorized('Auth required'), 401);
 
-    if (!userId) {
-      const response = ResponseUtil.unauthorized('Authentication required');
-      throw new HttpException(response, response.httpStatus || HttpStatus.UNAUTHORIZED);
-    }
+    if (permissions.some(p => [RbacPermission.AUTHENTICATED, RbacPermission.USER, 'authenticated', 'user'].includes(p as any))) return true;
 
-    // Nếu có @Permission('authenticated') hoặc @Permission('user') → chỉ cần đăng nhập
-    if (
-      requiredPerms.includes(RbacPermission.AUTHENTICATED) ||
-      requiredPerms.includes(RbacPermission.USER) ||
-      requiredPerms.includes('authenticated') ||
-      requiredPerms.includes('user')
-    ) {
-      return true;
-    }
-
-    // Lấy groupId thay vì contextId (đã được set bởi GroupInterceptor)
     const groupId = RequestContext.get<number | null>('groupId') ?? null;
+    if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) return true;
 
-    // Check permissions trong group
-    const ok = await this.rbac.userHasPermissionsInGroup(userId, groupId, requiredPerms);
-
-    if (!ok) {
-      const response = ResponseUtil.forbidden(
-        `Access denied. Required permissions: ${requiredPerms.join(', ')}`
-      );
-      throw new HttpException(response, response.httpStatus || HttpStatus.FORBIDDEN);
-    }
-
-    return true;
+    const res = ResponseUtil.forbidden(`Access denied. Need: ${permissions.join(',')}`);
+    throw new HttpException(res, res.httpStatus || 403);
   }
 }

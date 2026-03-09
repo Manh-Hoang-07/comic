@@ -1,202 +1,104 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
 
 @Injectable()
-export class RbacCacheService {
+export class RbacCacheService implements OnModuleInit {
   private readonly ttlSeconds: number;
-  private readonly versionKey = 'rbac:version';
+  private readonly invalidationChannel = 'rbac:invalidation';
+  // L1 Cache (In-Memory) - TTL 30s
+  private l1Cache = new Map<string, { data: Set<string>; expiry: number }>();
+  private readonly l1TtlMs = 30000;
 
   constructor(
     private readonly redis: RedisUtil,
     private readonly configService: ConfigService,
   ) {
-    this.ttlSeconds = Number(this.configService.get('RBAC_CACHE_TTL') || 300);
+    this.ttlSeconds = Number(this.configService.get('RBAC_CACHE_TTL') || 3600);
   }
 
-  private userPermsKey(userId: number, version: number): string {
-    return `rbac:user:${userId}:v${version}`;
-  }
-
-  async getVersion(): Promise<number> {
-    if (!this.redis.isEnabled()) return 1;
-    const val = await this.redis.get(this.versionKey);
-    const num = val ? Number(val) : 1;
-    return Number.isFinite(num) && num > 0 ? num : 1;
-  }
-
-  async bumpVersion(): Promise<void> {
-    if (!this.redis.isEnabled()) return;
-    const current = await this.getVersion();
-    await this.redis.set(this.versionKey, String(current + 1));
-  }
-
-  async getUserPermissions(userId: number): Promise<Set<string> | null> {
-    if (!this.redis.isEnabled()) return null;
-    const version = await this.getVersion();
-    const raw = await this.redis.get(this.userPermsKey(userId, version));
-    if (!raw) return null;
-    try {
-      const arr = JSON.parse(raw) as string[];
-      return new Set(arr);
-    } catch {
-      return null;
+  async onModuleInit() {
+    // Lắng nghe lệnh xoá cache từ các server khác
+    if (this.redis.isEnabled()) {
+      await this.redis.subscribe(this.invalidationChannel, (message) => {
+        try {
+          const { type, userId, key } = JSON.parse(message);
+          if (type === 'user_all') {
+            this.clearL1ByUser(userId);
+          } else if (type === 'specific_key') {
+            this.l1Cache.delete(key);
+          }
+        } catch (e) { }
+      });
     }
   }
 
-  async setUserPermissions(userId: number, permissions: Iterable<string>): Promise<void> {
-    if (!this.redis.isEnabled()) return;
-    const version = await this.getVersion();
-    const arr = Array.from(new Set(permissions));
-    await this.redis.set(this.userPermsKey(userId, version), JSON.stringify(arr), this.ttlSeconds);
-  }
-
-  async invalidateUser(userId: number): Promise<void> {
-    // With versioning, simplest is to bump version globally to invalidate all users immediately
-    // If you want per-user invalidation without global bump, store index of versions and delete specific keys (more complex)
-    await this.bumpVersion();
-  }
-
-  /**
-   * Get user permissions in context
-   */
-  async getUserPermissionsInContext(
-    userId: number,
-    contextId: number,
-  ): Promise<Set<string> | null> {
-    if (!this.redis.isEnabled()) return null;
-    const version = await this.getVersion();
-    const key = `rbac:user:${userId}:ctx:${contextId}:v${version}`;
-    const raw = await this.redis.get(key);
-    if (!raw) return null;
-    try {
-      const arr = JSON.parse(raw) as string[];
-      return new Set(arr);
-    } catch {
-      return null;
+  private clearL1ByUser(userId: number) {
+    const prefix = `rbac:u:${userId}:`;
+    for (const cacheKey of this.l1Cache.keys()) {
+      if (cacheKey.startsWith(prefix)) {
+        this.l1Cache.delete(cacheKey);
+      }
     }
   }
 
-  /**
-   * Set user permissions in context
-   */
-  async setUserPermissionsInContext(
-    userId: number,
-    contextId: number,
-    permissions: Iterable<string>,
-  ): Promise<void> {
-    if (!this.redis.isEnabled()) return;
-    const version = await this.getVersion();
-    const key = `rbac:user:${userId}:ctx:${contextId}:v${version}`;
-    const arr = Array.from(new Set(permissions));
-    await this.redis.set(key, JSON.stringify(arr), this.ttlSeconds);
+  private getGroupKey(userId: number, groupId: number): string {
+    return `rbac:u:${userId}:g:${groupId}`;
   }
 
-  /**
-   * Clear user permissions in context
-   */
-  async clearUserPermissionsInContext(
-    userId: number,
-    contextId: number,
-  ): Promise<void> {
-    // Bump version to invalidate all caches
-    await this.bumpVersion();
+  private getSystemKey(userId: number): string {
+    return `rbac:u:${userId}:system`;
   }
 
-  /**
-   * Get user permissions in group
-   */
-  async getUserPermissionsInGroup(
-    userId: number,
-    groupId: number,
-  ): Promise<Set<string> | null> {
-    if (!this.redis.isEnabled()) return null;
-    const version = await this.getVersion();
-    const key = `rbac:user:${userId}:grp:${groupId}:v${version}`;
-    const raw = await this.redis.get(key);
-    if (!raw) return null;
-    try {
-      const arr = JSON.parse(raw) as string[];
-      return new Set(arr);
-    } catch {
-      return null;
+  async hasPermission(userId: number, groupId: number | null, permission: string): Promise<boolean> {
+    if (!this.redis.isEnabled()) return false;
+    const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
+    const l1 = this.l1Cache.get(key);
+    if (l1 && l1.expiry > Date.now()) return l1.data.has(permission);
+    if (await this.redis.sismember(key, permission)) {
+      await this.loadToL1(userId, groupId);
+      return true;
     }
+    return false;
   }
 
-  /**
-   * Set user permissions in group
-   */
-  async setUserPermissionsInGroup(
-    userId: number,
-    groupId: number,
-    permissions: Iterable<string>,
-  ): Promise<void> {
+  private async loadToL1(userId: number, groupId: number | null) {
+    const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
+    const permissions = await this.redis.smembers(key);
+    if (permissions.length) this.l1Cache.set(key, { data: new Set(permissions), expiry: Date.now() + this.l1TtlMs });
+  }
+
+  async setPermissions(userId: number, groupId: number | null, permissions: string[]) {
     if (!this.redis.isEnabled()) return;
-    const version = await this.getVersion();
-    const key = `rbac:user:${userId}:grp:${groupId}:v${version}`;
-    const arr = Array.from(new Set(permissions));
-    await this.redis.set(key, JSON.stringify(arr), this.ttlSeconds);
-  }
-
-  /**
-   * Clear user permissions in group
-   */
-  async clearUserPermissionsInGroup(
-    userId: number,
-    groupId: number,
-  ): Promise<void> {
-    // Bump version to invalidate all caches
-    await this.bumpVersion();
-  }
-
-  // ─── [C3] System-level permission cache ────────────────────────────────────
-  // Dùng key đặc biệt 'system' để cache quyền system-level, tránh 4 DB queries mỗi request
-
-  private systemPermsKey(userId: number, version: number): string {
-    return `rbac:user:${userId}:system:v${version}`;
-  }
-
-  async getSystemPermissions(userId: number): Promise<Set<string> | null> {
-    if (!this.redis.isEnabled()) return null;
-    const version = await this.getVersion();
-    const raw = await this.redis.get(this.systemPermsKey(userId, version));
-    if (!raw) return null;
-    try {
-      const arr = JSON.parse(raw) as string[];
-      return new Set(arr);
-    } catch {
-      return null;
+    const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
+    await this.redis.del(key);
+    if (permissions.length) {
+      await this.redis.sadd(key, ...permissions);
+      await (this.redis as any).client?.expire(key, this.ttlSeconds);
+      await this.redis.trackKey(userId, key);
     }
+    this.l1Cache.delete(key);
+    await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'specific_key', key }));
   }
 
-  async setSystemPermissions(userId: number, permissions: Iterable<string>): Promise<void> {
+  async clearUserCache(userId: number, groupId: number | null) {
+    const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
+    await this.redis.del(key);
+    this.l1Cache.delete(key);
+  }
+
+  async clearAllUserCaches(userId: number) {
     if (!this.redis.isEnabled()) return;
-    const version = await this.getVersion();
-    const arr = Array.from(new Set(permissions));
-    await this.redis.set(this.systemPermsKey(userId, version), JSON.stringify(arr), this.ttlSeconds);
+    const keys = await this.redis.getTrackedKeys(userId);
+    for (const key of keys) await this.redis.del(key);
+    await this.redis.clearTrackedKeys(userId);
+    this.clearL1ByUser(userId);
+    await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'user_all', userId }));
   }
 
-  /**
-   * 🧹 [Clean Code] Xoá toàn bộ cache permissions của một user (system + group)
-   * Dùng khi user đổi Role / rời Group...
-   */
-  async clearAllUserCaches(userId: number): Promise<void> {
-    await this.bumpVersion();
-  }
-
-  /**
-   * 🧹 [Clean Code] Kiểm tra xem cache đã tồn tại chưa.
-   * Trả về true nếu cache đã có, false nếu cần nạp lại.
-   * Dùng thay cho hack gọi userHasPermissionsInGroup(userId, groupId, []) chỉ để trigger cache.
-   */
-  async isPermissionsCached(userId: number, groupId: number | null): Promise<boolean> {
-    if (groupId === null) {
-      const cached = await this.getSystemPermissions(userId);
-      return cached !== null;
-    }
-    const cached = await this.getUserPermissionsInGroup(userId, groupId);
-    return cached !== null;
+  async isCached(userId: number, groupId: number | null): Promise<boolean> {
+    if (!this.redis.isEnabled()) return false;
+    const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
+    return this.l1Cache.has(key) || (await (this.redis as any).client?.exists(key)) === 1;
   }
 }
-
-

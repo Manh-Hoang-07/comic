@@ -22,77 +22,38 @@ export class GroupInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
+    const permissions = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [context.getHandler(), context.getClass()]) || [];
+    const isPublicEndpoint = permissions.includes(PUBLIC_PERMISSION);
 
-    // Check if this is a public endpoint
-    const requiredPerms = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]) || [];
-    const isPublicEndpoint = requiredPerms.includes(PUBLIC_PERMISSION);
-
-    // 1. Chỉ lấy groupId từ Header (X-Group-Id)
     const groupIdRaw = request.headers['x-group-id'] || request.headers['group-id'] || request.headers['group_id'];
     const groupId = groupIdRaw ? Number(groupIdRaw) : null;
 
     if (groupId) {
-      // TRƯỜNG HỢP CÓ GROUP_ID TRONG HEADER
-      let group: any = null;
-      try {
-        group = await this.groupService.findById(groupId);
-      } catch (e) {
-        group = null;
-      }
-
+      const group = await this.groupService.findById(groupId).catch(() => null);
       if (!group) {
-        // Nếu là public endpoint thì cho qua với System Context, nếu không thì báo lỗi
-        if (isPublicEndpoint) {
-          const sysContext = await this.contextService.getSystemContext();
-          RequestContext.set('contextId', sysContext ? Number(sysContext.id) : null);
-          RequestContext.set('groupId', null);
-          return next.handle();
-        }
+        if (isPublicEndpoint) return this.setSysCtx(next);
         throw new BadRequestException('Group not found');
       }
 
-      // Validate quyền truy cập Group
       const userId = Auth.id(context);
       if (userId && !isPublicEndpoint) {
-        // 🚀 [Tối ưu] Chỉ check membership bằng findUnique O(1) thay vì getUserGroups() O(N)
-        const userInGroup = await this.userGroupRepo.findUnique(userId, groupId);
-        let hasAccess = !!userInGroup;
-
-        // Nếu không trong nhóm, kiểm tra xem có phải Global Admin (System Context) không
-        if (!hasAccess) {
-          hasAccess = await this.rbacService.isSystemAdmin(userId);
-        }
-
-        if (!hasAccess) {
-          throw new ForbiddenException(
-            `Access denied to group ${groupId}. You do not have permission to access this group.`
-          );
-        }
+        const hasAccess = (await this.userGroupRepo.findUnique(userId, groupId)) || (await this.rbacService.isSystemAdmin(userId));
+        if (!hasAccess) throw new ForbiddenException(`Access denied to group ${groupId}`);
       }
 
-      // Thiết lập Context và Group ID vào RequestContext
       RequestContext.set('groupId', group.id);
-      if (group.context) {
-        RequestContext.set('context', group.context);
-        RequestContext.set('contextId', Number(group.context.id));
-      } else {
-        const contextEntity = await this.contextService.findById(Number(group.context_id));
-        if (contextEntity) {
-          RequestContext.set('context', contextEntity);
-          RequestContext.set('contextId', Number(contextEntity.id));
-        }
-      }
+      const contextId = group.context?.id || group.context_id;
+      RequestContext.set('contextId', Number(contextId));
     } else {
-      // TRƯỜNG HỢP KHÔNG CÓ GROUP_ID TRONG HEADER
-      // Mặc định về System Context, Group: null
-      const sysContext = await this.contextService.getSystemContext();
-      RequestContext.set('contextId', sysContext ? Number(sysContext.id) : null);
-      RequestContext.set('groupId', null);
+      return this.setSysCtx(next);
     }
+    return next.handle();
+  }
 
+  private async setSysCtx(next: CallHandler) {
+    const sys = await this.contextService.getSystemContext();
+    RequestContext.set('contextId', sys ? Number(sys.id) : null);
+    RequestContext.set('groupId', null);
     return next.handle();
   }
 }

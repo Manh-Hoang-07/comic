@@ -132,7 +132,7 @@ export class UserGroupService {
       group_id: BigInt(groupId),
     });
 
-    await this.rbacCache.clearUserPermissionsInGroup(memberUserId, groupId);
+    await this.rbacCache.clearUserCache(memberUserId, groupId);
   }
 
   /**

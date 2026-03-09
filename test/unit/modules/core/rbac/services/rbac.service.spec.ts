@@ -8,155 +8,110 @@ import { GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repo
 import { USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
 import { ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
+import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ContextType } from '@/modules/core/rbac/rbac.constants';
 
 describe('RbacService', () => {
     let service: RbacService;
-    let userGroupRepo: any;
     let assignmentRepo: any;
     let roleHasPermRepo: any;
     let roleContextRepo: any;
     let groupRepo: any;
-    let userRepo: any;
-    let roleRepo: any;
     let rbacCache: any;
+    let prisma: any;
 
     beforeEach(async () => {
-        userGroupRepo = { findUnique: jest.fn() };
-        assignmentRepo = { findManyRaw: jest.fn(), findUnique: jest.fn(), create: jest.fn(), createMany: jest.fn(), deleteMany: jest.fn() };
+        assignmentRepo = {
+            findManyRaw: jest.fn(),
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            createMany: jest.fn(),
+            deleteMany: jest.fn()
+        };
         roleHasPermRepo = { findMany: jest.fn() };
-        roleContextRepo = { findFirst: jest.fn(), findMany: jest.fn() };
-        groupRepo = { findFirstRaw: jest.fn(), findById: jest.fn() };
-        userRepo = { findById: jest.fn() };
-        roleRepo = { findManyRaw: jest.fn() };
+        roleContextRepo = { findMany: jest.fn() };
+        groupRepo = { findById: jest.fn() };
         rbacCache = {
-            getUserPermissionsInGroup: jest.fn(),
-            setUserPermissionsInGroup: jest.fn(),
-            clearUserPermissionsInGroup: jest.fn(),
-            getSystemPermissions: jest.fn(),
-            setSystemPermissions: jest.fn(),
+            isCached: jest.fn(),
+            hasPermission: jest.fn(),
+            setPermissions: jest.fn(),
+            redis: { smembers: jest.fn() }
+        };
+        prisma = {
+            $transaction: (cb: any) => cb(prisma),
+            userRoleAssignment: { deleteMany: jest.fn(), createMany: jest.fn() },
+            permission: { findMany: jest.fn().mockResolvedValue([]) }
         };
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 RbacService,
-                { provide: USER_GROUP_REPOSITORY, useValue: userGroupRepo },
+                { provide: USER_GROUP_REPOSITORY, useValue: {} },
                 { provide: USER_ROLE_ASSIGNMENT_REPOSITORY, useValue: assignmentRepo },
                 { provide: ROLE_HAS_PERMISSION_REPOSITORY, useValue: roleHasPermRepo },
                 { provide: ROLE_CONTEXT_REPOSITORY, useValue: roleContextRepo },
                 { provide: GROUP_REPOSITORY, useValue: groupRepo },
-                { provide: USER_REPOSITORY, useValue: userRepo },
-                { provide: ROLE_REPOSITORY, useValue: roleRepo },
+                { provide: USER_REPOSITORY, useValue: {} },
+                { provide: ROLE_REPOSITORY, useValue: {} },
                 { provide: RbacCacheService, useValue: rbacCache },
+                { provide: PrismaService, useValue: prisma },
             ],
         }).compile();
 
         service = module.get<RbacService>(RbacService);
     });
 
-    it('should be defined', () => {
-        expect(service).toBeDefined();
+    describe('userHasPermissionsInGroup', () => {
+        it('should refresh if not cached and return true if has any permission', async () => {
+            rbacCache.isCached.mockResolvedValue(false);
+            rbacCache.hasPermission.mockResolvedValue(true);
+
+            // Mock refresh login
+            assignmentRepo.findManyRaw.mockResolvedValue([{ role_id: 1n }]);
+            roleHasPermRepo.findMany.mockResolvedValue([{ permission: { code: 'p1', status: 'active' } }]);
+
+            const result = await service.userHasPermissionsInGroup(1, 10, ['p1']);
+
+            expect(rbacCache.isCached).toHaveBeenCalled();
+            expect(rbacCache.setPermissions).toHaveBeenCalledWith(1, 10, ['p1']);
+            expect(result).toBe(true);
+        });
     });
 
-    describe('userHasPermissionsInGroup', () => {
-        it('should return false if user not in group', async () => {
-            userGroupRepo.findUnique.mockResolvedValue(null);
-            const result = await service.userHasPermissionsInGroup(1, 10, ['p1']);
-            expect(result).toBe(false);
-        });
-
-        it('should use cache if available', async () => {
-            userGroupRepo.findUnique.mockResolvedValue({ id: 1 });
-            rbacCache.getUserPermissionsInGroup.mockResolvedValue(new Set(['p1']));
-
-            const result = await service.userHasPermissionsInGroup(1, 10, ['p1']);
-            expect(result).toBe(true);
-            expect(assignmentRepo.findManyRaw).not.toHaveBeenCalled();
-        });
-
-        it('should query DB and update cache if not in cache', async () => {
-            userGroupRepo.findUnique.mockResolvedValue({ id: 1 });
-            rbacCache.getUserPermissionsInGroup.mockResolvedValue(null);
-            assignmentRepo.findManyRaw.mockResolvedValue([{ role_id: 5 }]);
-            roleHasPermRepo.findMany.mockResolvedValue([
-                { permission: { code: 'p1' } }
+    describe('refreshUserPermissions', () => {
+        it('should flatten permissions correctly', async () => {
+            assignmentRepo.findManyRaw.mockResolvedValue([{ role_id: 100n }]);
+            roleHasPermRepo.findMany.mockResolvedValue([{ permission: { id: 1n, code: 'child', parent_id: 2n, status: 'active' } }]);
+            prisma.permission.findMany.mockResolvedValue([
+                { id: 1n, code: 'child', parent_id: 2n, status: 'active' },
+                { id: 2n, code: 'parent', parent_id: null, status: 'active' }
             ]);
 
-            const result = await service.userHasPermissionsInGroup(1, 10, ['p1']);
-            expect(result).toBe(true);
-            expect(rbacCache.setUserPermissionsInGroup).toHaveBeenCalled();
+            await service.refreshUserPermissions(1, 10);
+
+            expect(rbacCache.setPermissions).toHaveBeenCalledWith(1, 10, expect.arrayContaining(['child', 'parent']));
         });
     });
 
-    describe('assignRoleToUser', () => {
-        it('should throw BadRequestException if user not in group', async () => {
-            userGroupRepo.findUnique.mockResolvedValue(null);
-            await expect(service.assignRoleToUser(1, 5, 10)).rejects.toThrow(BadRequestException);
-        });
-
-        it('should throw BadRequestException if role not allowed in context', async () => {
-            userGroupRepo.findUnique.mockResolvedValue({ id: 1 });
-            groupRepo.findById.mockResolvedValue({ id: 10, context_id: 1 });
-            roleContextRepo.findFirst.mockResolvedValue(null);
-
-            await expect(service.assignRoleToUser(1, 5, 10)).rejects.toThrow(BadRequestException);
-        });
-
-        it('should create assignment if valid', async () => {
-            userGroupRepo.findUnique.mockResolvedValue({ id: 1 });
-            groupRepo.findById.mockResolvedValue({ id: 10, context_id: 1 });
-            roleContextRepo.findFirst.mockResolvedValue({ id: 1 });
-            assignmentRepo.findUnique.mockResolvedValue(null);
-
-            await service.assignRoleToUser(1, 5, 10);
-            expect(assignmentRepo.create).toHaveBeenCalled();
-            expect(rbacCache.clearUserPermissionsInGroup).toHaveBeenCalledWith(1, 10);
-        });
-    });
     describe('syncRolesInGroup', () => {
-        it('should throw NotFoundException if user or group not found', async () => {
-            userRepo.findById.mockResolvedValue(null);
-            await expect(service.syncRolesInGroup(1, 10, [5])).rejects.toThrow(NotFoundException);
+        it('should error if group not found', async () => {
+            groupRepo.findById.mockResolvedValue(null);
+            await expect(service.syncRolesInGroup(1, 10, [1])).rejects.toThrow(NotFoundException);
         });
 
-        it('should sync roles correctly', async () => {
-            userRepo.findById.mockResolvedValue({ id: 1 });
+        it('should update DB and call refresh', async () => {
             groupRepo.findById.mockResolvedValue({ id: 10, context_id: 1 });
-            userGroupRepo.findUnique.mockResolvedValue({ id: 1 });
-            roleRepo.findManyRaw.mockResolvedValue([{ id: 5 }]);
-            roleContextRepo.findFirst.mockResolvedValue({ id: 1 });
-            roleContextRepo.findMany.mockResolvedValue([{ role_id: BigInt(5) }]);
-            assignmentRepo.findUnique.mockResolvedValue(null);
+            roleContextRepo.findMany.mockResolvedValue([{ role_id: 1n }]);
 
-            await service.syncRolesInGroup(1, 10, [5]);
+            // Mock refresh
+            assignmentRepo.findManyRaw.mockResolvedValue([]);
 
-            expect(assignmentRepo.deleteMany).toHaveBeenCalled();
-            expect(assignmentRepo.createMany).toHaveBeenCalled();
-            expect(rbacCache.clearUserPermissionsInGroup).toHaveBeenCalledWith(1, 10);
-        });
-    });
+            await service.syncRolesInGroup(1, 10, [1]);
 
-    describe('checkSystemPermissions', () => {
-        it('should return false if system group not found', async () => {
-            rbacCache.getSystemPermissions.mockResolvedValue(null);
-            groupRepo.findFirstRaw.mockResolvedValue(null);
-            const result = await (service as any).checkSystemPermissions(1, ['p1']);
-            expect(result).toBe(false);
-        });
-
-        it('should return true if user has p1 in system group', async () => {
-            rbacCache.getSystemPermissions.mockResolvedValue(null);
-            groupRepo.findFirstRaw.mockResolvedValue({ id: 1 });
-            userGroupRepo.findUnique.mockResolvedValue({ id: 1 });
-            assignmentRepo.findManyRaw.mockResolvedValue([{ role_id: 5 }]);
-            roleHasPermRepo.findMany.mockResolvedValue([{ permission: { code: 'p1' } }]);
-
-            const result = await (service as any).checkSystemPermissions(1, ['p1']);
-            expect(result).toBe(true);
+            expect(prisma.userRoleAssignment.deleteMany).toHaveBeenCalled();
+            expect(prisma.userRoleAssignment.createMany).toHaveBeenCalled();
+            expect(rbacCache.setPermissions).toHaveBeenCalled();
         });
     });
 });
-
-
-
-

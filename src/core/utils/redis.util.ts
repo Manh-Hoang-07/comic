@@ -7,21 +7,48 @@ export class RedisUtil implements OnModuleDestroy {
   private client: RedisClient | null = null;
   private readonly url: string | undefined;
 
+  private subClient: RedisClient | null = null;
+
   constructor(private readonly configService: ConfigService) {
     this.url = process.env.REDIS_URL || this.configService.get<string>('REDIS_URL');
     if (this.url) {
-      this.client = new Redis(this.url, {
+      const options = {
         lazyConnect: true,
         maxRetriesPerRequest: 1,
         enableReadyCheck: false,
-        retryStrategy: () => null, // Disable reconnection loop
-      });
+        retryStrategy: () => null,
+      };
+      this.client = new Redis(this.url, options);
+      this.subClient = new Redis(this.url, options);
 
-      // Suppress unhandled error events
-      this.client.on('error', () => {
-        // Silently ignore redis connection errors during startup/seeding
-      });
+      this.client.on('error', () => { });
+      this.subClient.on('error', () => { });
     }
+  }
+
+  // ... (existing methods)
+
+  async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
+    if (!this.subClient) return;
+    await this.subClient.subscribe(channel);
+    this.subClient.on('message', (chan, msg) => {
+      if (chan === channel) callback(msg);
+    });
+  }
+
+  /**
+   * Track keys by user to avoid KEYS command
+   */
+  async trackKey(userId: number, key: string): Promise<void> {
+    await this.sadd(`rbac:u:${userId}:keys`, key);
+  }
+
+  async getTrackedKeys(userId: number): Promise<string[]> {
+    return this.smembers(`rbac:u:${userId}:keys`);
+  }
+
+  async clearTrackedKeys(userId: number): Promise<void> {
+    await this.del(`rbac:u:${userId}:keys`);
   }
 
   isEnabled(): boolean {
@@ -106,6 +133,32 @@ export class RedisUtil implements OnModuleDestroy {
       end
     `;
     await this.client.eval(script, 1, key, token);
+  }
+
+  async sadd(key: string, ...values: string[]): Promise<void> {
+    if (!this.client || values.length === 0) return;
+    await this.client.sadd(key, ...values);
+  }
+
+  async sismember(key: string, value: string): Promise<boolean> {
+    if (!this.client) return false;
+    const result = await this.client.sismember(key, value);
+    return result === 1;
+  }
+
+  async smembers(key: string): Promise<string[]> {
+    if (!this.client) return [];
+    return this.client.smembers(key);
+  }
+
+  async srem(key: string, ...values: string[]): Promise<void> {
+    if (!this.client || values.length === 0) return;
+    await this.client.srem(key, ...values);
+  }
+
+  async publish(channel: string, message: string): Promise<void> {
+    if (!this.client) return;
+    await this.client.publish(channel, message);
   }
 
   async onModuleDestroy() {

@@ -11,89 +11,87 @@ describe('RbacCacheService', () => {
     beforeEach(async () => {
         redisUtil = {
             isEnabled: jest.fn().mockReturnValue(true),
-            get: jest.fn(),
-            set: jest.fn(),
+            sismember: jest.fn(),
+            smembers: jest.fn(),
+            del: jest.fn(),
+            sadd: jest.fn(),
+            publish: jest.fn(),
+            trackKey: jest.fn(),
+            getTrackedKeys: jest.fn(),
+            clearTrackedKeys: jest.fn(),
+            subscribe: jest.fn(),
         };
 
         configService = {
-            get: jest.fn().mockReturnValue(300),
+            get: jest.fn().mockReturnValue(3600),
         };
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 RbacCacheService,
-                {
-                    provide: RedisUtil,
-                    useValue: redisUtil,
-                },
-                {
-                    provide: ConfigService,
-                    useValue: configService,
-                },
+                { provide: RedisUtil, useValue: redisUtil },
+                { provide: ConfigService, useValue: configService },
             ],
         }).compile();
 
         service = module.get<RbacCacheService>(RbacCacheService);
+        // @ts-ignore: reset L1 cache for each test
+        service.l1Cache = new Map();
     });
 
     it('should be defined', () => {
         expect(service).toBeDefined();
     });
 
-    describe('getVersion', () => {
-        it('should return 1 if redis is disabled', async () => {
-            redisUtil.isEnabled.mockReturnValue(false);
-            const version = await service.getVersion();
-            expect(version).toBe(1);
+    describe('hasPermission', () => {
+        it('should check L1 cache first', async () => {
+            const key = 'rbac:u:1:g:10';
+            // @ts-ignore: populate L1
+            service.l1Cache.set(key, { data: new Set(['perm1']), expiry: Date.now() + 10000 });
+
+            const result = await service.hasPermission(1, 10, 'perm1');
+            expect(result).toBe(true);
+            expect(redisUtil.sismember).not.toHaveBeenCalled();
         });
 
-        it('should return cached version if exists', async () => {
-            redisUtil.get.mockResolvedValue('5');
-            const version = await service.getVersion();
-            expect(version).toBe(5);
-        });
-    });
+        it('should fallback to L2 (Redis) and load to L1', async () => {
+            redisUtil.sismember.mockResolvedValue(1);
+            redisUtil.smembers.mockResolvedValue(['perm1', 'perm2']);
 
-    describe('getUserPermissionsInGroup', () => {
-        it('should return null if not in cache', async () => {
-            redisUtil.get.mockResolvedValue(null);
-            const result = await service.getUserPermissionsInGroup(1, 10);
-            expect(result).toBeNull();
-        });
+            const result = await service.hasPermission(1, 10, 'perm1');
+            expect(result).toBe(true);
+            expect(redisUtil.sismember).toHaveBeenCalled();
+            expect(redisUtil.smembers).toHaveBeenCalled();
 
-        it('should return Set of permissions if in cache', async () => {
-            redisUtil.get.mockImplementation((key: string) => {
-                if (key === 'rbac:version') return Promise.resolve('1');
-                return Promise.resolve(JSON.stringify(['p1', 'p2']));
-            });
-            const result = await service.getUserPermissionsInGroup(1, 10);
-            expect(result).toBeInstanceOf(Set);
-            expect(result?.has('p1')).toBe(true);
-            expect(result?.has('p2')).toBe(true);
+            // Check if loaded to L1
+            // @ts-ignore
+            expect(service.l1Cache.has('rbac:u:1:g:10')).toBe(true);
         });
     });
 
-    describe('setUserPermissionsInGroup', () => {
-        it('should store permissions as JSON string', async () => {
-            redisUtil.get.mockResolvedValue('1');
-            await service.setUserPermissionsInGroup(1, 10, ['p1']);
-            expect(redisUtil.set).toHaveBeenCalledWith(
-                'rbac:user:1:grp:10:v1',
-                JSON.stringify(['p1']),
-                300
-            );
+    describe('setPermissions', () => {
+        it('should update Redis and publish invalidation', async () => {
+            redisUtil.client = { expire: jest.fn() };
+            await service.setPermissions(1, 10, ['p1', 'p2']);
+
+            expect(redisUtil.del).toHaveBeenCalledWith('rbac:u:1:g:10');
+            expect(redisUtil.sadd).toHaveBeenCalledWith('rbac:u:1:g:10', 'p1', 'p2');
+            expect(redisUtil.trackKey).toHaveBeenCalledWith(1, 'rbac:u:1:g:10');
+            expect(redisUtil.publish).toHaveBeenCalled();
+            // @ts-ignore: check L1 cleared
+            expect(service.l1Cache.has('rbac:u:1:g:10')).toBe(false);
         });
     });
 
-    describe('clearUserPermissionsInGroup', () => {
-        it('should bump version', async () => {
-            redisUtil.get.mockResolvedValue('1');
-            await service.clearUserPermissionsInGroup(1, 10);
-            expect(redisUtil.set).toHaveBeenCalledWith('rbac:version', '2');
+    describe('clearAllUserCaches', () => {
+        it('should clear all tracked keys and publish', async () => {
+            redisUtil.getTrackedKeys.mockResolvedValue(['key1', 'key2']);
+            await service.clearAllUserCaches(1);
+
+            expect(redisUtil.del).toHaveBeenCalledWith('key1');
+            expect(redisUtil.del).toHaveBeenCalledWith('key2');
+            expect(redisUtil.clearTrackedKeys).toHaveBeenCalledWith(1);
+            expect(redisUtil.publish).toHaveBeenCalledWith('rbac:invalidation', expect.stringContaining('user_all'));
         });
     });
 });
-
-
-
-

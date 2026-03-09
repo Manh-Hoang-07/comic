@@ -1,0 +1,33 @@
+FAIL test/unit/modules/core/rbac/services/rbac-cache.service.spec.ts (7.019 s)
+  RbacCacheService
+    ΓêÜ should be defined (23 ms)
+    hasPermission
+      ΓêÜ should check L1 cache first (4 ms)
+      ├ù should fallback to L2 (Redis) and load to L1 (4 ms)
+    setPermissions
+      ΓêÜ should update Redis and publish invalidation (5 ms)
+    clearAllUserCaches
+      ΓêÜ should clear all tracked keys and publish (5 ms)
+
+  ΓùÅ RbacCacheService ΓÇ║ hasPermission ΓÇ║ should fallback to L2 (Redis) and load to L1
+
+    expect(jest.fn()).toHaveBeenCalled()
+
+    Expected number of calls: >= 1
+    Received number of calls:    0
+
+      62 |             expect(result).toBe(true);
+      63 |             expect(redisUtil.sismember).toHaveBeenCalled();
+    > 64 |             expect(redisUtil.smembers).toHaveBeenCalled();
+         |                                        ^
+      65 |
+      66 |             // Check if loaded to L1
+      67 |             // @ts-ignore
+
+      at Object.<anonymous> (test/unit/modules/core/rbac/services/rbac-cache.service.spec.ts:64:40)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 4 passed, 5 total
+Snapshots:   0 total
+Time:        7.463 s, estimated 11 s
+Ran all test suites matching /test\\unit\\modules\\core\\rbac\\services\\rbac-cache.service.spec.ts/i.

@@ -47,7 +47,7 @@ export abstract class PrismaRepository<
         const filter = options.filter || {};
 
         const where: any = this.buildWhere(filter);
-        const orderBy = parseSort(sort) as unknown as OrderByInput[];
+        const orderBy = this.parseSort(sort) as unknown as OrderByInput[];
 
         const selectionFlat = resolveQuerySelection(options, {
             select: this.defaultSelect,
@@ -125,7 +125,7 @@ export abstract class PrismaRepository<
 
         return this.delegate.findMany({
             where: this.buildWhere(filter),
-            orderBy: options.sort ? parseSort(options.sort) : undefined,
+            orderBy: options.sort ? this.parseSort(options.sort) : undefined,
             take: options.limit,
             skip:
                 options.page && options.limit ? (options.page - 1) * options.limit : undefined,

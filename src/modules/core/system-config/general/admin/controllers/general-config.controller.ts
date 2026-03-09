@@ -38,7 +38,6 @@ export class GeneralConfigController {
   @Post()
   @CacheEvict({ keys: ['system:configs:general'] })
   updateConfig(@Body(ValidationPipe) dto: UpdateGeneralConfigDto) {
-    const userId = this.auth.id() || undefined;
-    return this.generalConfigService.updateConfig(dto, userId);
+    return this.generalConfigService.updateConfig(dto);
   }
 }

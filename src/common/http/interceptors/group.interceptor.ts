@@ -29,7 +29,7 @@ export class GroupInterceptor implements NestInterceptor {
     const groupId = groupIdRaw ? Number(groupIdRaw) : null;
 
     if (groupId) {
-      const group = await this.groupService.findById(groupId).catch(() => null);
+      const group = await this.groupService.getOne(groupId).catch(() => null);
       if (!group) {
         if (isPublicEndpoint) return this.setSysCtx(next);
         throw new BadRequestException('Group not found');

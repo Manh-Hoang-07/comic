@@ -106,21 +106,21 @@ describe('AuthUtil', () => {
         it('should return specific property from user if user exists', () => {
             (RequestContext.get as jest.Mock).mockReturnValue(mockUser);
 
-            expect(Auth.get(undefined, 'email')).toBe('test@example.com');
-            expect(Auth.get(undefined, 'status')).toBe('active');
+            expect(Auth.get('email', undefined)).toBe('test@example.com');
+            expect(Auth.get('status', undefined)).toBe('active');
         });
 
         it('should return undefined if user property does not exist', () => {
             (RequestContext.get as jest.Mock).mockReturnValue(mockUser);
 
             // Let's pretend user does not have this property
-            expect((Auth as any).get(undefined, 'nonexistent')).toBeUndefined();
+            expect((Auth as any).get('nonexistent', undefined)).toBeUndefined();
         });
 
-        it('should return undefined if user does not exist', () => {
+        it('should return null if user does not exist', () => {
             (RequestContext.get as jest.Mock).mockReturnValue(null);
 
-            expect(Auth.get(undefined, 'email')).toBeUndefined();
+            expect(Auth.get('email', undefined)).toBeNull();
         });
     });
 });

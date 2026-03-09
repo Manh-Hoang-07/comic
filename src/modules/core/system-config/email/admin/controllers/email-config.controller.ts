@@ -34,7 +34,6 @@ export class EmailConfigController {
   @LogRequest()
   @Post()
   updateConfig(@Body(ValidationPipe) dto: UpdateEmailConfigDto) {
-    const userId = this.auth.id() || undefined;
-    return this.emailConfigService.updateConfig(dto, userId);
+    return this.emailConfigService.updateConfig(dto);
   }
 }

@@ -30,10 +30,10 @@ describe('GeneralConfigController', () => {
         expect(service.getConfig).toHaveBeenCalled();
     });
 
-    it('should call service.updateConfig with userId', async () => {
+    it('should call service.updateConfig', async () => {
         const dto = { site_name: 'Test' };
         await controller.updateConfig(dto as any);
-        expect(service.updateConfig).toHaveBeenCalledWith(dto, 1);
+        expect(service.updateConfig).toHaveBeenCalledWith(dto);
     });
 });
 

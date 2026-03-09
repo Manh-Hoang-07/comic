@@ -73,7 +73,7 @@ export class ContactController {
     @Param('id') id: string,
     @Body('reply') reply: string,
   ) {
-    return this.contactService.replyToContact(+id, reply, this.auth.id() || undefined);
+    return this.contactService.replyToContact(+id, reply);
   }
 
   @Permission('contact.manage')

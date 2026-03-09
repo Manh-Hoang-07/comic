@@ -4,7 +4,7 @@ import { BaseService } from '@/common/core/services';
 import { ICommentRepository, COMMENT_REPOSITORY } from '../../domain/comment.repository';
 import { ComicNotificationService } from '@/modules/comics/shared/services/comic-notification.service';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
-import { COMMENT_TREE_INCLUDE } from '../utils/comment-query.helper';
+import { COMMENT_TREE_INCLUDE } from '../../utils/comment-query.helper';
 
 @Injectable()
 export class UserCommentsService extends BaseService<ComicComment, ICommentRepository> {

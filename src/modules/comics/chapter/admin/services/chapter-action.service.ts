@@ -1,5 +1,6 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
-import { Chapter, ChapterStatus } from '@prisma/client';
+import { Chapter } from '@prisma/client';
+import { ChapterStatus } from '@/shared/enums/types/chapter-status.enum';
 import { IChapterRepository, CHAPTER_REPOSITORY } from '../../domain/chapter.repository';
 import { IChapterPageRepository, CHAPTER_PAGE_REPOSITORY } from '../../domain/chapter-page.repository';
 import { IComicRepository, COMIC_REPOSITORY } from '../../../comic/domain/comic.repository';

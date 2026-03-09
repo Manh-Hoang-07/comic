@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
-import { UserService } from '@/modules/core/iam/user/admin/services/user.service';
 import { ProfileController } from './controllers/profile.controller';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
+import { AdminUserModule } from '../admin/user.module';
 
 @Module({
-    imports: [RbacModule],
+    imports: [RbacModule, AdminUserModule],
     controllers: [ProfileController],
-    providers: [UserService],
-    exports: [UserService],
 })
 export class UserProfileModule { }

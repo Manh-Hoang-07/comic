@@ -4,9 +4,9 @@ import { MENU_REPOSITORY } from '@/modules/core/menu/domain/menu.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RequestContext } from '@/common/shared/utils';
 import { BadRequestException } from '@nestjs/common';
-import * as menuHelper from '@/common/core/utils/menu.helper';
+import * as menuHelper from '@/modules/core/menu/utils/menu.helper';
 
-jest.mock('@/common/core/utils/menu.helper');
+jest.mock('@/modules/core/menu/utils/menu.helper');
 
 describe('MenuService', () => {
     let service: MenuService;
@@ -66,16 +66,17 @@ describe('MenuService', () => {
 
     describe('getUserMenus', () => {
         it('should call helper functions to filter and build tree', async () => {
-            const mockMenus = [{ id: 1, code: 'm1' }];
+            const mockMenus = [{ id: 1, code: 'm1', show_in_menu: true }];
             menuRepo.findAllWithChildren.mockResolvedValue(mockMenus);
 
-            (menuHelper.filterMenusByPermissions as jest.Mock).mockResolvedValue(mockMenus);
+            rbacService.getUserPermissions = jest.fn().mockResolvedValue(new Set());
+            (menuHelper.filterAdminMenus as jest.Mock).mockReturnValue(mockMenus);
             (menuHelper.buildMenuTree as jest.Mock).mockReturnValue([{ id: 1, children: [] }]);
 
             const result = await service.getUserMenus(1, { group: 'admin' });
 
             expect(menuRepo.findAllWithChildren).toHaveBeenCalled();
-            expect(menuHelper.filterMenusByPermissions).toHaveBeenCalled();
+            expect(menuHelper.filterAdminMenus).toHaveBeenCalled();
             expect(menuHelper.buildMenuTree).toHaveBeenCalledWith(mockMenus);
             expect(result).toEqual([{ id: 1, children: [] }]);
         });

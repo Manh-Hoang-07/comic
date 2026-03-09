@@ -4,7 +4,7 @@ import { BaseService } from '@/common/core/services';
 import { ICommentRepository, COMMENT_REPOSITORY } from '../../domain/comment.repository';
 import { IPaginationOptions } from '@/common/core/repositories';
 import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
-import { COMMENT_TREE_INCLUDE, normalizeCommentFilters } from '../utils/comment-query.helper';
+import { COMMENT_TREE_INCLUDE, normalizeCommentFilters } from '../../utils/comment-query.helper';
 
 @Injectable()
 export class CommentsService extends BaseService<ComicComment, ICommentRepository> {

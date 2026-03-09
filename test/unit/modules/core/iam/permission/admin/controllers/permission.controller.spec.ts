@@ -18,9 +18,9 @@ describe('PermissionController', () => {
             getList: jest.fn(),
             getSimpleList: jest.fn(),
             getOne: jest.fn(),
-            createWithAudit: jest.fn(),
-            updateWithAudit: jest.fn(),
-            deleteById: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
         };
 
         const module: TestingModule = await Test.createTestingModule({
@@ -72,37 +72,33 @@ describe('PermissionController', () => {
 
     describe('create', () => {
         it('should create permission with audit info', async () => {
-            (Auth.id as jest.Mock).mockReturnValue(99);
             const dto = { name: 'P' };
-            service.createWithAudit.mockResolvedValue({ id: 1 });
+            service.create.mockResolvedValue({ id: 1 });
 
             const result = await controller.create(dto);
 
-            expect(Auth.id).toHaveBeenCalled();
-            expect(service.createWithAudit).toHaveBeenCalledWith(dto, 99);
+            expect(service.create).toHaveBeenCalledWith(dto);
             expect(result.id).toBe(1);
         });
     });
 
     describe('update', () => {
         it('should update permission with audit info', async () => {
-            (Auth.id as jest.Mock).mockReturnValue(99);
             const dto = { name: 'P' };
-            service.updateWithAudit.mockResolvedValue({ id: 1 });
+            service.update.mockResolvedValue({ id: 1 });
 
             const result = await controller.update(1, dto);
 
-            expect(Auth.id).toHaveBeenCalled();
-            expect(service.updateWithAudit).toHaveBeenCalledWith(1, dto, 99);
+            expect(service.update).toHaveBeenCalledWith(1, dto);
             expect(result.id).toBe(1);
         });
     });
 
     describe('delete', () => {
         it('should delete permission', async () => {
-            service.deleteById.mockResolvedValue(true);
+            service.delete.mockResolvedValue(true);
             const result = await controller.delete(1);
-            expect(service.deleteById).toHaveBeenCalledWith(1);
+            expect(service.delete).toHaveBeenCalledWith(1);
             expect(result).toBe(true);
         });
     });

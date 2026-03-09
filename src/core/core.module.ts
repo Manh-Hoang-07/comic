@@ -52,25 +52,11 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         JWT_ISSUER: Joi.string().allow(''),
         JWT_AUDIENCE: Joi.string().allow(''),
 
-        // Database
-        DB_TYPE: Joi.string().default('postgresql'),
-        DB_HOST: Joi.string().hostname().default('localhost'),
-        DB_PORT: Joi.number().default(5432),
-        DB_USERNAME: Joi.string().allow(''),
-        DB_PASSWORD: Joi.string().allow(''),
-        DB_DATABASE: Joi.string().allow(''),
-        DB_SYNCHRONIZE: Joi.boolean().truthy('true').falsy('false').default(false),
-        DB_LOGGING: Joi.boolean().truthy('true').falsy('false').default(false),
-        DB_SSL: Joi.boolean().truthy('true').falsy('false').default(false),
-        DB_CHARSET: Joi.string().default('utf8mb4'),
-        DB_TIMEZONE: Joi.string().default('+07:00'),
+        // Database (Prisma)
+        DATABASE_URL: Joi.string().uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] }).required(),
+        DIRECT_URL: Joi.string().uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] }).optional(),
         DB_CONNECTION_LIMIT: Joi.number().default(50),
-        // DB_ACQUIRE_TIMEOUT: Joi.number().default(60000),
-        // DB_TIMEOUT: Joi.number().default(60000),
-        // DB_RECONNECT: Joi.boolean().truthy('true').falsy('false').default(true),
 
-        // Prisma
-        DATABASE_URL: Joi.string().uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] }).optional(),
 
         // Mail (optional but warn if partially provided)
         MAIL_HOST: Joi.string().hostname().default('localhost'),

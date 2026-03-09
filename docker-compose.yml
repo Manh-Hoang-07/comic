@@ -1,44 +1,29 @@
 services:
-  db:
-    image: mariadb:11.4
-    container_name: comic-db
-    environment:
-      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-      MARIADB_DATABASE: ${DB_DATABASE}
-    ports:
-      # Avoid clashing with XAMPP MySQL (often 3306)
-      - "3307:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      # Use $$ to avoid compose-time env interpolation
-      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
+  #  db:
+  #    image: mariadb:11.4
+  #    container_name: comic-db
+  #    environment:
+  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+  #      MARIADB_DATABASE: ${DB_DATABASE}
+  #    ports:
+  #      # Avoid clashing with XAMPP MySQL (often 3306)
+  #      - "3307:3306"
+  #    volumes:
+  #      - db_data:/var/lib/mysql
+  #    healthcheck:
+  #      # Use $$ to avoid compose-time env interpolation
+  #      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
+  #      interval: 5s
+  #      timeout: 5s
+  #      retries: 30
 
-  redis:
-    image: redis:7-alpine
-    container_name: comic-redis
-    ports:
-      # Avoid clashing with local Redis (often 6379)
-      - "6380:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: comic-api
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    # depend_on redis removed as it is now external (Upstash)
     environment:
       NODE_ENV: ${NODE_ENV}
       PORT: ${PORT}
@@ -47,14 +32,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       APP_TIMEZONE: ${APP_TIMEZONE}
 
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${DB_DATABASE}
-      DB_CONNECTION_LIMIT: ${DB_CONNECTION_LIMIT}
-
       DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
       REDIS_URL: ${REDIS_URL}
 
       JWT_SECRET: ${JWT_SECRET}
@@ -82,5 +61,5 @@ services:
     ports:
       - "8000:8000"
 
-volumes:
-  db_data:
+#volumes:
+#  db_data:

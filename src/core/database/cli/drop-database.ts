@@ -2,7 +2,8 @@ import 'reflect-metadata';
 import { config } from 'dotenv';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
-import * as mysql from 'mysql2/promise';
+import { Client } from 'pg';
+import { parse } from 'pg-connection-string';
 
 async function bootstrap() {
   const logger = new Logger('DropDatabaseCLI');
@@ -10,53 +11,61 @@ async function bootstrap() {
   // Load environment variables từ file .env
   config({ path: path.resolve(process.cwd(), '.env') });
 
-  const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306', 10) || 3306,
-    user: process.env.DB_USERNAME || '',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_DATABASE || '',
-    charset: process.env.DB_CHARSET || 'utf8mb4',
-    timezone: process.env.DB_TIMEZONE || '+07:00',
-  };
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    logger.error('DATABASE_URL is not defined in .env');
+    process.exit(1);
+  }
 
-  const databaseName = dbConfig.database;
+  const configParams = parse(connectionString);
+  const databaseName = configParams.database;
 
-  // Create a connection without specifying the database to connect to MySQL server
-  const connection = await mysql.createConnection({
-    host: dbConfig.host,
-    port: dbConfig.port,
-    user: dbConfig.user,
-    password: dbConfig.password,
+  if (!databaseName) {
+    logger.error('Database name not found in DATABASE_URL');
+    process.exit(1);
+  }
+
+  // Create a connection without specifying the database to connect to 'postgres' server
+  const client = new Client({
+    user: configParams.user,
+    host: configParams.host || 'localhost',
+    database: 'postgres',
+    password: configParams.password,
+    port: configParams.port ? parseInt(configParams.port, 10) : 5432,
+    ssl: { rejectUnauthorized: false }
   });
 
   try {
-    logger.log(`Connected to MySQL server at ${dbConfig.host}:${dbConfig.port}`);
+    await client.connect();
+    logger.log(`Connected to PostgreSQL server at ${configParams.host || 'localhost'}`);
 
     // Check if database exists
-    const [rows] = await connection.execute(
-      `SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?`,
+    const res = await client.query(
+      'SELECT 1 FROM pg_database WHERE datname = $1',
       [databaseName]
     );
 
-    const dbExists = Array.isArray(rows) && rows.length > 0;
+    const dbExists = res.rowCount !== null && res.rowCount > 0;
 
     if (dbExists) {
-      // Drop database
-      await connection.execute(`DROP DATABASE \`${databaseName}\``);
+      // Drop database - PostgreSQL doesn't allow dropping the database you're connected to, 
+      // but we're connected to 'postgres' so it's fine.
+      // We also need to terminate other connections to that DB first in a real scenario,
+      // but for CLI this should be enough.
+      await client.query(`DROP DATABASE "${databaseName}"`);
       logger.log(`✅ Database '${databaseName}' dropped successfully.`);
     } else {
       logger.log(`Database '${databaseName}' does not exist. Skipping drop.`);
     }
 
-    await connection.end();
+    await client.end();
     process.exit(0);
   } catch (error) {
     logger.error(`❌ Failed to drop database '${databaseName}':`, error);
-    await connection.end();
     process.exit(1);
   }
 }
+
 
 bootstrap();
 

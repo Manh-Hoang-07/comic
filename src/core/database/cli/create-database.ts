@@ -1,43 +1,53 @@
 import 'reflect-metadata';
 import { config } from 'dotenv';
 import * as path from 'path';
-import * as mysql from 'mysql2/promise';
+import { Client } from 'pg';
+import { parse } from 'pg-connection-string';
 
 // Load environment variables từ file .env
 config({ path: path.resolve(process.cwd(), '.env') });
 
 async function createDatabaseIfNotExists() {
-  const dbName = process.env.DB_DATABASE || '';
-  const dbHost = process.env.DB_HOST || 'localhost';
-  const dbPort = parseInt(process.env.DB_PORT || '3306', 10);
-  const dbUsername = process.env.DB_USERNAME || '';
-  const dbPassword = process.env.DB_PASSWORD || '';
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    process.exit(1);
+  }
 
-  // Removed console.log for production
+  const config = parse(connectionString);
+  const dbName = config.database;
+
+  // Connect to 'postgres' default database to create the new one
+  const client = new Client({
+    user: config.user,
+    host: config.host || 'localhost',
+    database: 'postgres',
+    password: config.password,
+    port: config.port ? parseInt(config.port, 10) : 5432,
+    ssl: { rejectUnauthorized: false }
+  });
+
 
   try {
-    // Kết nối MySQL mà không chỉ định database
-    const connection = await mysql.createConnection({
-      host: dbHost,
-      port: dbPort,
-      user: dbUsername,
-      password: dbPassword,
-    });
+    await client.connect();
 
-    // Tạo database nếu chưa tồn tại
-    await connection.query(
-      `CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    // Check if database exists
+    const res = await client.query(
+      "SELECT 1 FROM pg_database WHERE datname = $1",
+      [dbName]
     );
 
-    await connection.end();
+    if (res.rowCount === 0) {
+      // Create database
+      await client.query(`CREATE DATABASE "${dbName}"`);
+    }
 
-    // Removed console.log for production
+    await client.end();
     process.exit(0);
   } catch (error: any) {
-    // Removed console.error for production
     process.exit(1);
   }
 }
+
 
 createDatabaseIfNotExists();
 

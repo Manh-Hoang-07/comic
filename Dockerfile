@@ -12,7 +12,8 @@ COPY prisma ./prisma
 COPY src ./src
 
 # Prisma generate requires DATABASE_URL to be set (adapter config reads it)
-ENV DATABASE_URL="mysql://user:pass@localhost:3306/db"
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
+
 
 RUN npm run prisma:generate
 RUN npm run build

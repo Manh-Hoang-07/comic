@@ -175,6 +175,28 @@ export class RbacCacheService {
     const arr = Array.from(new Set(permissions));
     await this.redis.set(this.systemPermsKey(userId, version), JSON.stringify(arr), this.ttlSeconds);
   }
+
+  /**
+   * 🧹 [Clean Code] Xoá toàn bộ cache permissions của một user (system + group)
+   * Dùng khi user đổi Role / rời Group...
+   */
+  async clearAllUserCaches(userId: number): Promise<void> {
+    await this.bumpVersion();
+  }
+
+  /**
+   * 🧹 [Clean Code] Kiểm tra xem cache đã tồn tại chưa.
+   * Trả về true nếu cache đã có, false nếu cần nạp lại.
+   * Dùng thay cho hack gọi userHasPermissionsInGroup(userId, groupId, []) chỉ để trigger cache.
+   */
+  async isPermissionsCached(userId: number, groupId: number | null): Promise<boolean> {
+    if (groupId === null) {
+      const cached = await this.getSystemPermissions(userId);
+      return cached !== null;
+    }
+    const cached = await this.getUserPermissionsInGroup(userId, groupId);
+    return cached !== null;
+  }
 }
 
 

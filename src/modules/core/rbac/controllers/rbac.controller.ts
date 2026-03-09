@@ -5,17 +5,18 @@ import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RequestContext } from '@/common/shared/utils';
 import { Auth } from '@/common/auth/utils';
 import { ExecutionContext } from '@nestjs/common';
+import { PERM } from '@/modules/core/rbac/rbac.constants';
 
 @Controller('admin/users')
 export class RbacController {
-  constructor(private readonly service: RbacService) {}
+  constructor(private readonly service: RbacService) { }
 
   /**
    * Sync roles cho user trong group (thay thế toàn bộ roles hiện tại trong group)
-   * System admin (có permission role.manage) có thể bỏ qua validation
+   * System admin có thể bỏ qua validation
    * Group_id tự động lấy từ RequestContext (không cần truyền trong body)
    */
-  @Permission('role.manage')
+  @Permission(PERM.ROLE.MANAGE)
   @LogRequest()
   @Put(':id/roles')
   async syncRoles(
@@ -25,20 +26,20 @@ export class RbacController {
   ) {
     // Lấy groupId từ RequestContext (đã được set bởi GroupInterceptor)
     const groupId = RequestContext.get<number | null>('groupId');
-    
+
     if (!groupId) {
       throw new BadRequestException('Group ID is required. Please specify X-Group-Id header or group_id query parameter');
     }
-    
-    // Check nếu user hiện tại là system admin (có permission role.manage)
+
+    // Check nếu user hiện tại là System Admin
     const currentUserId = Auth.id(context);
-    const isSystemAdmin = currentUserId 
-      ? await this.service.userHasPermissionsInGroup(currentUserId, null, ['role.manage'])
+    const isSystemAdmin = currentUserId
+      ? await this.service.isSystemAdmin(currentUserId)
       : false;
-    
+
     // System admin có thể bỏ qua validation (có thể gán bất kỳ role nào)
     const skipValidation = isSystemAdmin;
-    
+
     return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids || [], skipValidation);
   }
 }

@@ -5,6 +5,8 @@ export enum ContextType {
     GROUP = 'group'
 }
 
+export const SYSTEM_CONTEXT_CODE = 'system';
+
 export enum RbacPermission {
     SYSTEM_MANAGE = 'system.manage',
     GROUP_MANAGE = 'group.manage',
@@ -14,4 +16,15 @@ export enum RbacPermission {
     USER = 'user'
 }
 
-export const SYSTEM_CONTEXT_CODE = 'system';
+/**
+ * Tập hợp hằng số quyền (Single Source of Truth)
+ * Các string giá trị ở đây PHẢI TRÙNG với cột 'code' trong bảng 'permissions' của DB.
+ */
+export const PERM = {
+    SYSTEM: {
+        MANAGE: 'system.manage',
+    },
+    ROLE: {
+        MANAGE: 'role.manage', // Quyền chính bạn đang dùng
+    }
+};

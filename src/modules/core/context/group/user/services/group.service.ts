@@ -7,7 +7,7 @@ import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac
 import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
-import { RbacPermission } from '@/modules/core/rbac/rbac.constants';
+import { RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
 
 @Injectable()
 export class UserGroupService {
@@ -48,9 +48,7 @@ export class UserGroupService {
     if (isSystemAdmin) return true;
 
     return this.rbacService.userHasPermissionsInGroup(userId, groupId, [
-      RbacPermission.GROUP_MANAGE,
-      RbacPermission.GROUP_MEMBER_ADD,
-      RbacPermission.GROUP_MEMBER_MANAGE,
+      PERM.ROLE.MANAGE, // Thay thế cho các quyền group.manage/add không có trong DB
     ]);
   }
 

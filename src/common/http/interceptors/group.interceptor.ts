@@ -1,13 +1,13 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, ForbiddenException, BadRequestException, Inject } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { RequestContext } from '@/common/shared/utils';
 import { AdminContextService } from '@/modules/core/context/context/admin/services/context.service';
 import { AdminGroupService } from '@/modules/core/context/group/admin/services/group.service';
-import { UserGroupService } from '@/modules/core/context/group/user/services/group.service';
 import { Auth } from '@/common/auth/utils';
 import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
+import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
 
 @Injectable()
 export class GroupInterceptor implements NestInterceptor {
@@ -15,7 +15,8 @@ export class GroupInterceptor implements NestInterceptor {
     private readonly reflector: Reflector,
     private readonly contextService: AdminContextService,
     private readonly groupService: AdminGroupService,
-    private readonly userGroupService: UserGroupService,
+    @Inject(USER_GROUP_REPOSITORY)
+    private readonly userGroupRepo: IUserGroupRepository,
     private readonly rbacService: RbacService,
   ) { }
 
@@ -56,19 +57,18 @@ export class GroupInterceptor implements NestInterceptor {
       // Validate quyền truy cập Group
       const userId = Auth.id(context);
       if (userId && !isPublicEndpoint) {
-        // 1. Kiểm tra User có trong nhóm không
-        const userGroups = await this.userGroupService.getUserGroups(userId);
-        const groupIdNumber = Number(group.id);
-        let hasAccess = userGroups.some((g: any) => Number(g.id) === groupIdNumber);
+        // 🚀 [Tối ưu] Chỉ check membership bằng findUnique O(1) thay vì getUserGroups() O(N)
+        const userInGroup = await this.userGroupRepo.findUnique(userId, groupId);
+        let hasAccess = !!userInGroup;
 
-        // 2. Nếu không trong nhóm, kiểm tra xem có phải Global Admin (System Context) không
+        // Nếu không trong nhóm, kiểm tra xem có phải Global Admin (System Context) không
         if (!hasAccess) {
           hasAccess = await this.rbacService.isSystemAdmin(userId);
         }
 
         if (!hasAccess) {
           throw new ForbiddenException(
-            `Access denied to group ${groupIdNumber}. You do not have permission to access this group.`
+            `Access denied to group ${groupId}. You do not have permission to access this group.`
           );
         }
       }

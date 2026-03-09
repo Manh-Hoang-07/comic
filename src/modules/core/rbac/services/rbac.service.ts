@@ -7,7 +7,7 @@ import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
-import { ContextType, RbacPermission } from '@/modules/core/rbac/rbac.constants';
+import { ContextType, RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 
 /**
@@ -70,8 +70,8 @@ export class RbacService {
    */
   async isSystemAdmin(userId: number): Promise<boolean> {
     return this.userHasPermissionsInGroup(userId, null, [
-      RbacPermission.SYSTEM_MANAGE,
-      RbacPermission.GROUP_MANAGE,
+      PERM.SYSTEM.MANAGE,
+      PERM.ROLE.MANAGE,
     ]);
   }
 
@@ -90,15 +90,42 @@ export class RbacService {
   }
 
   /**
-   * Helper lấy quyền Global
+   * Helper lấy quyền Global (tường minh, không hack side-effect)
    */
   private async getGlobalPermissionsSet(userId: number): Promise<Set<string>> {
     let cached = await this.rbacCache.getSystemPermissions(userId);
     if (cached === null) {
-      await this.checkSystemPermissions(userId, []);
+      // Nạp cache system permissions nếu chưa có
+      await this.ensureSystemPermissionsLoaded(userId);
       cached = await this.rbacCache.getSystemPermissions(userId);
     }
     return cached || new Set<string>();
+  }
+
+  /**
+   * 🧹 [Clean Code] Nạp system permissions vào cache một cách tường minh
+   */
+  private async ensureSystemPermissionsLoaded(userId: number): Promise<void> {
+    const assignments = await this.assignmentRepo.findManyRaw({
+      where: {
+        user_id: BigInt(userId),
+        group: {
+          context: { type: ContextType.SYSTEM },
+          status: 'active' as any,
+        },
+        role: { status: 'active' as any },
+      },
+      select: { role_id: true },
+    });
+
+    if (!assignments.length) {
+      await this.rbacCache.setSystemPermissions(userId, []);
+      return;
+    }
+
+    const roleIds = Array.from(new Set(assignments.map((a: any) => a.role_id)));
+    const permissions = await this.getPermissionsByRoleIds(roleIds);
+    await this.rbacCache.setSystemPermissions(userId, permissions);
   }
 
   /**
@@ -143,78 +170,81 @@ export class RbacService {
    * Lấy danh sách permission codes (bao gồm kế thừa) từ danh sách Role IDs
    */
   private async getPermissionsByRoleIds(roleIds: bigint[]): Promise<Set<string>> {
+    // 🚀 Tối ưu: Lấy toàn bộ links Role-Permission và Permission hierarchy
+    // Để xử lý triệt để đệ quy, ta có thể fetch toàn bộ Tree hoặc dùng include sâu.
+    // Với Prisma, cách an toàn nhất cho Tree sâu là fetch active permissions 
+    // và build Map trong memory nếu số lượng permissions nhỏ (< 1000).
     const links = await this.roleHasPermRepo.findMany({
       where: {
         role_id: { in: roleIds },
         permission: { status: 'active' as any },
       },
       include: {
-        permission: {
-          include: {
-            parent: {
-              include: {
-                parent: true
-              }
-            }
-          },
-        },
+        permission: true // Chỉ lấy permission trực tiếp, logic đệ quy sẽ fetch thêm nếu cần
+        // Hoặc nạp sẵn 5 cấp nếu muốn tối ưu IO
       },
     });
 
     const set = new Set<string>();
+    const permCache = new Map<bigint, any>();
+
     for (const link of links) {
-      this.collectPermissionCodes((link as any).permission, set);
+      await this.collectPermissionCodesRecursively((link as any).permission, set, permCache);
     }
     return set;
   }
 
   /**
-   * Đệ quy thu thập mã quyền từ cây hierarchy (đi ngược lên cha)
+   * Đệ quy thu thập mã quyền và mã quyền cha (Flattening)
    */
-  private collectPermissionCodes(perm: any, set: Set<string>): void {
+  private async collectPermissionCodesRecursively(
+    perm: any,
+    set: Set<string>,
+    permCache: Map<bigint, any>
+  ): Promise<void> {
     if (!perm || perm.status !== 'active') return;
+
     if (perm.code) set.add(perm.code);
-    if (perm.parent) {
-      this.collectPermissionCodes(perm.parent, set);
+
+    // Nếu có cha, tiếp tục truy vết ngược lên
+    if (perm.parent_id) {
+      let parent = perm.parent;
+      if (!parent) {
+        // Fetch từ cache hoặc DB nếu include chưa nạp
+        if (permCache.has(perm.parent_id)) {
+          parent = permCache.get(perm.parent_id);
+        } else {
+          // Fallback fetch lẻ (nên tránh N+1 bằng cách build Tree Map trước nếu Tree to)
+          parent = await this.prisma.permission.findUnique({
+            where: { id: perm.parent_id }
+          });
+          permCache.set(perm.parent_id, parent);
+        }
+      }
+      await this.collectPermissionCodesRecursively(parent, set, permCache);
     }
   }
 
   /**
    * Check system-level permissions (Global Permissions)
+   * Sử dụng ensureSystemPermissionsLoaded để nạp cache nếu cần
    */
   private async checkSystemPermissions(
     userId: number,
     required: string[],
   ): Promise<boolean> {
-    const cached = await this.rbacCache.getSystemPermissions(userId);
-    if (cached !== null) {
-      if (required.length === 0) return true;
-      return required.some(need => cached.has(need));
+    let cached = await this.rbacCache.getSystemPermissions(userId);
+    if (cached === null) {
+      await this.ensureSystemPermissionsLoaded(userId);
+      cached = await this.rbacCache.getSystemPermissions(userId);
     }
 
-    const assignments = await this.assignmentRepo.findManyRaw({
-      where: {
-        user_id: BigInt(userId),
-        group: {
-          context: { type: ContextType.SYSTEM },
-          status: 'active' as any,
-        },
-        role: { status: 'active' as any },
-      },
-      select: { role_id: true },
-    });
-
-    if (!assignments.length) {
-      await this.rbacCache.setSystemPermissions(userId, []);
-      return false;
+    if (!cached || cached.size === 0) {
+      return required.length === 0;
     }
 
-    const roleIds = Array.from(new Set(assignments.map((a: any) => a.role_id)));
-    const permissions = await this.getPermissionsByRoleIds(roleIds);
-
-    await this.rbacCache.setSystemPermissions(userId, permissions);
     if (required.length === 0) return true;
-    return required.some(need => permissions.has(need));
+    return required.some(need => cached!.has(need));
   }
 
   /**
@@ -307,24 +337,30 @@ export class RbacService {
       }
     }
 
-    // Sử dụng Transaction từ PrismaService
+    // Sử dụng Transaction từ PrismaService để đảm bảo tính nguyên tử (Atomicity)
     await this.prisma.$transaction(async (tx) => {
-      await this.assignmentRepo.deleteMany({
-        user_id: BigInt(userId),
-        group_id: BigInt(groupId),
+      // 1. Xoá toàn bộ roles cũ của user trong group này
+      await tx.userRoleAssignment.deleteMany({
+        where: {
+          user_id: BigInt(userId),
+          group_id: BigInt(groupId),
+        },
       });
 
+      // 2. Thêm mới danh sách roles (Bulk Insert)
       if (roles.length > 0) {
-        await this.assignmentRepo.createMany(
-          roles.map(role => ({
+        await tx.userRoleAssignment.createMany({
+          data: roles.map(role => ({
             user_id: BigInt(userId),
             role_id: BigInt(role.id),
             group_id: BigInt(groupId),
-          }))
-        );
+          })),
+          skipDuplicates: true,
+        });
       }
     });
 
+    // Xoá cache để lần sau nạp lại bộ quyền mới nhất
     await this.rbacCache.clearUserPermissionsInGroup(userId, groupId);
   }
 }

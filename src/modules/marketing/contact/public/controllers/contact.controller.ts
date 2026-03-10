@@ -1,12 +1,12 @@
 import { Controller, Post, Body, ValidationPipe } from '@nestjs/common';
-import { PublicContactService } from '@/modules/introduction/contact/public/services/contact.service';
-import { CreateContactDto } from '@/modules/introduction/contact/public/dtos/create-contact.dto';
+import { PublicContactService } from '@/modules/marketing/contact/public/services/contact.service';
+import { CreateContactDto } from '@/modules/marketing/contact/public/dtos/create-contact.dto';
 import { Permission } from '@/common/auth/decorators';
 import { LogRequest } from '@/common/shared/decorators';
 
 @Controller('public/contacts')
 export class PublicContactController {
-  constructor(private readonly contactService: PublicContactService) {}
+  constructor(private readonly contactService: PublicContactService) { }
 
   @Permission('public')
   @LogRequest()

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 
 // Import admin modules
-import { AdminContactModule } from '@/modules/introduction/contact/admin/contact.module';
+import { AdminContactModule } from '@/modules/marketing/contact/admin/contact.module';
 
 // Import public modules
-import { PublicContactModule } from '@/modules/introduction/contact/public/contact.module';
+import { PublicContactModule } from '@/modules/marketing/contact/public/contact.module';
 import { ContactRepositoryModule } from './contact.repository.module';
 
 @Module({

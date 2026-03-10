@@ -41,13 +41,16 @@ import { SeedLocations } from '@/core/database/seeder/core/seed-locations';
     SeedRoles,
     SeedUsers,
     SeedMenus,
-    SeedBannerLocations,
-    SeedBanners,
-    SeedContacts,
     SeedGeneralConfigs,
     SeedEmailConfigs,
     SeedGroups,
     SeedContentTemplates,
+    // Marketing Seeders
+    SeedBannerLocations,
+    SeedBanners,
+    SeedContacts,
+    SeedFaqs,
+
     // Introduction Seeders
     SeedProjects,
     SeedAboutSections,
@@ -56,7 +59,6 @@ import { SeedLocations } from '@/core/database/seeder/core/seed-locations';
     SeedPartners,
     SeedGallery,
     SeedCertificates,
-    SeedFaqs,
     // Post Module Seeders
     SeedPosts,
 

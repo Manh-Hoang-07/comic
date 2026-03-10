@@ -3,7 +3,6 @@ import { CONTACT_REPOSITORY } from './domain/contact.repository';
 import { ContactRepositoryImpl } from './infrastructure/repositories/contact.repository.impl';
 
 @Global()
-@Global()
 @Module({
     providers: [
         {

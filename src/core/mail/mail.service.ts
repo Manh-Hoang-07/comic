@@ -75,10 +75,6 @@ export class MailService {
   /** Send a single email. */
   async send(options: SendMailOptions): Promise<void> {
     this.validateEmailContent(options);
-    if (this.isDevMode()) {
-      console.log('SKIP MAIL IN DEV:', options.subject, '→', options.to);
-      return;
-    }
     const config = await this.getActiveConfig();
     const transporter = await this.getTransporter();
     await transporter.sendMail(buildMailPayload(config, options));
@@ -94,11 +90,6 @@ export class MailService {
     }
     this.validateBulkEmailContents(options.emails);
 
-    if (this.isDevMode()) {
-      console.log('SKIP BULK MAIL IN DEV:', options.emails.length, 'emails');
-      return { success: options.emails.length, failed: 0, errors: [] };
-    }
-
     const config = await this.getActiveConfig();
     const transporter = await this.getTransporter();
     const parallel = options.parallel !== false;
@@ -110,9 +101,6 @@ export class MailService {
 
   // ── Private Helpers ───────────────────────────────────────────────────────
 
-  private isDevMode(): boolean {
-    return process.env.NODE_ENV === 'development';
-  }
 
   private validateEmailContent(options: { html?: string; text?: string }): void {
     if (!options.html && !options.text) {

@@ -9,8 +9,8 @@ describe('Admin ContactService', () => {
 
     beforeEach(async () => {
         repository = {
-            getList: jest.fn(),
-            getOne: jest.fn(),
+            findAll: jest.fn().mockResolvedValue({ data: [], meta: {} }),
+            findById: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
@@ -34,16 +34,19 @@ describe('Admin ContactService', () => {
     });
 
     describe('getSimpleList', () => {
-        it('should call getList with default limit', async () => {
+        it('should call repository.findAll with default limit', async () => {
             await service.getSimpleList({});
-            expect(repository.getList).toHaveBeenCalledWith({ limit: 50 });
+            expect(repository.findAll).toHaveBeenCalledWith(
+                expect.objectContaining({ limit: 50 })
+            );
         });
     });
 
     describe('markAsRead', () => {
         it('should update status to Read if current status is Pending', async () => {
             const mockContact = { id: 1, status: ContactStatus.Pending };
-            repository.getOne.mockResolvedValue(mockContact);
+            repository.findById.mockResolvedValue(mockContact);
+            repository.update.mockResolvedValue({ ...mockContact, status: ContactStatus.Read });
 
             await service.markAsRead(1);
 
@@ -54,7 +57,7 @@ describe('Admin ContactService', () => {
 
         it('should not update if status is not Pending', async () => {
             const mockContact = { id: 1, status: ContactStatus.Replied };
-            repository.getOne.mockResolvedValue(mockContact);
+            repository.findById.mockResolvedValue(mockContact);
 
             await service.markAsRead(1);
 
@@ -64,6 +67,7 @@ describe('Admin ContactService', () => {
 
     describe('closeContact', () => {
         it('should update status to Closed', async () => {
+            repository.update.mockResolvedValue({ id: 1, status: ContactStatus.Closed });
             await service.closeContact(1);
             expect(repository.update).toHaveBeenCalledWith(1, {
                 status: ContactStatus.Closed

@@ -46,18 +46,16 @@ export class RbacService {
   }
 
   async refreshUserPermissions(userId: number, groupId: number | null): Promise<void> {
-    const where: any = {
-      user_id: BigInt(userId),
-      status: 'active' as any,
-    };
-
-    if (groupId === null) {
-      where.group = { context: { type: ContextType.SYSTEM } };
-    } else {
-      where.group_id = BigInt(groupId);
-    }
-
-    const assignments = await this.assignmentRepo.findManyRaw({ where, select: { role_id: true } });
+    const assignments = await this.prisma.userRoleAssignment.findMany({
+      where: {
+        user_id: BigInt(userId),
+        role: { status: 'active' },
+        ...(groupId === null
+          ? { group: { code: 'system' } }
+          : { group_id: BigInt(groupId) }),
+      },
+      select: { role_id: true }
+    });
     const roleIds = Array.from(new Set(assignments.map(a => a.role_id)));
 
     const permissions = roleIds.length ? await this.getFlattenedPermissions(roleIds) : new Set<string>();

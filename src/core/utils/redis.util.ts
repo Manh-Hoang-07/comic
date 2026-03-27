@@ -15,10 +15,7 @@ export class RedisUtil implements OnModuleDestroy {
       const options = {
         lazyConnect: true,
         maxRetriesPerRequest: 1,
-        enableReadyCheck: false,
         retryStrategy: () => null,
-        family: 4, // Force IPv4 cho Upstash
-        tls: this.url.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
       };
       this.client = new Redis(this.url, options);
       this.subClient = new Redis(this.url, options);

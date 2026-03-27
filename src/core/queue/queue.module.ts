@@ -16,8 +16,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                         redisConfig = {
                             host: url.hostname,
                             port: Number(url.port),
-                            // username: url.username, // if needed
-                            // password: url.password, // if needed
+                            username: url.username ? decodeURIComponent(url.username) : undefined,
+                            password: url.password ? decodeURIComponent(url.password) : undefined,
+                            tls: url.protocol === 'rediss:' ? { rejectUnauthorized: false } : undefined,
+                            family: 4, // Force IPv4 (Quan trọng khi dùng Upstash trên Node >= 18)
+                            enableReadyCheck: false, // Tránh lỗi INFO command của Upstash serverless
+                            maxRetriesPerRequest: null, // Yêu cầu từ Bull
                         };
                     } catch (e) {
                         // Fallback if URL parsing fails or if users prefer host/port envs

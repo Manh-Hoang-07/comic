@@ -1,29 +1,37 @@
 services:
-  #  db:
-  #    image: mariadb:11.4
-  #    container_name: comic-db
-  #    environment:
-  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-  #      MARIADB_DATABASE: ${DB_DATABASE}
-  #    ports:
-  #      # Avoid clashing with XAMPP MySQL (often 3306)
-  #      - "3307:3306"
-  #    volumes:
-  #      - db_data:/var/lib/mysql
-  #    healthcheck:
-  #      # Use $$ to avoid compose-time env interpolation
-  #      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
-  #      interval: 5s
-  #      timeout: 5s
-  #      retries: 30
+  db:
+    image: postgres:15-alpine
+    container_name: comic-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: comic_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+
+  redis:
+    image: redis:7-alpine
+    container_name: comic-redis
+    ports:
+      - "6379:6379"
+    restart: always
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: comic-api
-    # depend_on redis removed as it is now external (Upstash)
+    depends_on:
+      - redis
+      - db
     environment:
       NODE_ENV: ${NODE_ENV}
       PORT: ${PORT}
@@ -62,5 +70,5 @@ services:
     ports:
       - "8000:8000"
 
-#volumes:
-#  db_data:
+volumes:
+  db_data:

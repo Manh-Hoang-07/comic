@@ -5,7 +5,10 @@ WORKDIR /app
 # Install dependencies first for better layer caching
 COPY package.json package-lock.json ./
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-RUN npm ci
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm ci
 
 # Copy source (Not copying test/ to keep prod build clean)
 COPY tsconfig.json nest-cli.json prisma.config.ts ./
@@ -31,6 +34,8 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
+# Copy thư mục chứa data mẫu JSON để chạy Seeder
+COPY --from=build /app/src/core/database/json ./src/core/database/json
 
 RUN mkdir -p storage/uploads
 

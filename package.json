@@ -32,7 +32,9 @@
     "db:create": "ts-node -r tsconfig-paths/register src/core/database/cli/create-database.ts",
     "db:drop": "ts-node -r tsconfig-paths/register src/core/database/cli/drop-database.ts",
     "seed": "ts-node -r tsconfig-paths/register src/core/database/cli/seed.ts",
-    "seed:refresh": "ts-node -r tsconfig-paths/register src/core/database/cli/seed.ts --refresh"
+    "seed:refresh": "ts-node -r tsconfig-paths/register src/core/database/cli/seed.ts --refresh",
+    "seed:prod": "node dist/core/database/cli/seed.js",
+    "seed:refresh:prod": "node dist/core/database/cli/seed.js --refresh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.940.0",

@@ -120,7 +120,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
 
   protected override transform(role: any) {
     if (!role) return role;
-    const item = this.deepConvertBigInt(role) as any;
+    const item = { ...role } as any;
 
     if (item.parent) {
       item.parent = transformPermission(item.parent);

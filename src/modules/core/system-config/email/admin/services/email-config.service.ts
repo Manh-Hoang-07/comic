@@ -53,7 +53,7 @@ export class EmailConfigService extends BaseService<any, IEmailConfigRepository>
   }
 
   protected transform(config: any, maskPassword = false) {
-    const item = this.deepConvertBigInt(config) as any;
+    const item = { ...config } as any;
     if (item && maskPassword && item.smtp_password) {
       item.smtp_password = '******';
     }

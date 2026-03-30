@@ -52,7 +52,4 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
     return { success: true };
   }
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 }

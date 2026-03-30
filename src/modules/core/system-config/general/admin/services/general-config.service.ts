@@ -66,7 +66,4 @@ export class GeneralConfigService extends BaseService<any, IGeneralConfigReposit
     }
   }
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 }

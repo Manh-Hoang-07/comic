@@ -90,7 +90,4 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
         }
     }
 
-    protected override transform(entity: any): any {
-        return this.deepConvertBigInt(entity);
-    }
 }

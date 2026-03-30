@@ -71,7 +71,7 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
 
   protected override transform(permission: any) {
     if (!permission) return permission;
-    const item = this.deepConvertBigInt(permission) as any;
+    const item = { ...permission } as any;
 
     if (item.parent) {
       item.parent = transformPermission(item.parent);

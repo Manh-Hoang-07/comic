@@ -96,7 +96,4 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
 
   // ── Transformation ─────────────────────────────────────────────────────────
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 }

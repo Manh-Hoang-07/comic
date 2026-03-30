@@ -48,7 +48,4 @@ export class ContactService extends BaseService<Contact, IContactRepository> {
 
   // ── Transformation ─────────────────────────────────────────────────────────
 
-  protected override transform(contact: any) {
-    return this.deepConvertBigInt(contact);
-  }
 }

@@ -91,7 +91,4 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
     }
   }
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 }

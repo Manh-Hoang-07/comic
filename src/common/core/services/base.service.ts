@@ -2,7 +2,6 @@ import { NotFoundException } from '@nestjs/common';
 import { IRepository, IPaginatedResult, IPaginationOptions } from '../repositories/repository.interface';
 import { createPaginationMeta, prepareQuery } from '../utils';
 import { getGroupFilter, assignGroupOwnership } from '@/common/shared/utils/group-ownership.util';
-import { deepConvertBigInt } from '@/common/shared/utils/bigint-converter';
 
 /**
  * Base Service DB-agnostic.
@@ -162,20 +161,11 @@ export abstract class BaseService<T, R extends IRepository<T>> {
 
     /**
      * Transform dữ liệu trả về.
-     * Mặc định: convert BigInt → number để JSON serialization hoạt động đúng.
-     * Override ở subclass để thêm logic custom.
+     * Mặc định trả về entity nguyên bản. 
+     * Override ở subclass để thêm logic custom (giấu field, map data...).
      */
     protected transform(entity: T | null): T | null {
-        if (!entity) return null;
-        return deepConvertBigInt(entity);
-    }
-
-    /**
-     * Helper để convert BigInt sang number trong object.
-     * Subclass có thể gọi trực tiếp khi cần transform thủ công.
-     */
-    protected deepConvertBigInt(obj: any): any {
-        return deepConvertBigInt(obj);
+        return entity;
     }
 }
 

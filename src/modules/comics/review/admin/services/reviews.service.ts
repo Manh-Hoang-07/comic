@@ -94,7 +94,4 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     }
   }
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 }

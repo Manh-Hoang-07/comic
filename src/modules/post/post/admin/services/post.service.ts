@@ -92,7 +92,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
 
   protected override transform(post: any) {
     if (!post) return post;
-    const p = super.transform(post) as any;
+    const p = { ...post } as any;
 
     if (p.primary_category) {
       const { id, name, slug } = p.primary_category;

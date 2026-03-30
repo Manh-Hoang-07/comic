@@ -49,7 +49,4 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
     return { success: true };
   }
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 }

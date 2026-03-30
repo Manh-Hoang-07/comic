@@ -47,7 +47,4 @@ export class ContentTemplateService extends BaseService<ContentTemplate, IConten
 
     // ── Transformation ─────────────────────────────────────────────────────────
 
-    protected override transform(entity: any): any {
-        return this.deepConvertBigInt(entity);
-    }
 }

@@ -47,7 +47,4 @@ export class FollowsService extends BaseService<ComicFollow, IFollowRepository> 
     return this.repository.exists({ user_id: userId, comic_id: comicId });
   }
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 }

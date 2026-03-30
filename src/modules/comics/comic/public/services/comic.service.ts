@@ -115,8 +115,8 @@ export class PublicComicsService extends BaseService<Comic, IComicRepository> {
       delete transformed.chapters;
     }
 
-    // Convert BigInts
-    return this.deepConvertBigInt(transformed);
+    // Convert BigInts (handled globally)
+    return transformed;
   }
 
   protected override async afterGetOne(entity: any): Promise<any> {

@@ -63,9 +63,6 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
     };
   }
 
-  protected override transform(entity: any): any {
-    return this.deepConvertBigInt(entity);
-  }
 
   /**
    * Lấy danh sách pages của chapter
@@ -86,7 +83,7 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
       sort: 'page_number:ASC'
     });
 
-    return this.deepConvertBigInt(pages);
+    return pages;
   }
 
   /**

@@ -97,6 +97,6 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
       item.category_ids = item.category_ids || [];
     }
 
-    return this.deepConvertBigInt(item);
+    return item;
   }
 }

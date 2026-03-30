@@ -1,37 +1,25 @@
 import {
   Injectable,
   NotFoundException,
-  Inject,
   BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { RequestContext } from '@/common/shared/utils';
-import {
-  IUserRepository,
-  USER_REPOSITORY,
-} from '@/modules/core/user/domain/user.repository';
 import { BaseService } from '@/common/core/services';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
-import { ChangePasswordDto } from '../dtos/change-password.dto';
-import { UserActionService } from './user-action.service';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
+import { RbacService } from '@/modules/core/rbac/services/rbac.service';
+import { normalizeIdArray } from '@/modules/core/iam/utils/iam-transform.helper';
+import { UserRepository } from '@/modules/core/user/repositories/user.repository';
+import { ChangePasswordDto } from '../dtos/change-password.dto';
 
 @Injectable()
-export class UserService extends BaseService<any, IUserRepository> {
+export class UserService extends BaseService<any, UserRepository> {
   constructor(
-    @Inject(USER_REPOSITORY)
-    private readonly userRepo: IUserRepository,
-    private readonly userActionService: UserActionService,
+    private readonly userRepo: UserRepository,
+    private readonly rbacService: RbacService,
   ) {
     super(userRepo);
-  }
-
-  protected override async prepareFilters(filter: any) {
-    const groupFilter = getGroupFilter();
-    if (groupFilter.group_id) {
-      return { ...filter, groupId: groupFilter.group_id };
-    }
-    return filter;
   }
 
   // ── Password Management ────────────────────────────────────────────────────
@@ -40,22 +28,34 @@ export class UserService extends BaseService<any, IUserRepository> {
     const user = await this.verifyUserExistence(id);
     const hashed = await bcrypt.hash(dto.password, 10);
     await this.userRepo.update(id, { password: hashed });
+    return { success: true, message: 'Đổi mật khẩu thành công' };
   }
 
-  async userChangePassword(id: number | bigint, oldPassword: string, newPassword: string) {
-    const user = await this.userRepo.findByIdForAuth(id);
-    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+  // ── Relations Management ───────────────────────────────────────────────────
 
-    if (user.password) {
-      const isMatch = await bcrypt.compare(oldPassword, user.password);
-      if (!isMatch) throw new BadRequestException('Mật khẩu cũ không chính xác');
+  async syncRelations(userId: number, data: { profile?: any; role_ids?: any }): Promise<void> {
+    if (data.profile) {
+      await this.userRepo.upsertProfile(userId, data.profile);
     }
 
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await this.userRepo.update(id, { password: hashed });
+    const roleIds = normalizeIdArray(data.role_ids);
+    if (roleIds !== null) {
+      const groupId = RequestContext.get<number | null>('groupId');
+      if (groupId) {
+        await this.rbacService.syncRolesInGroup(userId, groupId, roleIds, true);
+      }
+    }
   }
 
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+  protected override async prepareFilters(filter: any) {
+    const groupFilter = getGroupFilter();
+    if (groupFilter.group_id) {
+      return { ...filter, groupId: groupFilter.group_id };
+    }
+    return filter;
+  }
 
   protected override async beforeCreate(data: any) {
     const payload = { ...data };
@@ -68,7 +68,6 @@ export class UserService extends BaseService<any, IUserRepository> {
 
     await this.validateUniqueness(payload);
 
-    // Relationships are handled in overridden create()
     delete payload.role_ids;
     delete payload.profile;
 
@@ -77,7 +76,7 @@ export class UserService extends BaseService<any, IUserRepository> {
 
   async create(data: any) {
     const user = await super.create(data);
-    await this.userActionService.syncRelations(Number(user.id), data);
+    await this.syncRelations(Number(user.id), data);
     return this.getOne(user.id);
   }
 
@@ -101,7 +100,7 @@ export class UserService extends BaseService<any, IUserRepository> {
 
   async update(id: number | bigint, data: any) {
     await super.update(id, data);
-    await this.userActionService.syncRelations(Number(id), data);
+    await this.syncRelations(Number(id), data);
     return this.getOne(id);
   }
 
@@ -136,7 +135,6 @@ export class UserService extends BaseService<any, IUserRepository> {
     const u = this.deepConvertBigInt(user) as any;
     const groupId = RequestContext.get<number | null>('groupId');
 
-    // Filter roles for current group context
     if (groupId && u.user_role_assignments) {
       u.role_ids = (u.user_role_assignments as any[])
         .filter((ura: any) => Number(ura.group_id) === Number(groupId))

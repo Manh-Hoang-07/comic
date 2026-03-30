@@ -1,7 +1,6 @@
 import { Global, Module, Provider } from '@nestjs/common';
 import { PrismaModule } from '@/core/database/prisma/prisma.module';
-import { UserRepositoryImpl } from '../user/infrastructure/repositories/user.repository.impl';
-import { USER_REPOSITORY } from '../user/domain/user.repository';
+import { UserRepository, USER_REPOSITORY } from '../user/repositories/user.repository';
 import { RoleRepositoryImpl } from './role/infrastructure/repositories/role.repository.impl';
 import { ROLE_REPOSITORY } from './role/domain/role.repository';
 import { PermissionRepositoryImpl } from './permission/infrastructure/repositories/permission.repository.impl';
@@ -10,7 +9,7 @@ import { PERMISSION_REPOSITORY } from './permission/domain/permission.repository
 const repositories: Provider[] = [
     {
         provide: USER_REPOSITORY,
-        useClass: UserRepositoryImpl,
+        useClass: UserRepository,
     },
     {
         provide: ROLE_REPOSITORY,

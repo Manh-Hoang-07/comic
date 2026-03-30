@@ -5,7 +5,7 @@ import { USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-a
 import { ROLE_HAS_PERMISSION_REPOSITORY } from '@/modules/core/rbac/role-has-permission/domain/role-has-permission.repository';
 import { ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
 import { GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
 import { ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
 import { PrismaService } from '@/core/database/prisma/prisma.service';

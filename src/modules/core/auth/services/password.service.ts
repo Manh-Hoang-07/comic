@@ -3,7 +3,7 @@ import * as bcrypt from 'bcryptjs';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { ConfigService } from '@nestjs/config';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
 import { AttemptLimiterService } from '@/core/security/attempt-limiter.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';

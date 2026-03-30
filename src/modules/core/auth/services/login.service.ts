@@ -5,7 +5,7 @@ import { RedisUtil } from '@/core/utils/redis.util';
 import { TokenService } from '@/modules/core/auth/services/token.service';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { AttemptLimiterService } from '@/core/security/attempt-limiter.service';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
 import { LoginDto } from '@/modules/core/auth/dto/login.dto';
 
 @Injectable()

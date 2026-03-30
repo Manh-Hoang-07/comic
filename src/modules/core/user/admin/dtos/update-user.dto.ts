@@ -1,38 +1,6 @@
 import { IsArray, IsEmail, IsOptional, IsString, MinLength, ValidateNested, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
-
-class ProfilePayloadDto {
-  @IsOptional()
-  @IsString()
-  birthday?: string;
-
-  @IsOptional()
-  @IsString()
-  gender?: string;
-
-  @IsOptional()
-  @IsString()
-  address?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  country_id?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  province_id?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  ward_id?: number;
-
-  @IsOptional()
-  @IsString()
-  about?: string;
-}
+import { UserProfilePayloadDto } from './create-user.dto';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -66,8 +34,6 @@ export class UpdateUserDto {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => ProfilePayloadDto)
-  profile?: ProfilePayloadDto;
+  @Type(() => UserProfilePayloadDto)
+  profile?: UserProfilePayloadDto;
 }
-
-

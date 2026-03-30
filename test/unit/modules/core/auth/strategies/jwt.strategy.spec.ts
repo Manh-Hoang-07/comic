@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtStrategy } from '@/modules/core/auth/strategies/jwt.strategy';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
 
 describe('JwtStrategy', () => {
     let strategy: JwtStrategy;

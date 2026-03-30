@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
 import { LoginDto } from '@/modules/core/auth/dto/login.dto';
 import { RegisterDto } from '@/modules/core/auth/dto/register.dto';
 import { ForgotPasswordDto } from '@/modules/core/auth/dto/forgot-password.dto';

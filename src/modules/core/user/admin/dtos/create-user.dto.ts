@@ -1,7 +1,7 @@
 import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength, ValidateNested, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class ProfilePayloadDto {
+export class UserProfilePayloadDto {
   @IsOptional()
   @IsString()
   birthday?: string;
@@ -66,8 +66,6 @@ export class CreateUserDto {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => ProfilePayloadDto)
-  profile?: ProfilePayloadDto;
+  @Type(() => UserProfilePayloadDto)
+  profile?: UserProfilePayloadDto;
 }
-
-

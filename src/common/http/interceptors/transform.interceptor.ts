@@ -7,6 +7,7 @@ import {
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { ResponseUtil } from '@/common/shared/utils';
+import { deepConvertBigInt } from '@/common/shared/utils/bigint-converter';
 import { mapExceptionToResponse } from './exception-mapper.helper';
 
 @Injectable()
@@ -19,13 +20,15 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
   }
 
   private handleSuccess(raw: any): any {
-    // If it's already an ApiResponse format (e.g. from manual ResponseUtil.success), return as-is
-    if (isApiResponse(raw)) return raw;
+    // 1. Transform BigInt values to Number globally
+    const safeData = deepConvertBigInt(raw);
 
-    // Handle paginated results from BaseService
-    if (raw && typeof raw === 'object' && 'data' in raw && 'meta' in raw) {
-      const { data, meta } = raw;
-      // Convert internal meta to external PaginationMeta if needed
+    // 2. If it's already an ApiResponse format, return as-is
+    if (isApiResponse(safeData)) return safeData;
+
+    // 3. Handle paginated results
+    if (safeData && typeof safeData === 'object' && 'data' in safeData && 'meta' in safeData) {
+      const { data, meta } = safeData;
       return ResponseUtil.paginated(
         data,
         meta.page || meta.currentPage || 1,
@@ -34,11 +37,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
       );
     }
 
-    return ResponseUtil.success(raw);
+    return ResponseUtil.success(safeData);
   }
 
   private handleError(err: any): Observable<never> {
-    // If it's already in the standard error format, just rethrow
     if (isApiResponse(err?.response)) {
       return throwError(() => err);
     }
@@ -46,8 +48,6 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
     const { message, code, status, errors } = mapExceptionToResponse(err);
     const apiError = ResponseUtil.error(message, code, status, errors);
 
-    // We keep it as an error to be handled by the Global Filter if necessary, 
-    // but formatted as an ApiResponse
     return throwError(() => ({
       ...err,
       response: apiError,
@@ -59,3 +59,4 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
 function isApiResponse(obj: any): boolean {
   return obj && typeof obj === 'object' && 'success' in obj && 'timestamp' in obj;
 }
+

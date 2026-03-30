@@ -2,7 +2,8 @@ import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
+import { ConfigService } from '@nestjs/config';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import { RegisterDto } from '../dto/register.dto';
 import { AuthOtpService } from './auth-otp.service';
@@ -14,6 +15,7 @@ export class RegistrationService {
         @Inject(USER_REPOSITORY)
         private readonly userRepo: IUserRepository,
         private readonly otpService: AuthOtpService,
+        private readonly configService: ConfigService,
         @InjectQueue('notification')
         private readonly notificationQueue: Queue,
     ) { }
@@ -67,6 +69,8 @@ export class RegistrationService {
     }
 
     private queueWelcomeEmail(user: any): void {
+        const appUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+        
         this.notificationQueue.add(
             'send_email_template',
             {
@@ -77,7 +81,7 @@ export class RegistrationService {
                         name: user.name || user.username,
                         username: user.username,
                         email: user.email,
-                        loginUrl: `${process.env.APP_URL}/auth/login`,
+                        loginUrl: `${appUrl}/auth/login`,
                     },
                 },
             },
@@ -90,3 +94,4 @@ export class RegistrationService {
         ).catch((err) => console.error('Failed to queue registration success email', err));
     }
 }
+

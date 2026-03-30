@@ -16,7 +16,7 @@
     {
         "code": "account-management",
         "name": "Quản lý tài khoản",
-        "path": "/admin/core/iam/users",
+        "path": "/admin/core/user/users",
         "api_path": "api/admin/users",
         "icon": "👥",
         "type": "group",
@@ -35,7 +35,7 @@
     {
         "code": "users",
         "name": "Tài khoản",
-        "path": "/admin/core/iam/users",
+        "path": "/admin/core/user/users",
         "api_path": "api/admin/users",
         "icon": "👤",
         "type": "route",

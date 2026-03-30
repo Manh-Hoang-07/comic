@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Patch, UseGuards, UnauthorizedException } from '@nestjs/common';
-import { UserService } from '@/modules/core/iam/user/admin/services/user.service';
-import { UpdateProfileDto } from '@/modules/core/iam/user/admin/dtos/update-profile.dto';
+import { UserService } from '@/modules/core/user/admin/services/user.service';
+import { UpdateProfileDto } from '@/modules/core/user/admin/dtos/update-profile.dto';
 import { UserChangePasswordDto } from '../dtos/user-change-password.dto';
 import { Auth } from '@/common/auth/utils';
 import { JwtAuthGuard } from '@/common/auth/guards';

@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Put, Post, Query } from '@nestjs/common';
-import { UserService } from '@/modules/core/iam/user/admin/services/user.service';
-import { CreateUserDto } from '@/modules/core/iam/user/admin/dtos/create-user.dto';
-import { UpdateUserDto } from '@/modules/core/iam/user/admin/dtos/update-user.dto';
-import { ChangePasswordDto } from '@/modules/core/iam/user/admin/dtos/change-password.dto';
+import { UserService } from '@/modules/core/user/admin/services/user.service';
+import { CreateUserDto } from '@/modules/core/user/admin/dtos/create-user.dto';
+import { UpdateUserDto } from '@/modules/core/user/admin/dtos/update-user.dto';
+import { ChangePasswordDto } from '@/modules/core/user/admin/dtos/change-password.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { prepareQuery } from '@/common/core/utils';

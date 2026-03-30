@@ -2,7 +2,8 @@ import { Injectable, Inject, BadRequestException, NotFoundException } from '@nes
 import * as bcrypt from 'bcryptjs';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
+import { ConfigService } from '@nestjs/config';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { AttemptLimiterService } from '@/core/security/attempt-limiter.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -15,6 +16,7 @@ export class PasswordService {
         private readonly userRepo: IUserRepository,
         private readonly otpService: AuthOtpService,
         private readonly accountLockoutService: AttemptLimiterService,
+        private readonly configService: ConfigService,
         @InjectQueue('notification')
         private readonly notificationQueue: Queue,
     ) { }
@@ -66,6 +68,8 @@ export class PasswordService {
     }
 
     private queueSuccessNotification(user: any): void {
+        const appUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+
         this.notificationQueue.add(
             'send_email_template',
             {
@@ -75,7 +79,7 @@ export class PasswordService {
                     variables: {
                         name: user.name || user.username,
                         time: new Date().toLocaleString('vi-VN'),
-                        loginUrl: `${process.env.APP_URL}/login`,
+                        loginUrl: `${appUrl}/login`,
                     },
                 },
             },
@@ -88,3 +92,4 @@ export class PasswordService {
         ).catch((err) => console.error('Failed to queue reset password success email', err));
     }
 }
+

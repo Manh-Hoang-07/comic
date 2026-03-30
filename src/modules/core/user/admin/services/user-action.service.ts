@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RequestContext } from '@/common/shared/utils';
-import { normalizeIdArray } from '../../../utils/iam-transform.helper';
+import { normalizeIdArray } from '../../../iam/utils/iam-transform.helper';
 
 @Injectable()
 export class UserActionService {

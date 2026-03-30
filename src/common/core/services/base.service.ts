@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { IRepository, IPaginatedResult, IPaginationOptions } from '../repositories/repository.interface';
 import { createPaginationMeta, prepareQuery } from '../utils';
 import { getGroupFilter, assignGroupOwnership } from '@/common/shared/utils/group-ownership.util';
+import { deepConvertBigInt } from '@/common/shared/utils/bigint-converter';
 
 /**
  * Base Service DB-agnostic.
@@ -178,28 +179,3 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     }
 }
 
-/**
- * Recursively convert BigInt values to number in a plain object/array.
- * Exported for use outside BaseService (e.g. standalone services).
- */
-export function deepConvertBigInt(obj: any): any {
-    if (obj === null || obj === undefined) return obj;
-    if (typeof obj === 'bigint') return Number(obj);
-    if (typeof obj !== 'object') return obj;
-    if (obj instanceof Date) return obj;
-
-    if (Array.isArray(obj)) {
-        const res = new Array(obj.length);
-        for (let i = 0; i < obj.length; i++) res[i] = deepConvertBigInt(obj[i]);
-        return res;
-    }
-
-    const ctor = obj.constructor;
-    if (ctor !== undefined && ctor.name !== 'Object') return obj;
-
-    const res: any = {};
-    for (const key of Object.keys(obj)) {
-        res[key] = deepConvertBigInt(obj[key]);
-    }
-    return res;
-}

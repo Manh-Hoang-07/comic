@@ -9,7 +9,7 @@ import { RequestContext } from '@/common/shared/utils';
 import {
   IUserRepository,
   USER_REPOSITORY,
-} from '@/modules/core/iam/user/domain/user.repository';
+} from '@/modules/core/user/domain/user.repository';
 import { BaseService } from '@/common/core/services';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { ChangePasswordDto } from '../dtos/change-password.dto';

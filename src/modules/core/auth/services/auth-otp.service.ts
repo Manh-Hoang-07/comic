@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
 import { ContentTemplateExecutionService } from '@/modules/core/content-template/services/content-template-execution.service';
 import { generateOtp, buildOtpKey } from '../utils/otp.helper';
@@ -10,6 +11,7 @@ export class AuthOtpService {
     constructor(
         private readonly redis: RedisUtil,
         private readonly contentTemplateService: ContentTemplateExecutionService,
+        private readonly configService: ConfigService,
     ) { }
 
     /**
@@ -52,9 +54,10 @@ export class AuthOtpService {
         if (!cached) return false;
 
         // Direct check + Dev bypass
+        const nodeEnv = this.configService.get<string>('NODE_ENV');
         const isValid =
             providedOtp === cached ||
-            ((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') &&
+            ((nodeEnv === 'development' || nodeEnv === 'test') &&
                 providedOtp === '123456');
 
         if (isValid) {
@@ -65,3 +68,4 @@ export class AuthOtpService {
         return false;
     }
 }
+

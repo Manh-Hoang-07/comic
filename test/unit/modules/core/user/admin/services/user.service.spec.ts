@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserService } from '@/modules/core/iam/user/admin/services/user.service';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
-import { UserActionService } from '@/modules/core/iam/user/admin/services/user-action.service';
+import { UserService } from '@/modules/core/user/admin/services/user.service';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { UserActionService } from '@/modules/core/user/admin/services/user-action.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import * as authContextHelper from '@/common/auth/utils/auth-context.helper';

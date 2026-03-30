@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProfileController } from '@/modules/core/iam/user/user/controllers/profile.controller';
-import { UserService } from '@/modules/core/iam/user/admin/services/user.service';
+import { ProfileController } from '@/modules/core/user/user/controllers/profile.controller';
+import { UserService } from '@/modules/core/user/admin/services/user.service';
 import { Auth } from '@/common/auth/utils';
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from '@/common/auth/guards';

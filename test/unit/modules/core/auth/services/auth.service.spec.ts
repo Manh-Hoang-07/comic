@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '@/modules/core/auth/services/auth.service';
-import { USER_REPOSITORY } from '@/modules/core/iam/user/domain/user.repository';
+import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { RedisUtil } from '@/core/utils/redis.util';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { TokenService } from '@/modules/core/auth/services/token.service';

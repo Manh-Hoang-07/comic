@@ -60,3 +60,4 @@ export class EmailConfigService extends BaseService<any, IEmailConfigRepository>
     return item;
   }
 }
+

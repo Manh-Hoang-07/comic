@@ -12,3 +12,4 @@ export class ProvinceController {
         return this.provinceService.getList(query);
     }
 }
+

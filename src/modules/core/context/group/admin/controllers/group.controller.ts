@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, ForbiddenException, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ForbiddenException, Query } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { AdminGroupService } from '../services/group.service';
@@ -26,7 +26,7 @@ export class AdminGroupController {
     name: string;
     description?: string;
     metadata?: any;
-    context_id: number;
+    context_id: any;
   }) {
     const userId = this.auth.id();
     if (!userId) {
@@ -76,7 +76,7 @@ export class AdminGroupController {
    */
   @Permission('public')
   @Get(':id')
-  async getGroup(@Param('id', ParseIntPipe) id: number) {
+  async getGroup(@Param('id') id: any) {
     return this.groupService.getOne(id);
   }
 
@@ -86,7 +86,7 @@ export class AdminGroupController {
   @Permission('group.manage')
   @Put(':id')
   async updateGroup(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body() body: Partial<{ name: string; description: string; metadata: any }>,
   ) {
     const userId = this.auth.id();
@@ -108,7 +108,7 @@ export class AdminGroupController {
    */
   @Permission('group.manage')
   @Delete(':id')
-  async deleteGroup(@Param('id', ParseIntPipe) id: number) {
+  async deleteGroup(@Param('id') id: any) {
     const userId = this.auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
@@ -124,4 +124,6 @@ export class AdminGroupController {
     return { message: 'Group deleted successfully' };
   }
 }
+
+
 

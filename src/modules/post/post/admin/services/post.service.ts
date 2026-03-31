@@ -24,7 +24,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
 
   // ── CRUD Overrides ────────────────────────────────────────────────────────
 
-  override async getOne(id: string | number | bigint): Promise<Post> {
+  override async getOne(id: any): Promise<Post> {
     const entity = await super.getOne(id);
     verifyGroupOwnership({ group_id: entity.group_id ? Number(entity.group_id) : null });
     return entity;
@@ -37,10 +37,10 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     return this.getOne(entity.id);
   }
 
-  async update(id: string | number | bigint, data: any): Promise<Post> {
-    const payload = await this.beforeUpdate(Number(id), data);
+  async update(id: any, data: any): Promise<Post> {
+    const payload = await this.beforeUpdate(id, data);
     const entity = await this.repository.update(id, payload);
-    await this.actionService.syncRelations(Number(id), data);
+    await this.actionService.syncRelations(id, data);
     return this.getOne(id);
   }
 
@@ -64,7 +64,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     return payload;
   }
 
-  protected override async beforeUpdate(id: number, data: any) {
+  protected override async beforeUpdate(id: any, data: any) {
     const current = await this.getOne(id); // Includes ownership check
 
     const payload = { ...data };
@@ -116,3 +116,5 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     return p;
   }
 }
+
+

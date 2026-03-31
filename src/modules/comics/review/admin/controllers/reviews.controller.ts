@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
 } from '@nestjs/common';
 import { ReviewsService } from '../services/reviews.service';
@@ -38,7 +38,7 @@ export class ReviewsController {
 
   @Permission('comic.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.reviewsService.getOne(id);
   }
 
@@ -46,8 +46,8 @@ export class ReviewsController {
   @LogRequest({ fileBaseName: 'review_update' })
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body(ValidationPipe) body: { content?: string; rating?: number },
+    @Param('id') id: any,
+    @Body(ValidationPipe) body: { content?: string; rating?: any },
   ) {
     return this.reviewsService.update(id, body);
   }
@@ -55,7 +55,9 @@ export class ReviewsController {
   @Permission('comic.manage')
   @LogRequest({ fileBaseName: 'review_delete' })
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.reviewsService.delete(id);
   }
 }
+
+

@@ -66,3 +66,4 @@ export class NotificationController {
     return this.notificationService.delete(+id);
   }
 }
+

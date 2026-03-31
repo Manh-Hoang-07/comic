@@ -8,6 +8,7 @@ import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
 import { RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class UserGroupService {
@@ -28,7 +29,7 @@ export class UserGroupService {
     private readonly rbacCache: RbacCacheService,
   ) { }
 
-  async isOwner(groupId: number, userId: number): Promise<boolean> {
+  async isOwner(groupId: any, userId: any): Promise<boolean> {
     const group = await this.groupRepo.findById(groupId);
     if (!group) return false;
     return group.owner_id != null && Number(group.owner_id) === userId;
@@ -37,7 +38,7 @@ export class UserGroupService {
   /**
    * Kiểm tra quyền quản lý Group
    */
-  async canManageGroup(groupId: number, userId: number): Promise<boolean> {
+  async canManageGroup(groupId: any, userId: any): Promise<boolean> {
     const group = await this.groupRepo.findById(groupId);
     if (!group) return false;
 
@@ -53,10 +54,10 @@ export class UserGroupService {
   }
 
   async addMember(
-    groupId: number,
-    memberUserId: number,
+    groupId: any,
+    memberUserId: any,
     roleIds: number[],
-    requesterUserId: number,
+    requesterUserId: any,
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
     if (!canManage) {
@@ -73,8 +74,8 @@ export class UserGroupService {
 
     if (!existingUserGroup) {
       await this.userGroupRepo.create({
-        user_id: BigInt(memberUserId),
-        group_id: BigInt(groupId),
+        user_id: toPrimaryKey(memberUserId),
+        group_id: toPrimaryKey(groupId),
         joined_at: new Date(),
       } as any);
     }
@@ -87,10 +88,10 @@ export class UserGroupService {
    * Thay thế toàn bộ roles của member trong group
    */
   async assignRolesToMember(
-    groupId: number,
-    memberUserId: number,
+    groupId: any,
+    memberUserId: any,
     roleIds: number[],
-    requesterUserId: number,
+    requesterUserId: any,
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
     if (!canManage) {
@@ -106,9 +107,9 @@ export class UserGroupService {
   }
 
   async removeMember(
-    groupId: number,
-    memberUserId: number,
-    requesterUserId: number,
+    groupId: any,
+    memberUserId: any,
+    requesterUserId: any,
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
     if (!canManage) {
@@ -123,13 +124,13 @@ export class UserGroupService {
     }
 
     await this.userGroupRepo.deleteMany({
-      user_id: BigInt(memberUserId),
-      group_id: BigInt(groupId),
+      user_id: toPrimaryKey(memberUserId),
+      group_id: toPrimaryKey(groupId),
     });
 
     await this.assignmentRepo.deleteMany({
-      user_id: BigInt(memberUserId),
-      group_id: BigInt(groupId),
+      user_id: toPrimaryKey(memberUserId),
+      group_id: toPrimaryKey(groupId),
     });
 
     await this.rbacCache.clearUserCache(memberUserId, groupId);
@@ -138,10 +139,10 @@ export class UserGroupService {
   /**
    * Lấy danh sách thành viên của group
    */
-  async getGroupMembers(groupId: number) {
+  async getGroupMembers(groupId: any) {
     const assignments = await this.assignmentRepo.findManyRaw({
       where: {
-        group_id: BigInt(groupId),
+        group_id: toPrimaryKey(groupId),
       },
       include: {
         user: true,
@@ -157,7 +158,7 @@ export class UserGroupService {
         userMap.set(userId, {
           user_id: userId,
           user: a.user ? {
-            id: Number(a.user.id),
+            id: toPrimaryKey(a.user.id),
             username: a.user.username,
             email: a.user.email,
           } : null,
@@ -166,7 +167,7 @@ export class UserGroupService {
       }
       if (a.role) {
         userMap.get(userId).roles.push({
-          id: Number(a.role.id),
+          id: toPrimaryKey(a.role.id),
           code: a.role.code,
           name: a.role.name,
         });
@@ -179,16 +180,16 @@ export class UserGroupService {
   /**
    * [🚀 Tối ưu - Fix N+1] Lấy danh sách nhóm của User
    */
-  async getUserGroups(userId: number) {
+  async getUserGroups(userId: any) {
     // 1. Fetch UserGroup kèm Group và assignments trong duy nhất 1 query prisma
     const userGroups = await this.userGroupRepo.findManyRaw({
-      where: { user_id: BigInt(userId) },
+      where: { user_id: toPrimaryKey(userId) },
       include: {
         group: {
           include: {
             context: true,
             user_role_assignments: {
-              where: { user_id: BigInt(userId) },
+              where: { user_id: toPrimaryKey(userId) },
               include: { role: true }
             }
           }
@@ -202,7 +203,7 @@ export class UserGroupService {
       if (!group || group.status !== 'active') return null;
 
       return {
-        id: Number(group.id),
+        id: toPrimaryKey(group.id),
         code: group.code,
         name: group.name,
         type: group.type,
@@ -218,7 +219,7 @@ export class UserGroupService {
         roles: (group.user_role_assignments || [])
           .filter((ra: any) => ra.role)
           .map((ra: any) => ({
-            id: Number(ra.role.id),
+            id: toPrimaryKey(ra.role.id),
             code: ra.role.code,
             name: ra.role.name,
           })),
@@ -227,3 +228,5 @@ export class UserGroupService {
     }).filter(item => item !== null);
   }
 }
+
+

@@ -5,7 +5,7 @@ import {
   Delete,
   Body,
   Param,
-  ParseIntPipe,
+  
   ValidationPipe,
 } from '@nestjs/common';
 import { ReadingHistoryService } from '../services/reading-history.service';
@@ -23,16 +23,17 @@ export class ReadingHistoryController {
 
   @Permission('authenticated')
   @Post()
-  async updateOrCreate(@Body(ValidationPipe) body: { comic_id: number; chapter_id: number }) {
+  async updateOrCreate(@Body(ValidationPipe) body: { comic_id: any; chapter_id: any }) {
     return this.readingHistoryService.updateOrCreate(body.comic_id, body.chapter_id);
   }
 
   @Permission('authenticated')
   @Delete(':comicId')
-  async delete(@Param('comicId', ParseIntPipe) comicId: number) {
+  async delete(@Param('comicId') comicId: any) {
     return this.readingHistoryService.clearHistory(comicId);
   }
 }
+
 
 
 

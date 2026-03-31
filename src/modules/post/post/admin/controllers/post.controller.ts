@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
   UseInterceptors,
 } from '@nestjs/common';
@@ -39,7 +39,7 @@ export class PostController {
 
   @Permission('post.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.postService.getOne(id);
   }
 
@@ -56,7 +56,7 @@ export class PostController {
   @Put(':id')
   @CacheEvict({ keys: ['posts:list:*', 'posts:featured:*', 'posts:slug:*'] })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) dto: UpdatePostDto,
   ) {
     return this.postService.update(id, dto as any);
@@ -66,8 +66,10 @@ export class PostController {
   @LogRequest({ fileBaseName: 'post_delete' })
   @Delete(':id')
   @CacheEvict({ keys: ['posts:list:*', 'posts:featured:*', 'posts:slug:*'] })
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.postService.delete(id);
   }
 }
+
+
 

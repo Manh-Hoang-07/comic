@@ -3,6 +3,7 @@ import { ITestimonialRepository, TESTIMONIAL_REPOSITORY, TestimonialFilter } fro
 import { IProjectRepository, PROJECT_REPOSITORY } from '@/modules/introduction/project/domain/project.repository';
 import { BaseService } from '@/common/core/services';
 import { Testimonial } from '@prisma/client';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class TestimonialService extends BaseService<Testimonial, ITestimonialRepository> {
@@ -31,7 +32,7 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
     return data;
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected async beforeUpdate(id: any, data: any) {
     if (data.project_id) {
       const project = await this.projectRepo.findById(data.project_id);
       if (!project) throw new NotFoundException(`Project with ID ${data.project_id} not found`);
@@ -39,7 +40,7 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
     return data;
   }
 
-  async toggleFeatured(id: number | bigint, featured: boolean) {
+  async toggleFeatured(id: any, featured: boolean) {
     return this.update(id, { featured });
   }
 
@@ -48,7 +49,7 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
     const item = super.transform(testimonial) as any;
     if (item.project) {
       item.project = {
-        id: Number(item.project.id),
+        id: toPrimaryKey(item.project.id),
         name: item.project.name,
         slug: item.project.slug,
       };
@@ -56,6 +57,8 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
     return item;
   }
 }
+
+
 
 
 

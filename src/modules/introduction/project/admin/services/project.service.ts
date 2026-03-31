@@ -33,7 +33,7 @@ export class ProjectService extends BaseContentService<Project, IProjectReposito
     return payload;
   }
 
-  protected override async beforeUpdate(id: number | bigint, data: any) {
+  protected override async beforeUpdate(id: any, data: any) {
     const payload = { ...data };
 
     // Handle Slug
@@ -50,7 +50,9 @@ export class ProjectService extends BaseContentService<Project, IProjectReposito
 
   // ── Operations ─────────────────────────────────────────────────────────────
 
-  async incrementViewCount(id: number | bigint) {
+  async incrementViewCount(id: any) {
     return this.projectRepo.incrementViewCount(id);
   }
 }
+
+

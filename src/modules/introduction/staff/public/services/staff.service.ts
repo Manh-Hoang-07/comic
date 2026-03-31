@@ -33,7 +33,7 @@ export class PublicStaffService extends BaseService<Staff, IStaffRepository> {
     return result.data;
   }
 
-  async getOne(id: number) {
+  async getOne(id: any) {
     const staff = await super.getOne(id);
     if (!staff || (staff as any).status !== BasicStatus.active) {
       throw new NotFoundException('Staff not found or inactive');
@@ -41,6 +41,8 @@ export class PublicStaffService extends BaseService<Staff, IStaffRepository> {
     return staff;
   }
 }
+
+
 
 
 

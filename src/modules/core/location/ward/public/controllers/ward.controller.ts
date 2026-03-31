@@ -12,3 +12,4 @@ export class WardController {
         return this.wardService.getList(query);
     }
 }
+

@@ -36,7 +36,7 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     };
   }
 
-  async createOrUpdateReview(comicId: number | bigint, rating: number, content?: string) {
+  async createOrUpdateReview(comicId: any, rating: number, content?: string) {
     const userId = RequestContext.get<number>('userId');
     if (!userId) throw new UnauthorizedException();
 
@@ -68,7 +68,7 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     return this.transform(review);
   }
 
-  async removeReview(comicId: number | bigint) {
+  async removeReview(comicId: any) {
     const userId = RequestContext.get<number>('userId');
     if (!userId) throw new UnauthorizedException();
 
@@ -88,6 +88,8 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
   }
 
 }
+
+
 
 
 

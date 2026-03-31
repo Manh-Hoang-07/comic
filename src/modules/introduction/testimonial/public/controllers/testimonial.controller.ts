@@ -15,7 +15,7 @@ export class PublicTestimonialController {
 
   @Permission('public')
   @Get('featured')
-  getFeatured(@Query('limit') limit?: number) {
+  getFeatured(@Query('limit') limit?: any) {
     return this.testimonialService.getFeatured(limit ? Number(limit) : 10);
   }
 
@@ -31,4 +31,5 @@ export class PublicTestimonialController {
     return this.testimonialService.getOne(Number(id));
   }
 }
+
 

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards, Req } from '@nest
 import { PostCommentService } from '../services/comment.service';
 import { JwtAuthGuard } from '@/common/auth/guards';
 import { Permission } from '@/common/auth/decorators';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Controller('public/posts/:postId/comments')
 @Permission('public')
@@ -30,10 +31,11 @@ export class PostCommentController {
         @Req() req: any,
     ) {
         return this.commentService.createComment({
-            post_id: Number(postId),
+            post_id: toPrimaryKey(postId),
             user_id: req.user.id,
             content: body.content,
             parent_id: body.parent_id ? Number(body.parent_id) : undefined,
         });
     }
 }
+

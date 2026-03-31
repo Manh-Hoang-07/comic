@@ -1,23 +1,39 @@
 /**
- * Normalizes input to an array of numbers.
- * Useful for IDs from request payloads.
+ * Normalizes input to an array of IDs.
+ * Useful for IDs from request payloads (UUID, BigInt, etc.).
  */
-export function normalizeIdArray(input: any): number[] | null {
+export function normalizeIdArray(input: any): any[] | null {
     if (input === undefined) return null;
     if (!Array.isArray(input)) return [];
-    return input.map((id: any) => Number(id)).filter((id) => !Number.isNaN(id));
+    return input.filter((id: any) => id !== null && id !== undefined);
 }
 
 /**
- * Ensures a value is a BigInt or null.
+ * Ensures a value is properly formatted for a Primary Key.
+ * Supports BigInt (as fallback), UUID, and ObjectId.
  */
-export function toBigInt(value?: number | string | bigint | null): bigint | null {
-    if (value === null || value === undefined) return null;
+export function toBigInt(value?: any): any | null {
+    if (value === null || value === undefined || value === '') return null;
     if (typeof value === 'bigint') return value;
-    const num = typeof value === 'string' ? Number(value) : value;
-    if (Number.isNaN(num)) return null;
-    return BigInt(num);
+    
+    if (typeof value === 'string') {
+        // UUID or ObjectId
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) || /^[0-9a-fA-F]{24}$/.test(value)) {
+            return value;
+        }
+        // Numeric string
+        if (/^\d+$/.test(value)) {
+            try { return BigInt(value); } catch { return value; }
+        }
+    }
+    
+    if (typeof value === 'number') {
+        try { return BigInt(value); } catch { return value; }
+    }
+    
+    return value;
 }
+
 
 /**
  * Normalizes a date input to a Date object or null.

@@ -26,7 +26,7 @@ export class PublicFaqService extends BaseContentService<Faq, IFaqRepository> {
     });
   }
 
-  async getOne(id: number) {
+  async getOne(id: any) {
     const faq = await super.getOne(id);
     if (!faq || (faq as any).status !== 'active') {
       throw new NotFoundException('FAQ not found or inactive');
@@ -44,7 +44,7 @@ export class PublicFaqService extends BaseContentService<Faq, IFaqRepository> {
     return result.data.map(item => this.transform(item));
   }
 
-  async incrementHelpfulCount(id: number) {
+  async incrementHelpfulCount(id: any) {
     return this.faqRepo.incrementHelpfulCount(id);
   }
 
@@ -56,6 +56,8 @@ export class PublicFaqService extends BaseContentService<Faq, IFaqRepository> {
     return item;
   }
 }
+
+
 
 
 

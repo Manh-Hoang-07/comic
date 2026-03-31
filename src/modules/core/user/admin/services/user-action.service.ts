@@ -14,7 +14,7 @@ export class UserActionService {
   /**
    * Synchronizes user profile and role assignments.
    */
-  async syncRelations(userId: number, data: { profile?: any; role_ids?: any }): Promise<void> {
+  async syncRelations(userId: any, data: { profile?: any; role_ids?: any }): Promise<void> {
     if (data.profile) {
       await this.userRepo.upsertProfile(userId, data.profile);
     }
@@ -28,3 +28,5 @@ export class UserActionService {
     }
   }
 }
+
+

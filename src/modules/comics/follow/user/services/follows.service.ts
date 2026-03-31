@@ -17,7 +17,7 @@ export class FollowsService extends BaseService<ComicFollow, IFollowRepository> 
     return { ...(filters || {}), user_id: getCurrentUserId() };
   }
 
-  async follow(comicId: number | bigint) {
+  async follow(comicId: any) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -30,7 +30,7 @@ export class FollowsService extends BaseService<ComicFollow, IFollowRepository> 
     return this.transform(saved);
   }
 
-  async unfollow(comicId: number | bigint) {
+  async unfollow(comicId: any) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -40,7 +40,7 @@ export class FollowsService extends BaseService<ComicFollow, IFollowRepository> 
     return { success: true };
   }
 
-  async isFollowing(comicId: number | bigint): Promise<boolean> {
+  async isFollowing(comicId: any): Promise<boolean> {
     const userId = getCurrentUserId();
     if (!userId) return false;
 
@@ -48,3 +48,5 @@ export class FollowsService extends BaseService<ComicFollow, IFollowRepository> 
   }
 
 }
+
+

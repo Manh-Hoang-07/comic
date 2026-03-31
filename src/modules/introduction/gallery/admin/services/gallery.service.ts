@@ -21,7 +21,7 @@ export class GalleryService extends BaseContentService<Gallery, IGalleryReposito
     return payload;
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected async beforeUpdate(id: any, data: any) {
     const payload = { ...data };
     const current = await this.galleryRepo.findById(id);
     if (!current) throw new NotFoundException('Gallery not found');
@@ -34,6 +34,8 @@ export class GalleryService extends BaseContentService<Gallery, IGalleryReposito
     return super.transform(gallery);
   }
 }
+
+
 
 
 

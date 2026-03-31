@@ -6,6 +6,7 @@ import { USER_ROLE_ASSIGNMENT_REPOSITORY, IUserRoleAssignmentRepository } from '
 import { BaseService } from '@/common/core/services';
 import { normalizeIdArray, transformPermission, resolveRoleContexts } from '@/modules/core/iam/utils/iam-transform.helper';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class RoleService extends BaseService<any, IRoleRepository> {
@@ -36,7 +37,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     return this.getList({ ...query, limit: 1000 });
   }
 
-  async assignPermissions(roleId: number | bigint, permissionIds: number[]) {
+  async assignPermissions(roleId: any, permissionIds: any[]) {
     await this.verifyRoleExistence(roleId);
     await this.roleRepo.syncPermissions(roleId, permissionIds);
     await this.rbacCache.bumpVersion().catch(() => undefined);
@@ -54,8 +55,8 @@ export class RoleService extends BaseService<any, IRoleRepository> {
       throw new BadRequestException('Role code already exists');
     }
 
-    // parent_id should be BigInt
-    if (payload.parent_id) payload.parent_id = BigInt(payload.parent_id);
+    // parent_id should be formatted for PK
+    if (payload.parent_id) payload.parent_id = toPrimaryKey(payload.parent_id);
 
     return payload;
   }
@@ -70,7 +71,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     return this.getOne(role.id);
   }
 
-  protected override async beforeUpdate(id: number | bigint, data: any) {
+  protected override async beforeUpdate(id: any, data: any) {
     const current = await this.verifyRoleExistence(id);
     const payload = { ...data };
     payload.updated_user_id = getCurrentUserId();
@@ -81,12 +82,12 @@ export class RoleService extends BaseService<any, IRoleRepository> {
       }
     }
 
-    if (payload.parent_id) payload.parent_id = BigInt(payload.parent_id);
+    if (payload.parent_id) payload.parent_id = toPrimaryKey(payload.parent_id);
 
     return payload;
   }
 
-  async update(id: number | bigint, data: any) {
+  async update(id: any, data: any) {
     const contextIds = normalizeIdArray(data.context_ids);
     const role = await super.update(id, data);
 
@@ -96,11 +97,11 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     return this.getOne(id);
   }
 
-  protected override async beforeDelete(id: number | bigint): Promise<boolean> {
-    const childrenCount = await this.roleRepo.count({ parent_id: BigInt(id) });
+  protected override async beforeDelete(id: any): Promise<boolean> {
+    const childrenCount = await this.roleRepo.count({ parent_id: toPrimaryKey(id) });
     if (childrenCount > 0) throw new BadRequestException('Cannot delete role with children');
 
-    const userCount = await this.assignmentRepo.count({ role_id: BigInt(id) });
+    const userCount = await this.assignmentRepo.count({ role_id: toPrimaryKey(id) });
     if (userCount > 0) throw new BadRequestException('Cannot delete role assigned to users');
 
     return true;
@@ -112,7 +113,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  private async verifyRoleExistence(id: number | bigint) {
+  private async verifyRoleExistence(id: any) {
     const role = await this.roleRepo.findById(id);
     if (!role) throw new NotFoundException('Role not found');
     return role;
@@ -145,3 +146,4 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     return item;
   }
 }
+

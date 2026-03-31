@@ -4,6 +4,7 @@ import { BaseService } from '@/common/core/services';
 import { IChapterRepository, CHAPTER_REPOSITORY } from '../../domain/chapter.repository';
 import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { ChapterActionService } from './chapter-action.service';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class ChapterService extends BaseService<Chapter, IChapterRepository> {
@@ -22,15 +23,15 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
 
   // ── Extended Operations ────────────────────────────────────────────────────
 
-  async updatePages(id: string | number | bigint, pages: any[]) {
+  async updatePages(id: any, pages: any[]) {
     const chapter = await this.getOne(id); // Check exists & ownership
-    await this.actionService.syncPages(BigInt(id), pages);
+    await this.actionService.syncPages(toPrimaryKey(id), pages);
     return this.getOne(id);
   }
 
   // ── CRUD Overrides ────────────────────────────────────────────────────────
 
-  override async getOne(id: string | number | bigint): Promise<Chapter> {
+  override async getOne(id: any): Promise<Chapter> {
     const entity = await super.getOne(id);
     verifyGroupOwnership(entity as any);
     return entity;
@@ -48,7 +49,7 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     return this.getOne(entity.id);
   }
 
-  async update(id: string | number | bigint, data: any): Promise<Chapter> {
+  async update(id: any, data: any): Promise<Chapter> {
     const payload = await this.beforeUpdate(id, data);
     const entity = await this.repository.update(id, payload);
 
@@ -72,23 +73,23 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     return payload;
   }
 
-  protected override async beforeUpdate(id: string | number | bigint, data: any): Promise<any> {
+  protected override async beforeUpdate(id: any, data: any): Promise<any> {
     const entity = await this.getOne(id); // Already includes ownership check
     const payload = { ...data };
 
     if (payload.chapter_index !== undefined && payload.chapter_index !== entity.chapter_index) {
-      await this.actionService.validateUniqueIndex(entity.comic_id as bigint, payload.chapter_index, BigInt(id));
+      await this.actionService.validateUniqueIndex(entity.comic_id as bigint, payload.chapter_index, toPrimaryKey(id));
     }
 
     return payload;
   }
 
-  protected override async beforeDelete(id: string | number | bigint): Promise<boolean> {
+  protected override async beforeDelete(id: any): Promise<boolean> {
     await this.getOne(id); // Ownership check
     return true;
   }
 
-  protected override async afterDelete(id: string | number | bigint, entity: Chapter): Promise<void> {
+  protected override async afterDelete(id: any, entity: Chapter): Promise<void> {
     if (entity && entity.comic_id) {
       await this.actionService.updateComicTimeline(entity.comic_id as bigint);
     }
@@ -97,3 +98,5 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
   // ── Transformation ─────────────────────────────────────────────────────────
 
 }
+
+

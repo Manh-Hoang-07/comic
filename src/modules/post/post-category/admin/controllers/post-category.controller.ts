@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
 } from '@nestjs/common';
 import { PostCategoryService } from '@/modules/post/post-category/admin/services/post-category.service';
@@ -35,7 +35,7 @@ export class PostCategoryController {
 
   @Permission('post_category.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.postCategoryService.getOne(id);
   }
 
@@ -50,7 +50,7 @@ export class PostCategoryController {
   @LogRequest()
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) updateDto: UpdatePostCategoryDto,
   ) {
     return this.postCategoryService.update(id, updateDto as any);
@@ -59,8 +59,10 @@ export class PostCategoryController {
   @Permission('post_category.manage')
   @LogRequest()
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.postCategoryService.delete(id);
   }
 }
+
+
 

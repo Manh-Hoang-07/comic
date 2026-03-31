@@ -17,7 +17,7 @@ export class GroupActionService {
      * Syncs the owner of a newly created group by adding them to the group 
      * and assigning the default 'admin' role within that group.
      */
-    async syncGroupOwner(groupId: bigint, ownerId: bigint): Promise<void> {
+    async syncGroupOwner(groupId: any, ownerId: any): Promise<void> {
         const numericOwnerId = Number(ownerId);
         const numericGroupId = Number(groupId);
 
@@ -41,3 +41,5 @@ export class GroupActionService {
         }
     }
 }
+
+

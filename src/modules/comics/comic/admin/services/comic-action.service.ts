@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Comic } from '@prisma/client';
 import { IComicRepository, COMIC_REPOSITORY } from '../../domain/comic.repository';
 import { IComicStatsRepository, COMIC_STATS_REPOSITORY } from '../../../stats/domain/comic-stats.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class ComicActionService {
@@ -15,7 +16,7 @@ export class ComicActionService {
     /**
      * Initializes stats for a new comic.
      */
-    async initializeStats(comicId: bigint): Promise<void> {
+    async initializeStats(comicId: any): Promise<void> {
         await this.statsRepository.create({
             comic_id: comicId,
             view_count: BigInt(0),
@@ -28,9 +29,9 @@ export class ComicActionService {
     /**
      * Syncs categories for a comic.
      */
-    async syncCategories(comicId: bigint, categoryIds: any[]): Promise<void> {
+    async syncCategories(comicId: any, categoryIds: any[]): Promise<void> {
         if (categoryIds && Array.isArray(categoryIds)) {
-            const pks = categoryIds.map((id) => BigInt(id));
+            const pks = categoryIds.map((id) => toPrimaryKey(id));
             await this.comicRepository.syncCategories(comicId, pks);
         }
     }
@@ -48,3 +49,5 @@ export class ComicActionService {
         }
     }
 }
+
+

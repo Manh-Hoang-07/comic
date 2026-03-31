@@ -4,6 +4,7 @@ import { CONTEXT_REPOSITORY, IContextRepository } from '@/modules/core/context/c
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { BaseService } from '@/common/core/services';
 import { GroupActionService } from './group-action.service';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class AdminGroupService extends BaseService<any, IGroupRepository> {
@@ -22,11 +23,11 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
 
   // ── Operations ─────────────────────────────────────────────────────────────
 
-  async isSystemAdmin(userId: number): Promise<boolean> {
+  async isSystemAdmin(userId: any): Promise<boolean> {
     return this.rbacService.isSystemAdmin(userId);
   }
 
-  async createGroup(data: any, requesterUserId: number) {
+  async createGroup(data: any, requesterUserId: any) {
     const isAdmin = await this.isSystemAdmin(requesterUserId);
     if (!isAdmin) {
       throw new ForbiddenException('Only system admin can create groups');
@@ -55,7 +56,7 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
 
     return {
       ...data,
-      context_id: BigInt(data.context_id),
+      context_id: toPrimaryKey(data.context_id),
       owner_id: data.owner_id ? BigInt(data.owner_id) : null,
       status: data.status || 'active',
     };
@@ -75,10 +76,12 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     if (item.context) {
       item.context = {
         ...item.context,
-        id: Number(item.context.id),
+        id: toPrimaryKey(item.context.id),
         ref_id: item.context.ref_id ? Number(item.context.ref_id) : null,
       };
     }
     return item;
   }
 }
+
+

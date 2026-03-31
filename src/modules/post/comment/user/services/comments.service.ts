@@ -5,6 +5,7 @@ import { IPostCommentRepository, POST_COMMENT_REPOSITORY } from '../../domain/po
 import { PostNotificationService } from '@/modules/post/shared/services/post-notification.service';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { POST_COMMENT_TREE_INCLUDE, normalizePostCommentFilters } from '../../utils/post-comment-query.helper';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class UserPostCommentsService extends BaseService<PostComment, IPostCommentRepository> {
@@ -38,21 +39,21 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
 
     // ── Extended Operations ────────────────────────────────────────────────────
 
-    async updateComment(id: number | bigint, content: string) {
+    async updateComment(id: any, content: string) {
         const userId = getCurrentUserId();
         if (!userId) throw new UnauthorizedException();
 
-        const comment = await this.repository.findOne({ id, userId: BigInt(userId) });
+        const comment = await this.repository.findOne({ id, userId: toPrimaryKey(userId) });
         if (!comment) throw new NotFoundException('Comment not found');
 
         return this.update(id, { content, updated_user_id: userId });
     }
 
-    async removeComment(id: number | bigint) {
+    async removeComment(id: any) {
         const userId = getCurrentUserId();
         if (!userId) throw new UnauthorizedException();
 
-        const comment = await this.repository.findOne({ id, userId: BigInt(userId) });
+        const comment = await this.repository.findOne({ id, userId: toPrimaryKey(userId) });
         if (!comment) throw new NotFoundException('Comment not found');
 
         return this.repository.delete(id);
@@ -83,7 +84,7 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
     protected override async afterCreate(entity: PostComment): Promise<void> {
         if (entity.parent_id) {
             await this.notificationService.notifyCommentReply(
-                Number(entity.id),
+                entity.id,
                 Number(entity.parent_id),
                 Number(entity.user_id)
             );
@@ -91,3 +92,5 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
     }
 
 }
+
+

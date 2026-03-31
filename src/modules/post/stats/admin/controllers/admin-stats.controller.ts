@@ -3,7 +3,7 @@ import {
   Get,
   Param,
   Query,
-  ParseIntPipe,
+  
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AdminPostStatsService } from '../services/admin-stats.service';
@@ -15,7 +15,7 @@ export class AdminPostStatsController {
   @Permission('post.manage')
   @Get(':id/stats')
   async getPostStats(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Query('start_date') startDate?: string,
     @Query('end_date') endDate?: string,
   ) {
@@ -39,4 +39,6 @@ export class AdminPostStatsController {
     return this.statsService.getViewsOverTime(new Date(startDate), new Date(endDate));
   }
 }
+
+
 

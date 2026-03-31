@@ -52,7 +52,7 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     };
   }
 
-  override async getOne(id: string | number | bigint): Promise<ComicReview> {
+  override async getOne(id: any): Promise<ComicReview> {
     const entity = await (this.repository as any).delegate.findFirst({
       where: { id: (this.repository as any).toPrimaryKey(id) },
       include: { comic: true }
@@ -69,17 +69,17 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     return this.transform(entity) as ComicReview;
   }
 
-  protected override async beforeUpdate(id: string | number | bigint, data: any): Promise<any> {
+  protected override async beforeUpdate(id: any, data: any): Promise<any> {
     await this.verifyOwnershipAndExistence(id);
     return data;
   }
 
-  protected override async beforeDelete(id: string | number | bigint): Promise<boolean> {
+  protected override async beforeDelete(id: any): Promise<boolean> {
     await this.verifyOwnershipAndExistence(id);
     return true;
   }
 
-  private async verifyOwnershipAndExistence(id: string | number | bigint) {
+  private async verifyOwnershipAndExistence(id: any) {
     const review = await (this.repository as any).delegate.findFirst({
       where: { id: (this.repository as any).toPrimaryKey(id) },
       include: { comic: true }
@@ -95,3 +95,5 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
   }
 
 }
+
+

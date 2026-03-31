@@ -5,7 +5,7 @@ import {
   Delete,
   Body,
   Param,
-  ParseIntPipe,
+  
   ValidationPipe,
 } from '@nestjs/common';
 import { BookmarksService } from '@/modules/comics/bookmark/user/services/bookmarks.service';
@@ -23,16 +23,18 @@ export class BookmarksController {
 
   @Permission('authenticated')
   @Post()
-  async create(@Body(ValidationPipe) body: { chapter_id: number; page_number: number }) {
+  async create(@Body(ValidationPipe) body: { chapter_id: any; page_number: any }) {
     return this.bookmarksService.createBookmark(body.chapter_id, body.page_number);
   }
 
   @Permission('authenticated')
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.bookmarksService.removeBookmark(id);
   }
 }
+
+
 
 
 

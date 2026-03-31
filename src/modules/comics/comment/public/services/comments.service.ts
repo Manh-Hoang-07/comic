@@ -12,7 +12,7 @@ export class PublicCommentsService {
   /**
    * Lấy comments của comic (tree structure)
    */
-  async getByComic(comicId: number, page: number = 1, limit: number = 20) {
+  async getByComic(comicId: any, page: number = 1, limit: number = 20) {
     const { data: comments, meta } = await this.commentRepository.findAll({
       filter: {
         comic_id: comicId,
@@ -58,7 +58,7 @@ export class PublicCommentsService {
   /**
    * Lấy comments của chapter (tree structure)
    */
-  async getByChapter(chapterId: number, page: number = 1, limit: number = 20) {
+  async getByChapter(chapterId: any, page: number = 1, limit: number = 20) {
     const { data: comments, meta } = await this.commentRepository.findAll({
       filter: {
         chapter_id: chapterId,
@@ -100,3 +100,5 @@ export class PublicCommentsService {
     };
   }
 }
+
+

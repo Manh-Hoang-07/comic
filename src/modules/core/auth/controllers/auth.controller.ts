@@ -329,3 +329,4 @@ export class AuthController {
     return res.redirect(this.configService.get<string>('googleOAuth.frontendUrl') + '/login?error=auth_failed');
   }
 }
+

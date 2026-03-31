@@ -1,7 +1,8 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { RedisUtil } from '@/core/utils/redis.util';
 import { IComicRepository, COMIC_REPOSITORY } from '@/modules/comics/comic/domain/comic.repository';
+import { RedisUtil } from '@/core/utils/redis.util';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class ComicViewCronService {
@@ -54,7 +55,7 @@ export class ComicViewCronService {
       .map(([comicIdStr, countStr]) => {
         try {
           return {
-            comicId: BigInt(comicIdStr),
+            comicId: toPrimaryKey(comicIdStr),
             comicIdStr,
             count: parseInt(countStr, 10),
           };
@@ -62,7 +63,7 @@ export class ComicViewCronService {
           return null;
         }
       })
-      .filter((entry): entry is { comicId: bigint; comicIdStr: string; count: number } =>
+      .filter((entry): entry is { comicId: any; comicIdStr: string; count: number } =>
         entry !== null && !isNaN(entry.count) && entry.count > 0,
       );
 
@@ -92,4 +93,6 @@ export class ComicViewCronService {
     this.logger.log(`Successfully synced ${entries.length} comics from ${workingKey}`);
   }
 }
+
+
 

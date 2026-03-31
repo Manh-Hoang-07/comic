@@ -4,6 +4,7 @@ import { IContactRepository, CONTACT_REPOSITORY } from '@/modules/marketing/cont
 import { ContactStatus } from '@/shared/enums/types/contact-status.enum';
 import { BaseService } from '@/common/core/services';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class ContactService extends BaseService<Contact, IContactRepository> {
@@ -23,18 +24,18 @@ export class ContactService extends BaseService<Contact, IContactRepository> {
 
   // ── Operations ─────────────────────────────────────────────────────────────
 
-  async replyToContact(id: number | bigint, reply: string) {
+  async replyToContact(id: any, reply: string) {
     const userId = getCurrentUserId();
     const data = {
       reply,
       status: ContactStatus.Replied as any,
       replied_at: new Date(),
-      replied_by: userId ? BigInt(userId) : null,
+      replied_by: userId ? toPrimaryKey(userId) : null,
     };
     return this.update(id, data);
   }
 
-  async markAsRead(id: number | bigint) {
+  async markAsRead(id: any) {
     const contact = await this.getOne(id);
     if (contact && (contact as any).status === ContactStatus.Pending) {
       return this.update(id, { status: ContactStatus.Read as any });
@@ -42,10 +43,12 @@ export class ContactService extends BaseService<Contact, IContactRepository> {
     return contact;
   }
 
-  async closeContact(id: number | bigint) {
+  async closeContact(id: any) {
     return this.update(id, { status: ContactStatus.Closed as any });
   }
 
   // ── Transformation ─────────────────────────────────────────────────────────
 
 }
+
+

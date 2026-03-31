@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Put, Post, Query, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Put, Post, Query } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
@@ -25,7 +25,7 @@ export class UserController {
 
   @Permission('user.manage')
   @Get(':id')
-  getOne(@Param('id', ParseIntPipe) id: number) {
+  getOne(@Param('id') id: any) {
     return this.service.getOne(id);
   }
 
@@ -39,21 +39,22 @@ export class UserController {
   @Permission('user.manage')
   @LogRequest({ fileBaseName: 'user_update' })
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
+  update(@Param('id') id: any, @Body() dto: UpdateUserDto) {
     return this.service.update(id, dto);
   }
 
   @Permission('user.manage')
   @LogRequest({ fileBaseName: 'user_change_password' })
   @Patch(':id/password')
-  changePassword(@Param('id', ParseIntPipe) id: number, @Body() dto: ChangePasswordDto) {
+  changePassword(@Param('id') id: any, @Body() dto: ChangePasswordDto) {
     return this.service.changePassword(id, dto);
   }
 
   @Permission('user.manage')
   @LogRequest({ fileBaseName: 'user_delete' })
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number) {
+  delete(@Param('id') id: any) {
     return this.service.delete(id);
   }
 }
+

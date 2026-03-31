@@ -1,4 +1,4 @@
-import { Controller, Put, Body, Param, ParseIntPipe, BadRequestException } from '@nestjs/common';
+import { Controller, Put, Body, Param, BadRequestException } from '@nestjs/common';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
@@ -20,8 +20,8 @@ export class RbacController {
   @LogRequest()
   @Put(':id/roles')
   async syncRoles(
-    @Param('id', ParseIntPipe) targetUserId: number,
-    @Body() body: { role_ids: number[] },
+    @Param('id') targetUserId: any,
+    @Body() body: { role_ids: any[] },
     context?: ExecutionContext,
   ) {
     // Lấy groupId từ RequestContext (đã được set bởi GroupInterceptor)
@@ -43,6 +43,7 @@ export class RbacController {
     return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids || [], skipValidation);
   }
 }
+
 
 
 

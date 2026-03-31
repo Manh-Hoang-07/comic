@@ -17,7 +17,7 @@ export class UserPasswordService {
   /**
    * Changing password for an existing user.
    */
-  async changePassword(id: number | bigint, dto: ChangePasswordDto) {
+  async changePassword(id: any, dto: ChangePasswordDto) {
     const user = await this.userRepo.findById(id);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     
@@ -27,3 +27,5 @@ export class UserPasswordService {
     return { success: true, message: 'Đổi mật khẩu thành công' };
   }
 }
+
+

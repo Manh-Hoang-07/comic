@@ -26,7 +26,7 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
     };
   }
 
-  async updateOrCreate(comicId: number | bigint, chapterId: number | bigint) {
+  async updateOrCreate(comicId: any, chapterId: any) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -41,7 +41,7 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
     return this.transform(created);
   }
 
-  async clearHistory(comicId: number | bigint) {
+  async clearHistory(comicId: any) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -50,3 +50,5 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
   }
 
 }
+
+

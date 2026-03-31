@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ForbiddenException } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { UserGroupService } from '../services/group.service';
@@ -23,8 +23,8 @@ export class GroupMemberController {
   @Permission('group.member.add')
   @Post(':id/members')
   async addMember(
-    @Param('id', ParseIntPipe) groupId: number,
-    @Body() body: { user_id: number; role_ids: number[] },
+    @Param('id') groupId: any,
+    @Body() body: { user_id: any; role_ids: any[] },
   ) {
     const userId = this.auth.id();
     if (!userId) {
@@ -41,9 +41,9 @@ export class GroupMemberController {
   @Permission('group.member.manage')
   @Put(':id/members/:memberId/roles')
   async assignRolesToMember(
-    @Param('id', ParseIntPipe) groupId: number,
-    @Param('memberId', ParseIntPipe) memberId: number,
-    @Body() body: { role_ids: number[] },
+    @Param('id') groupId: any,
+    @Param('memberId') memberId: any,
+    @Body() body: { role_ids: any[] },
   ) {
     const userId = this.auth.id();
     if (!userId) {
@@ -60,8 +60,8 @@ export class GroupMemberController {
   @Permission('group.member.remove')
   @Delete(':id/members/:memberId')
   async removeMember(
-    @Param('id', ParseIntPipe) groupId: number,
-    @Param('memberId', ParseIntPipe) memberId: number,
+    @Param('id') groupId: any,
+    @Param('memberId') memberId: any,
   ) {
     const userId = this.auth.id();
     if (!userId) {
@@ -77,8 +77,10 @@ export class GroupMemberController {
    */
   @Permission('public')
   @Get(':id/members')
-  async getGroupMembers(@Param('id', ParseIntPipe) id: number) {
+  async getGroupMembers(@Param('id') id: any) {
     return this.groupService.getGroupMembers(id);
   }
 }
+
+
 

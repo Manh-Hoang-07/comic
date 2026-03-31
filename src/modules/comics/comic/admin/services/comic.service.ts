@@ -25,7 +25,7 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
 
   // ── CRUD Overrides ────────────────────────────────────────────────────────
 
-  override async getOne(id: string | number | bigint): Promise<Comic> {
+  override async getOne(id: any): Promise<Comic> {
     const entity = await super.getOne(id);
     verifyGroupOwnership(entity as any);
     return entity;
@@ -38,7 +38,7 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
     return this.getOne(entity.id);
   }
 
-  async update(id: string | number | bigint, data: UpdateComicDto): Promise<Comic> {
+  async update(id: any, data: UpdateComicDto): Promise<Comic> {
     const payload = await this.beforeUpdate(id, data);
     const entity = await this.repository.update(id, payload);
     await this.actionService.syncRelations(entity, data, false);
@@ -58,7 +58,7 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
     return payload;
   }
 
-  protected override async beforeUpdate(id: string | number | bigint, data: UpdateComicDto): Promise<any> {
+  protected override async beforeUpdate(id: any, data: UpdateComicDto): Promise<any> {
     const entity = await this.getOne(id); // Already includes ownership check
 
     const payload = { ...data };
@@ -76,7 +76,7 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
     return payload;
   }
 
-  protected override async beforeDelete(id: string | number | bigint): Promise<boolean> {
+  protected override async beforeDelete(id: any): Promise<boolean> {
     await this.getOne(id); // Ownership check
     return true;
   }
@@ -100,3 +100,5 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
     return item;
   }
 }
+
+

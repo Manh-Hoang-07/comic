@@ -30,7 +30,7 @@ export class AuthService {
     return this.loginService.login(dto);
   }
 
-  async logout(userId: number, token?: string) {
+  async logout(userId: any, token?: string) {
     return this.loginService.logout(userId, token);
   }
 
@@ -38,7 +38,7 @@ export class AuthService {
     return this.loginService.refreshTokenByValue(refreshToken);
   }
 
-  async me(userId: number) {
+  async me(userId: any) {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     return safeUser(user);
@@ -79,3 +79,5 @@ export class AuthService {
     return this.socialAuthService.handleGoogleAuth(profile);
   }
 }
+
+

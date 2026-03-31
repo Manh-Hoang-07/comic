@@ -11,13 +11,13 @@ import { UpdateProfileDto } from '../dtos/update-profile.dto';
 export class ProfileService {
   constructor(private readonly userRepo: UserRepository) {}
 
-  async getProfile(userId: number) {
+  async getProfile(userId: any) {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     return user;
   }
 
-  async updateProfile(userId: number, dto: UpdateProfileDto) {
+  async updateProfile(userId: any, dto: UpdateProfileDto) {
     const userFields = ['name', 'image'];
     const profileFields = ['birthday', 'gender', 'address', 'about', 'country_id', 'province_id', 'ward_id'];
 
@@ -45,7 +45,7 @@ export class ProfileService {
     return this.userRepo.update(userId, userPayload);
   }
 
-  async changePassword(userId: number, oldPassword: string, newPassword: string) {
+  async changePassword(userId: any, oldPassword: string, newPassword: string) {
     const user = await this.userRepo.findByIdForAuth(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
@@ -59,3 +59,5 @@ export class ProfileService {
     return { success: true, message: 'Đổi mật khẩu thành công' };
   }
 }
+
+

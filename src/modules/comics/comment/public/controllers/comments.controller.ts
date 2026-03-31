@@ -3,7 +3,7 @@ import {
   Get,
   Param,
   Query,
-  ParseIntPipe,
+  
 } from '@nestjs/common';
 import { PublicCommentsService } from '../services/comments.service';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
@@ -15,7 +15,7 @@ export class PublicCommentsController {
   @Permission('public')
   @Get('comics/:comicId')
   async getByComic(
-    @Param('comicId', ParseIntPipe) comicId: number,
+    @Param('comicId') comicId: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -27,7 +27,7 @@ export class PublicCommentsController {
   @Permission('public')
   @Get('chapters/:chapterId')
   async getByChapter(
-    @Param('chapterId', ParseIntPipe) chapterId: number,
+    @Param('chapterId') chapterId: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -36,3 +36,4 @@ export class PublicCommentsController {
     return this.commentsService.getByChapter(chapterId, isNaN(pageNum) ? 1 : pageNum, isNaN(limitNum) ? 20 : limitNum);
   }
 }
+

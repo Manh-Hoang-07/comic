@@ -25,3 +25,4 @@ export class PartnerService extends BaseContentService<Partner, IPartnerReposito
 
 
 
+

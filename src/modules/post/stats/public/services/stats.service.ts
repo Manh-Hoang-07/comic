@@ -11,7 +11,7 @@ export class PostStatsService {
     private readonly statsRepository: IPostStatsRepository,
   ) { }
 
-  async getPostStats(postId: number) {
+  async getPostStats(postId: any) {
     const post = await this.postRepository.findById(postId);
     if (!post) throw new NotFoundException('Post not found');
 
@@ -23,4 +23,6 @@ export class PostStatsService {
     };
   }
 }
+
+
 

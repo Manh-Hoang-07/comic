@@ -19,7 +19,7 @@ export class UserStatsService {
   /**
    * Lấy dashboard data cho user
    */
-  async getDashboard(userId: number) {
+  async getDashboard(userId: any) {
     const [readingHistory, follows, bookmarks, readingCount, followCount, bookmarkCount] = await Promise.all([
       this.readingHistoryRepository.findMany({ user_id: userId }, {
         include: { comic: true, chapter: true },
@@ -56,7 +56,7 @@ export class UserStatsService {
   /**
    * Lấy library (tất cả comics user đã đọc/follow)
    */
-  async getLibrary(userId: number, page: number = 1, limit: number = 20) {
+  async getLibrary(userId: any, page: number = 1, limit: number = 20) {
     const { data: history, meta } = await this.readingHistoryRepository.findAll({
       filter: { user_id: userId },
       include: { comic: true, chapter: true },
@@ -75,3 +75,5 @@ export class UserStatsService {
     };
   }
 }
+
+

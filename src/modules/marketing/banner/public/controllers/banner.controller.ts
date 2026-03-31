@@ -18,3 +18,4 @@ export class PublicBannerController {
         return this.bannerService.getOne(+id);
     }
 }
+

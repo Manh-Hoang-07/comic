@@ -33,7 +33,7 @@ export class AdminPostCommentService extends BaseContentService<PostComment, IPo
         };
     }
 
-    override async getOne(id: string | number | bigint): Promise<PostComment> {
+    override async getOne(id: any): Promise<PostComment> {
         const entity = await (this.repository as any).delegate.findFirst({
             where: { id: (this.repository as any).toPrimaryKey(id) },
             include: POST_COMMENT_TREE_INCLUDE,
@@ -72,3 +72,5 @@ export class AdminPostCommentService extends BaseContentService<PostComment, IPo
         };
     }
 }
+
+

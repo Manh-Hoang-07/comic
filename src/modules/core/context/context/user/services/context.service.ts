@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { IContextRepository, CONTEXT_REPOSITORY } from '@/modules/core/context/context/domain/context.repository';
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class UserContextService {
@@ -14,7 +15,7 @@ export class UserContextService {
     private readonly userGroupRepo: IUserGroupRepository,
   ) { }
 
-  async getUserContexts(userId: number) {
+  async getUserContexts(userId: any) {
     const userGroups = await this.userGroupRepo.findByUserId(userId);
 
     if (!userGroups.length) return [];
@@ -31,7 +32,7 @@ export class UserContextService {
     return contexts.map(ctx => this.transform(ctx));
   }
 
-  async getUserContextsForTransfer(userId: number) {
+  async getUserContextsForTransfer(userId: any) {
     // ID 1 should be system context as per business logic
     const systemContext = await this.contextRepo.findById(1);
 
@@ -55,9 +56,11 @@ export class UserContextService {
     if (!context) return context;
     return {
       ...context,
-      id: Number(context.id),
+      id: toPrimaryKey(context.id),
       ref_id: context.ref_id ? Number(context.ref_id) : null,
     };
   }
 }
+
+
 

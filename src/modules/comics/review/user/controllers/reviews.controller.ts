@@ -5,7 +5,7 @@ import {
   Delete,
   Body,
   Param,
-  ParseIntPipe,
+  
   ValidationPipe,
   UsePipes,
 } from '@nestjs/common';
@@ -29,15 +29,16 @@ export class ReviewsController {
   @Post('comics/:comicId')
   @UsePipes(new SanitizeHtmlPipe())
   async createOrUpdate(
-    @Param('comicId', ParseIntPipe) comicId: number,
-    @Body(ValidationPipe) body: { rating: number; content?: string },
+    @Param('comicId') comicId: any,
+    @Body(ValidationPipe) body: { rating: any; content?: string },
   ) {
     return this.reviewsService.createOrUpdateReview(comicId, body.rating, body.content);
   }
 
   @Permission('authenticated')
   @Delete('comics/:comicId')
-  async delete(@Param('comicId', ParseIntPipe) comicId: number) {
+  async delete(@Param('comicId') comicId: any) {
     return this.reviewsService.removeReview(comicId);
   }
 }
+

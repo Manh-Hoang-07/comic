@@ -3,7 +3,7 @@ import { IBannerRepository, BANNER_REPOSITORY } from '@/modules/marketing/banner
 import { IBannerLocationRepository, BANNER_LOCATION_REPOSITORY } from '@/modules/marketing/banner-location/domain/banner-location.repository';
 import { BaseContentService } from '@/common/core/services';
 import { Banner } from '@prisma/client';
-import { toBigInt } from '@/common/core/utils/data.helper';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class BannerService extends BaseContentService<Banner, IBannerRepository> {
@@ -30,24 +30,24 @@ export class BannerService extends BaseContentService<Banner, IBannerRepository>
     protected override async beforeCreate(data: any) {
         if (data.location_id) {
             await this.validateLocation(data.location_id);
-            data.location_id = toBigInt(data.location_id);
+            data.location_id = toPrimaryKey(data.location_id);
         }
         return data;
     }
 
-    protected override async beforeUpdate(id: number | bigint, data: any) {
+    protected override async beforeUpdate(id: any, data: any) {
         const current = await this.getOne(id);
 
-        if (data.location_id && toBigInt(data.location_id) !== toBigInt((current as any).location_id)) {
+        if (data.location_id && toPrimaryKey(data.location_id) !== toPrimaryKey((current as any).location_id)) {
             await this.validateLocation(data.location_id);
-            data.location_id = toBigInt(data.location_id);
+            data.location_id = toPrimaryKey(data.location_id);
         }
         return data;
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private async validateLocation(locationId: number | bigint) {
+    private async validateLocation(locationId: any) {
         const location = await this.locationRepo.findById(locationId);
         if (!location) {
             throw new NotFoundException(`Vị trí banner với ID ${locationId} không tồn tại`);
@@ -61,7 +61,7 @@ export class BannerService extends BaseContentService<Banner, IBannerRepository>
         const item = super.transform(banner) as any;
         if (item.banner_location) {
             item.location = {
-                id: Number(item.banner_location.id),
+                id: toPrimaryKey(item.banner_location.id),
                 name: item.banner_location.name,
                 code: item.banner_location.code,
             };
@@ -70,3 +70,5 @@ export class BannerService extends BaseContentService<Banner, IBannerRepository>
         return item;
     }
 }
+
+

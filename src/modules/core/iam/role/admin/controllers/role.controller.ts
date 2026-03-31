@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { LogRequest } from '@/common/shared/decorators';
 import { AuthService } from '@/common/auth/services';
@@ -25,7 +25,7 @@ export class RoleController {
 
   @Permission('role.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.service.getOne(id);
   }
 
@@ -45,7 +45,7 @@ export class RoleController {
   @Permission('role.manage')
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body() dto: any
   ) {
     // Sử dụng AuthService trong hàm
@@ -58,7 +58,7 @@ export class RoleController {
   @LogRequest()
   @Permission('role.manage')
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.service.delete(id);
   }
 
@@ -66,12 +66,14 @@ export class RoleController {
   @Permission('role.manage')
   @Post(':id/permissions')
   async assignPermissions(
-    @Param('id', ParseIntPipe) roleId: number,
-    @Body() body: { permission_ids: number[] }
+    @Param('id') roleId: any,
+    @Body() body: { permission_ids: any[] }
   ) {
     return this.service.assignPermissions(roleId, body.permission_ids || []);
   }
 }
+
+
 
 
 

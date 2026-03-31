@@ -1,8 +1,25 @@
 /**
- * Helper to convert input to primary key type (default BigInt for this project).
- * Handles raw values, objects containing IDs, and numeric strings.
+ * Helper to check if a string is a valid UUID.
+ */
+function isUUID(id: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+/**
+ * Helper to check if a string is a valid MongoDB ObjectId.
+ */
+function isObjectId(id: string): boolean {
+    return /^[0-9a-fA-F]{24}$/.test(id);
+}
+
+/**
+ * Helper to convert input to primary key type.
+ * Default behavior:
+ * - If string is UUID or ObjectId, keep as string.
+ * - If input is numeric (number or numeric string), convert to BigInt (for Postgres/MySQL bigint PKs).
+ * - Otherwise return as-is.
  * 
- * @throws Error if the ID format is invalid for conversion.
+ * @throws Error if the ID format is invalid for conversion (when numeric string is expected but not provided).
  */
 export function toPrimaryKey(id: any): any {
     if (id && typeof id === 'object' && 'id' in id) {
@@ -10,28 +27,27 @@ export function toPrimaryKey(id: any): any {
     }
 
     if (typeof id === 'bigint') return id;
-
-    if (typeof id === 'number') {
-        try {
-            return BigInt(id);
-        } catch {
-            return id;
-        }
-    }
+    if (typeof id === 'number') return BigInt(id);
 
     if (typeof id === 'string') {
-        if (!/^\d+$/.test(id)) {
-            throw new Error(`Invalid ID format: ${id}. Expected a numeric string.`);
+        // 1. UUID or ObjectId - return as-is
+        if (isUUID(id) || isObjectId(id)) {
+            return id;
         }
-        try {
-            return BigInt(id);
-        } catch {
-            throw new Error(`Invalid ID format: ${id}. Cannot convert to BigInt.`);
+
+        // 2. Numeric string - convert to BigInt
+        if (/^\d+$/.test(id)) {
+            try {
+                return BigInt(id);
+            } catch {
+                return id;
+            }
         }
     }
 
     return id;
 }
+
 
 /**
  * Parses a sort string like "field:dir,field2:dir" into Prisma-compatible OrderBy input.

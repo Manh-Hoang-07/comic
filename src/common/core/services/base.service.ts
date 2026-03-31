@@ -35,7 +35,7 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     protected async afterCreate(_entity: T, _data: any): Promise<void> { }
 
     /** Chạy trước khi update: có thể validate, transform data. */
-    protected async beforeUpdate(_id: string | number | bigint, data: any): Promise<any> {
+    protected async beforeUpdate(_id: any, data: any): Promise<any> {
         return data;
     }
 
@@ -43,12 +43,12 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     protected async afterUpdate(_entity: T, _data: any): Promise<void> { }
 
     /** Chạy trước khi delete. Trả về false để hủy xóa. */
-    protected async beforeDelete(_id: string | number | bigint): Promise<boolean> {
+    protected async beforeDelete(_id: any): Promise<boolean> {
         return true;
     }
 
     /** Chạy sau khi delete thành công. */
-    protected async afterDelete(_id: string | number | bigint, _entity?: any): Promise<void> { }
+    protected async afterDelete(_id: any, _entity?: any): Promise<void> { }
 
     /** Chuẩn hóa pagination options (page, limit, sort). */
     protected async prepareOptions(options: IPaginationOptions): Promise<IPaginationOptions> {
@@ -123,7 +123,7 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     }
 
     /** Lấy một bản ghi theo ID. */
-    async getOne(id: string | number | bigint, _options: IPaginationOptions = {}): Promise<T> {
+    async getOne(id: any, _options: IPaginationOptions = {}): Promise<T> {
         const entity = await this.repository.findById(id);
         if (!entity) throw new NotFoundException(`Resource with ID ${id} not found`);
 
@@ -142,7 +142,7 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     }
 
     /** Cập nhật. */
-    async update(id: string | number | bigint, data: any): Promise<T> {
+    async update(id: any, data: any): Promise<T> {
         const payload = await this.beforeUpdate(id, data);
         const entity = await this.repository.update(id, payload);
         if (!entity) throw new NotFoundException(`Resource with ID ${id} not found to update`);
@@ -151,7 +151,7 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     }
 
     /** Xóa. */
-    async delete(id: string | number | bigint): Promise<any> {
+    async delete(id: any): Promise<any> {
         const canDelete = await this.beforeDelete(id);
         if (!canDelete) return false;
         const result = await this.repository.delete(id);

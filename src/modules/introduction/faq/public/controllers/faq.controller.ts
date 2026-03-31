@@ -15,7 +15,7 @@ export class PublicFaqController {
 
   @Permission('public')
   @Get('popular')
-  getPopular(@Query('limit') limit?: number) {
+  getPopular(@Query('limit') limit?: any) {
     return this.faqService.getPopular(limit ? Number(limit) : 10);
   }
 
@@ -34,4 +34,5 @@ export class PublicFaqController {
     return this.faqService.incrementHelpfulCount(Number(id));
   }
 }
+
 

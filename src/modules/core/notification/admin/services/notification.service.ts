@@ -41,14 +41,14 @@ export class NotificationService extends BaseService<any, INotificationRepositor
     return data;
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected async beforeUpdate(id: any, data: any) {
     if (data.user_id) data.user_id = toBigInt(data.user_id);
     return data;
   }
 
 
 
-  async markAsReadForUser(id: number, userId: number) {
+  async markAsReadForUser(id: any, userId: any) {
     const notification = await this.getOne(id);
     if (!notification || Number((notification as any).user_id) !== userId) {
       throw new NotFoundException('Notification not found');
@@ -57,7 +57,9 @@ export class NotificationService extends BaseService<any, INotificationRepositor
     return this.transform(updated);
   }
 
-  async markAllAsReadForUser(userId: number) {
+  async markAllAsReadForUser(userId: any) {
     await this.notificationRepo.markAllAsRead(userId);
   }
 }
+
+

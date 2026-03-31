@@ -30,3 +30,4 @@ export class CertificateService extends BaseContentService<Certificate, ICertifi
 
 
 
+

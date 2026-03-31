@@ -24,3 +24,4 @@ export class PublicGeneralConfigController {
     return this.generalConfigService.getConfig();
   }
 }
+

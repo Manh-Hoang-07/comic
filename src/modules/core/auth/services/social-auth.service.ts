@@ -86,3 +86,4 @@ export class SocialAuthService {
         return email.split('@')[0] + '_' + Date.now().toString().slice(-6);
     }
 }
+

@@ -12,7 +12,7 @@ export class PublicReviewsService {
   /**
    * Lấy danh sách reviews của comic
    */
-  async getByComic(comicId: number, page: number = 1, limit: number = 20) {
+  async getByComic(comicId: any, page: number = 1, limit: number = 20) {
     const { data: reviews, meta } = await this.reviewRepository.findAll({
       filter: { comic_id: comicId },
       include: {
@@ -36,3 +36,5 @@ export class PublicReviewsService {
     };
   }
 }
+
+

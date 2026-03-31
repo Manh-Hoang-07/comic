@@ -4,7 +4,7 @@ import {
   Post,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
   Body,
   Req,
@@ -13,6 +13,7 @@ import { Throttle } from '@nestjs/throttler';
 import { PublicChaptersService } from '@/modules/comics/chapter/public/services/chapter.service';
 import { ViewTrackingService } from '@/modules/comics/shared/services/view-tracking.service';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Controller('public/chapters')
 export class PublicChaptersController {
@@ -29,25 +30,25 @@ export class PublicChaptersController {
 
   @Permission('public')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.chaptersService.getOne(id);
   }
 
   @Permission('public')
   @Get(':id/pages')
-  async getPages(@Param('id', ParseIntPipe) id: number) {
+  async getPages(@Param('id') id: any) {
     return this.chaptersService.getPages(id);
   }
 
   @Permission('public')
   @Get(':id/next')
-  async getNext(@Param('id', ParseIntPipe) id: number) {
+  async getNext(@Param('id') id: any) {
     return this.chaptersService.getNext(id);
   }
 
   @Permission('public')
   @Get(':id/prev')
-  async getPrev(@Param('id', ParseIntPipe) id: number) {
+  async getPrev(@Param('id') id: any) {
     return this.chaptersService.getPrev(id);
   }
 
@@ -55,7 +56,7 @@ export class PublicChaptersController {
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 views per minute per IP
   @Post(':id/view')
   async trackView(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Req() req: any,
   ) {
     const chapter = await this.chaptersService.getOne(id);
@@ -64,7 +65,7 @@ export class PublicChaptersController {
     }
 
     return this.viewTrackingService.trackView({
-      comic_id: Number(chapter.comic_id),
+      comic_id: toPrimaryKey(chapter.comic_id),
       chapter_id: id,
       user_id: req.user?.id,
       ip: req.ip,
@@ -72,3 +73,5 @@ export class PublicChaptersController {
     });
   }
 }
+
+

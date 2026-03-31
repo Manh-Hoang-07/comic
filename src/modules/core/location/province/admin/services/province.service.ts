@@ -12,3 +12,4 @@ export class AdminProvinceService extends BaseService<Province, IProvinceReposit
         super(repository);
     }
 }
+

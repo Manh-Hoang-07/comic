@@ -21,13 +21,14 @@ export class UserStatsController {
   @Permission('authenticated')
   @Get('library')
   async getLibrary(
-    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 20,
+    @Query('page', new ParseIntPipe({ optional: true })) page: any = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: any = 20,
   ) {
     const userId = 1; // TODO: Get from request context
     return this.dashboardService.getLibrary(userId, page, limit);
   }
 }
+
 
 
 

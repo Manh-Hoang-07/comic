@@ -35,7 +35,7 @@ export class ContentTemplateService extends BaseService<ContentTemplate, IConten
         return data;
     }
 
-    protected override async beforeUpdate(id: number | string | bigint, data: any) {
+    protected override async beforeUpdate(id: any, data: any) {
         if (data.code) {
             const existing = await this.repository.findByCode(data.code);
             if (existing && String(existing.id) !== String(id)) {
@@ -48,3 +48,5 @@ export class ContentTemplateService extends BaseService<ContentTemplate, IConten
     // ── Transformation ─────────────────────────────────────────────────────────
 
 }
+
+

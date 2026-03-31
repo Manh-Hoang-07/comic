@@ -48,3 +48,4 @@ export class AdminProvinceController {
         return this.provinceService.delete(id);
     }
 }
+

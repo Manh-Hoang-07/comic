@@ -6,6 +6,7 @@ import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { ContextType, PERM } from '@/modules/core/rbac/rbac.constants';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 /**
  * Service quản lý RBAC (Role-Based Access Control)
@@ -21,7 +22,7 @@ export class RbacService {
     private readonly prisma: PrismaService,
   ) { }
 
-  async userHasPermissionsInGroup(userId: number, groupId: number | null, required: string[]): Promise<boolean> {
+  async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
     if (!(await this.rbacCache.isCached(userId, groupId))) {
       await this.refreshUserPermissions(userId, groupId);
     }
@@ -32,11 +33,11 @@ export class RbacService {
     return false;
   }
 
-  async isSystemAdmin(userId: number): Promise<boolean> {
+  async isSystemAdmin(userId: any): Promise<boolean> {
     return this.userHasPermissionsInGroup(userId, null, [PERM.SYSTEM.MANAGE]);
   }
 
-  async getUserPermissions(userId: number, groupId: number | null): Promise<Set<string>> {
+  async getUserPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
     if (!(await this.rbacCache.isCached(userId, groupId))) {
       await this.refreshUserPermissions(userId, groupId);
     }
@@ -45,14 +46,14 @@ export class RbacService {
     return new Set(perms);
   }
 
-  async refreshUserPermissions(userId: number, groupId: number | null): Promise<void> {
+  async refreshUserPermissions(userId: any, groupId: any | null): Promise<void> {
     const assignments = await this.prisma.userRoleAssignment.findMany({
       where: {
-        user_id: BigInt(userId),
+        user_id: toPrimaryKey(userId),
         role: { status: 'active' },
         ...(groupId === null
           ? { group: { code: 'system' } }
-          : { group_id: BigInt(groupId) }),
+          : { group_id: toPrimaryKey(groupId) }),
       },
       select: { role_id: true }
     });
@@ -62,19 +63,19 @@ export class RbacService {
     await this.rbacCache.setPermissions(userId, groupId, Array.from(permissions));
   }
 
-  async assignRoleToUser(userId: number, roleId: number, groupId: number): Promise<void> {
+  async assignRoleToUser(userId: any, roleId: any, groupId: any): Promise<void> {
     const existing = await this.assignmentRepo.findUnique(userId, roleId, groupId);
     if (!existing) {
       await this.assignmentRepo.create({
-        user_id: BigInt(userId),
-        role_id: BigInt(roleId),
-        group_id: BigInt(groupId)
+        user_id: toPrimaryKey(userId),
+        role_id: toPrimaryKey(roleId),
+        group_id: toPrimaryKey(groupId)
       });
     }
     await this.refreshUserPermissions(userId, groupId);
   }
 
-  async syncRolesInGroup(userId: number, groupId: number, roleIds: number[], skipValidation = false): Promise<void> {
+  async syncRolesInGroup(userId: any, groupId: any, roleIds: number[], skipValidation = false): Promise<void> {
     const group = await this.groupRepo.findById(groupId);
     if (!group) throw new NotFoundException('Group not found');
 
@@ -84,15 +85,15 @@ export class RbacService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.userRoleAssignment.deleteMany({
-        where: { user_id: BigInt(userId), group_id: BigInt(groupId) }
+        where: { user_id: toPrimaryKey(userId), group_id: toPrimaryKey(groupId) }
       });
 
       if (roleIds.length) {
         await tx.userRoleAssignment.createMany({
           data: roleIds.map(id => ({
-            user_id: BigInt(userId),
-            role_id: BigInt(id),
-            group_id: BigInt(groupId)
+            user_id: toPrimaryKey(userId),
+            role_id: toPrimaryKey(id),
+            group_id: toPrimaryKey(groupId)
           }))
         });
       }
@@ -103,15 +104,15 @@ export class RbacService {
 
   // ── Private Helpers ────────────────────────────────────────────────────────
 
-  private async validateRolesForContext(roleIds: number[], contextId: number): Promise<void> {
+  private async validateRolesForContext(roleIds: number[], contextId: any): Promise<void> {
     const rIdsBi = roleIds.map(BigInt);
     const validLinks = await this.roleContextRepo.findMany({
-      where: { role_id: { in: rIdsBi }, context_id: BigInt(contextId) }
+      where: { role_id: { in: rIdsBi }, context_id: toPrimaryKey(contextId) }
     });
 
     const validIds = new Set(validLinks.map(rc => rc.role_id.toString()));
     for (const id of roleIds) {
-      if (!validIds.has(BigInt(id).toString())) {
+      if (!validIds.has(toPrimaryKey(id).toString())) {
         throw new BadRequestException(`Role ID ${id} is not allowed in this context`);
       }
     }
@@ -142,3 +143,5 @@ export class RbacService {
     return result;
   }
 }
+
+

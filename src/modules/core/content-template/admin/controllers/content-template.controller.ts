@@ -7,7 +7,7 @@ import {
     Param,
     Delete,
     Query,
-    ParseIntPipe,
+    
 } from '@nestjs/common';
 import { ContentTemplateService } from '../services/content-template.service';
 import { ContentTemplateExecutionService } from '../../services/content-template-execution.service';
@@ -43,14 +43,14 @@ export class ContentTemplateController {
 
     @Permission('content_template.manage')
     @Get(':id')
-    findOne(@Param('id', ParseIntPipe) id: number) {
+    findOne(@Param('id') id: any) {
         return this.service.getOne(id);
     }
 
     @Permission('content_template.manage')
     @Put(':id')
     update(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id') id: any,
         @Body() dto: UpdateContentTemplateDto,
     ) {
         return this.service.update(id, dto);
@@ -58,7 +58,7 @@ export class ContentTemplateController {
 
     @Permission('content_template.manage')
     @Delete(':id')
-    remove(@Param('id', ParseIntPipe) id: number) {
+    remove(@Param('id') id: any) {
         return this.service.delete(id);
     }
 
@@ -74,3 +74,5 @@ export class ContentTemplateController {
         });
     }
 }
+
+

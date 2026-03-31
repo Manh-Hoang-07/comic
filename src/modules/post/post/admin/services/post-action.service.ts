@@ -13,7 +13,7 @@ export class PostActionService {
     /**
      * Syncs tags and categories for a post.
      */
-    async syncRelations(postId: number | bigint, data: { tag_ids?: any; category_ids?: any }): Promise<void> {
+    async syncRelations(postId: any, data: { tag_ids?: any; category_ids?: any }): Promise<void> {
         const tagIds = normalizeIdArray(data.tag_ids);
         const categoryIds = normalizeIdArray(data.category_ids);
 
@@ -26,3 +26,5 @@ export class PostActionService {
         }
     }
 }
+
+

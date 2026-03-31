@@ -35,7 +35,7 @@ export class RbacCacheService implements OnModuleInit {
     }
   }
 
-  private clearL1ByUser(userId: number) {
+  private clearL1ByUser(userId: any) {
     const prefix = `rbac:u:${userId}:`;
     for (const cacheKey of this.l1Cache.keys()) {
       if (cacheKey.startsWith(prefix)) {
@@ -44,15 +44,15 @@ export class RbacCacheService implements OnModuleInit {
     }
   }
 
-  private getGroupKey(userId: number, groupId: number): string {
+  private getGroupKey(userId: any, groupId: any): string {
     return `rbac:u:${userId}:g:${groupId}`;
   }
 
-  private getSystemKey(userId: number): string {
+  private getSystemKey(userId: any): string {
     return `rbac:u:${userId}:system`;
   }
 
-  async hasPermission(userId: number, groupId: number | null, permission: string): Promise<boolean> {
+  async hasPermission(userId: any, groupId: any | null, permission: string): Promise<boolean> {
     if (!this.redis.isEnabled()) return false;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
     const l1 = this.l1Cache.get(key);
@@ -64,13 +64,13 @@ export class RbacCacheService implements OnModuleInit {
     return false;
   }
 
-  private async loadToL1(userId: number, groupId: number | null) {
+  private async loadToL1(userId: any, groupId: any | null) {
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
     const permissions = await this.redis.smembers(key);
     if (permissions.length) this.l1Cache.set(key, { data: new Set(permissions), expiry: Date.now() + this.l1TtlMs });
   }
 
-  async setPermissions(userId: number, groupId: number | null, permissions: string[]) {
+  async setPermissions(userId: any, groupId: any | null, permissions: string[]) {
     if (!this.redis.isEnabled()) return;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
     await this.redis.del(key);
@@ -83,13 +83,13 @@ export class RbacCacheService implements OnModuleInit {
     await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'specific_key', key }));
   }
 
-  async clearUserCache(userId: number, groupId: number | null) {
+  async clearUserCache(userId: any, groupId: any | null) {
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
     await this.redis.del(key);
     this.l1Cache.delete(key);
   }
 
-  async clearAllUserCaches(userId: number) {
+  async clearAllUserCaches(userId: any) {
     if (!this.redis.isEnabled()) return;
     const keys = await this.redis.getTrackedKeys(userId);
     for (const key of keys) await this.redis.del(key);
@@ -98,7 +98,7 @@ export class RbacCacheService implements OnModuleInit {
     await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'user_all', userId }));
   }
 
-  async isCached(userId: number, groupId: number | null): Promise<boolean> {
+  async isCached(userId: any, groupId: any | null): Promise<boolean> {
     if (!this.redis.isEnabled()) return false;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
     return this.l1Cache.has(key) || (await (this.redis as any).client?.exists(key)) === 1;
@@ -119,3 +119,5 @@ export class RbacCacheService implements OnModuleInit {
     }
   }
 }
+
+

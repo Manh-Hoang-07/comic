@@ -37,3 +37,4 @@ export class EmailConfigController {
     return this.emailConfigService.updateConfig(dto);
   }
 }
+

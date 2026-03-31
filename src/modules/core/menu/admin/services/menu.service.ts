@@ -33,12 +33,12 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return this.create(data);
   }
 
-  async updateById(id: number, data: any, userId?: number) {
+  async updateById(id: any, data: any, userId?: number) {
     if (userId) data.updated_user_id = userId;
     return this.update(id, data);
   }
 
-  async deleteById(id: number) {
+  async deleteById(id: any) {
     return this.delete(id);
   }
 
@@ -52,7 +52,7 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return payload;
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected async beforeUpdate(id: any, data: any) {
     const current = await this.menuRepo.findById(id);
     if (!current) throw new NotFoundException('Menu not found');
 
@@ -72,7 +72,7 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return buildMenuTree(menus);
   }
 
-  async getUserMenus(userId?: number | bigint, filters: MenuFilter = {}): Promise<MenuTreeItem[]> {
+  async getUserMenus(userId?: any, filters: MenuFilter = {}): Promise<MenuTreeItem[]> {
     const group = filters.group || 'admin';
     const dbFilter: MenuFilter = { ...filters, group, status: BasicStatus.active };
 
@@ -83,11 +83,11 @@ export class MenuService extends BaseService<any, IMenuRepository> {
 
     let filtered: any[];
     if (group === 'client') {
-      filtered = filterClientMenus(menus, Number(userId));
+      filtered = filterClientMenus(menus, userId);
     } else {
       if (!userId) return [];
       const groupId = RequestContext.get<number | null>('groupId');
-      const userPerms = await this.rbacService.getUserPermissions(Number(userId), groupId ?? null);
+      const userPerms = await this.rbacService.getUserPermissions(userId, groupId ?? null);
       filtered = filterAdminMenus(menus, userPerms);
     }
 
@@ -124,3 +124,5 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return item;
   }
 }
+
+

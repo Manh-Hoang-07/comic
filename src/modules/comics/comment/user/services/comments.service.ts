@@ -39,7 +39,7 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
 
   // ── Extended Operations ────────────────────────────────────────────────────
 
-  async updateComment(id: number | bigint, content: string) {
+  async updateComment(id: any, content: string) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -49,7 +49,7 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
     return this.update(id, { content, updated_user_id: userId });
   }
 
-  async removeComment(id: number | bigint) {
+  async removeComment(id: any) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -84,7 +84,7 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
   protected override async afterCreate(entity: ComicComment): Promise<void> {
     if (entity.parent_id) {
       await this.notificationService.notifyCommentReply(
-        Number(entity.id),
+        entity.id,
         Number(entity.parent_id),
         Number(entity.user_id)
       );
@@ -92,3 +92,5 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
   }
 
 }
+
+

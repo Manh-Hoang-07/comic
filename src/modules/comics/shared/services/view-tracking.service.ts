@@ -4,6 +4,7 @@ import { IComicStatsRepository, COMIC_STATS_REPOSITORY } from '../../stats/domai
 import { IChapterRepository, CHAPTER_REPOSITORY } from '../../chapter/domain/chapter.repository';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { IComicRepository, COMIC_REPOSITORY } from '@/modules/comics/comic/domain/comic.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class ViewTrackingService {
@@ -24,7 +25,7 @@ export class ViewTrackingService {
    * Prevent duplicate views trong 1 giờ (IP + user_id)
    */
   async trackView(data: {
-    comic_id: number;
+    comic_id: any;
     chapter_id?: number;
     user_id?: number;
     ip?: string;
@@ -47,7 +48,7 @@ export class ViewTrackingService {
 
     // Tạo view record
     await this.viewRepository.create({
-      comic_id: BigInt(data.comic_id),
+      comic_id: toPrimaryKey(data.comic_id),
       chapter_id: data.chapter_id ? BigInt(data.chapter_id) : null,
       user_id: data.user_id ? BigInt(data.user_id) : null,
       ip: data.ip || null,
@@ -63,7 +64,7 @@ export class ViewTrackingService {
   /**
    * Aggregate views vào comic_stats
    */
-  private async updateStats(comicId: number, chapterId?: number) {
+  private async updateStats(comicId: any, chapterId?: number) {
     // Buffer increment view về comic thông qua repository (Redis + cron)
     await this.comicRepository.incrementView(comicId);
 
@@ -77,3 +78,5 @@ export class ViewTrackingService {
     }
   }
 }
+
+

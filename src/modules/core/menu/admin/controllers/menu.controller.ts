@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { MenuService } from '@/modules/core/menu/admin/services/menu.service';
@@ -35,7 +35,7 @@ export class AdminMenuController {
 
   @Permission('menu.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.service.getOne(id);
   }
 
@@ -51,7 +51,7 @@ export class AdminMenuController {
   @Permission('menu.manage')
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body() dto: UpdateMenuDto
   ) {
     const userId = this.auth.id();
@@ -61,8 +61,10 @@ export class AdminMenuController {
   @LogRequest()
   @Permission('menu.manage')
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.service.deleteById(id);
   }
 }
+
+
 

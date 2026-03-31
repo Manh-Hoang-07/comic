@@ -12,3 +12,4 @@ export class AdminWardService extends BaseService<Ward, IWardRepository> {
         super(repository);
     }
 }
+

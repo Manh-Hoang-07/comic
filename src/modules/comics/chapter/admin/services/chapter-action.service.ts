@@ -21,7 +21,7 @@ export class ChapterActionService {
     /**
      * Validates that chapter_index is unique within a comic.
      */
-    async validateUniqueIndex(comicId: bigint, index: number, excludeId?: bigint): Promise<void> {
+    async validateUniqueIndex(comicId: any, index: number, excludeId?: bigint): Promise<void> {
         const existing = await this.chapterRepository.findByComicIdAndIndex(comicId, index);
         if (existing && (!excludeId || existing.id !== excludeId)) {
             throw new BadRequestException(`Chapter với index ${index} đã tồn tại trong comic này`);
@@ -31,7 +31,7 @@ export class ChapterActionService {
     /**
      * Syncs pages for a chapter (deletes old ones and creates new ones).
      */
-    async syncPages(chapterId: bigint, pages: any[]): Promise<void> {
+    async syncPages(chapterId: any, pages: any[]): Promise<void> {
         if (!pages || !Array.isArray(pages)) return;
 
         // Delete existing pages
@@ -54,7 +54,7 @@ export class ChapterActionService {
     /**
      * Updates last chapter information on the parent comic.
      */
-    async updateComicTimeline(comicId: bigint): Promise<void> {
+    async updateComicTimeline(comicId: any): Promise<void> {
         const lastChapter = await (this.chapterRepository as any).delegate.findFirst({
             where: {
                 comic_id: comicId,
@@ -79,3 +79,5 @@ export class ChapterActionService {
         }
     }
 }
+
+

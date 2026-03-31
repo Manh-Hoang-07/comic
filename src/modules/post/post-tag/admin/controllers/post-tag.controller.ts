@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
 } from '@nestjs/common';
 import { PostTagService } from '@/modules/post/post-tag/admin/services/post-tag.service';
@@ -35,7 +35,7 @@ export class PostTagController {
 
   @Permission('post_tag.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.postTagService.getOne(id);
   }
 
@@ -50,7 +50,7 @@ export class PostTagController {
   @LogRequest()
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) updateDto: UpdatePostTagDto,
   ) {
     return this.postTagService.update(id, updateDto as any);
@@ -59,8 +59,10 @@ export class PostTagController {
   @Permission('post_tag.manage')
   @LogRequest()
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.postTagService.delete(id);
   }
 }
+
+
 

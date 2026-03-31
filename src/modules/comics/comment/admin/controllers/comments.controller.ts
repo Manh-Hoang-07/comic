@@ -6,7 +6,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
 } from '@nestjs/common';
 import { CommentsService } from '../services/comments.service';
@@ -37,7 +37,7 @@ export class CommentsController {
 
   @Permission('comic.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.commentsService.getOne(id);
   }
 
@@ -45,7 +45,7 @@ export class CommentsController {
   @LogRequest({ fileBaseName: 'comment_update' })
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) body: { content?: string; status?: 'visible' | 'hidden' },
   ) {
     return this.commentsService.update(id, body);
@@ -55,7 +55,7 @@ export class CommentsController {
   @LogRequest({ fileBaseName: 'comment_status_update' })
   @Put(':id/status')
   async updateStatus(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) body: { status: 'visible' | 'hidden' },
   ) {
     return this.commentsService.update(id, { status: body.status });
@@ -64,7 +64,9 @@ export class CommentsController {
   @Permission('comic.manage')
   @LogRequest({ fileBaseName: 'comment_delete' })
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.commentsService.delete(id);
   }
 }
+
+

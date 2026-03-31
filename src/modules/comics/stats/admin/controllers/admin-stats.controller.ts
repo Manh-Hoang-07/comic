@@ -20,7 +20,7 @@ export class AdminStatsController {
   @Permission('comic.manage')
   @Get('comics')
   async getTopComics(
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 20,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: any = 20,
     @Query('sortBy') sortBy: 'views' | 'follows' | 'rating' = 'views',
   ) {
     return this.analyticsService.getTopComics(limit, sortBy);
@@ -38,6 +38,7 @@ export class AdminStatsController {
     );
   }
 }
+
 
 
 

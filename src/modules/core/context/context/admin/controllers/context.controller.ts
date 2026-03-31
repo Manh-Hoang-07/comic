@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, ForbiddenException, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ForbiddenException, Query } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { AdminContextService } from '../services/context.service';
@@ -21,7 +21,7 @@ export class AdminContextController {
   @Post()
   async create(@Body() body: {
     type: string;
-    ref_id?: number | null;
+    ref_id?: any | null;
     name: string;
     code?: string;
     status?: string;
@@ -58,7 +58,7 @@ export class AdminContextController {
    */
   @Permission('public')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.contextService.findById(id);
   }
 
@@ -68,7 +68,7 @@ export class AdminContextController {
   @Permission('group.manage')
   @Put(':id')
   async updateContext(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body() body: Partial<{ name: string; code: string; status: string }>,
   ) {
     const userId = this.auth.id();
@@ -84,7 +84,7 @@ export class AdminContextController {
    */
   @Permission('group.manage')
   @Delete(':id')
-  async deleteContext(@Param('id', ParseIntPipe) id: number) {
+  async deleteContext(@Param('id') id: any) {
     const userId = this.auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
@@ -94,4 +94,6 @@ export class AdminContextController {
     return { message: 'Context deleted successfully' };
   }
 }
+
+
 

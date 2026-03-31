@@ -7,9 +7,10 @@ import {
     Body,
     Param,
     Query,
-    ParseIntPipe,
+    
     ValidationPipe,
     UsePipes,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { UserPostCommentsService } from '../services/comments.service';
@@ -23,8 +24,8 @@ export class UserPostCommentsController {
     @Permission('authenticated')
     @Get()
     async getMyComments(
-        @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
-        @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 20,
+        @Query('page', new ParseIntPipe({ optional: true })) page: any = 1,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: any = 20,
     ) {
         return this.commentsService.getList({ by_current_user: true, page, limit });
     }
@@ -34,8 +35,8 @@ export class UserPostCommentsController {
     @Post()
     @UsePipes(new SanitizeHtmlPipe())
     async create(@Body(ValidationPipe) body: {
-        post_id: number;
-        parent_id?: number;
+        post_id: any;
+        parent_id?: any;
         content: string;
     }) {
         // Validate post_id exists? Service handles parent validCheck. Post validCheck?
@@ -48,7 +49,7 @@ export class UserPostCommentsController {
     @Put(':id')
     @UsePipes(new SanitizeHtmlPipe())
     async update(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id') id: any,
         @Body(ValidationPipe) body: { content: string },
     ) {
         return this.commentsService.updateComment(id, body.content);
@@ -56,7 +57,9 @@ export class UserPostCommentsController {
 
     @Permission('authenticated')
     @Delete(':id')
-    async delete(@Param('id', ParseIntPipe) id: number) {
+    async delete(@Param('id') id: any) {
         return this.commentsService.removeComment(id);
     }
 }
+
+

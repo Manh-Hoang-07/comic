@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
 } from '@nestjs/common';
 import { ComicCategoryService } from '../services/comic-category.service';
@@ -34,7 +34,7 @@ export class ComicCategoryController {
 
   @Permission('comic.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.comicCategoryService.getOne(id);
   }
 
@@ -49,7 +49,7 @@ export class ComicCategoryController {
   @LogRequest({ fileBaseName: 'comic_category_update' })
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) dto: UpdateComicCategoryDto,
   ) {
     return this.comicCategoryService.update(id, dto);
@@ -58,7 +58,9 @@ export class ComicCategoryController {
   @Permission('comic.manage')
   @LogRequest({ fileBaseName: 'comic_category_delete' })
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.comicCategoryService.delete(id);
   }
 }
+
+

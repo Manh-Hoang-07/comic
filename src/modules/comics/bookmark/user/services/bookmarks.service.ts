@@ -27,7 +27,7 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
     };
   }
 
-  async createBookmark(chapterId: number | bigint, pageNumber: number) {
+  async createBookmark(chapterId: any, pageNumber: number) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -40,7 +40,7 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
     return this.getOne(saved.id);
   }
 
-  async removeBookmark(id: number | bigint) {
+  async removeBookmark(id: any) {
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
@@ -53,3 +53,5 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
   }
 
 }
+
+

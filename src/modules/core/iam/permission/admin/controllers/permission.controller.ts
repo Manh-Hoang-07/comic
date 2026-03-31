@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { Auth } from '@/common/auth/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
@@ -22,7 +22,7 @@ export class PermissionController {
 
   @Permission('permission.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.service.getOne(id);
   }
 
@@ -37,7 +37,7 @@ export class PermissionController {
   @LogRequest()
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body() dto: any,
   ) {
     return this.service.update(id, dto);
@@ -46,10 +46,12 @@ export class PermissionController {
   @Permission('permission.manage')
   @LogRequest()
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.service.delete(id);
   }
 }
+
+
 
 
 

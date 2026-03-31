@@ -12,3 +12,4 @@ export class CountryController {
         return this.countryService.getList(query);
     }
 }
+

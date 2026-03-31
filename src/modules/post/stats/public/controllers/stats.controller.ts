@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { PostStatsService } from '../services/stats.service';
 
@@ -8,8 +8,10 @@ export class PublicPostStatsController {
 
   @Permission('public')
   @Get(':id/stats')
-  async getPostStats(@Param('id', ParseIntPipe) id: number) {
+  async getPostStats(@Param('id') id: any) {
     return this.statsService.getPostStats(id);
   }
 }
+
+
 

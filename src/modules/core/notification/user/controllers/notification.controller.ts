@@ -78,3 +78,4 @@ export class NotificationController {
     return this.notificationService.markAllAsReadForUser(req.user.id);
   }
 }
+

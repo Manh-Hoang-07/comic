@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
 import { PublicComicsService } from '../services/comic.service';
 
@@ -24,4 +24,5 @@ export class PublicComicsController {
     return this.comicsService.getChaptersBySlug(slug);
   }
 }
+
 

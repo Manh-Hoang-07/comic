@@ -38,3 +38,4 @@ export class ProfileController {
     return this.service.changePassword(Number(userId), dto.old_password, dto.password);
   }
 }
+

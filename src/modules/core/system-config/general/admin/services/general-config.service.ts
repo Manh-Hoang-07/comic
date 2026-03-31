@@ -67,3 +67,4 @@ export class GeneralConfigService extends BaseService<any, IGeneralConfigReposit
   }
 
 }
+

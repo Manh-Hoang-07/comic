@@ -57,7 +57,7 @@ export class LoginService {
     this.userRepo.updateLastLogin(user.id).catch(() => undefined);
 
     // 5. Issue Tokens
-    const numericUserId = Number(user.id);
+    const numericUserId = user.id;
     const { accessToken, refreshToken, refreshJti, accessTtlSec } =
       this.tokenService.generateTokens(numericUserId, user.email!);
 
@@ -75,7 +75,7 @@ export class LoginService {
   /**
    * Terminate the session and blacklist the current token.
    */
-  async logout(userId: number, token?: string) {
+  async logout(userId: any, token?: string) {
     if (token) {
       const ttlSeconds = this.tokenService.getAccessTtlSec();
       await this.tokenBlacklistService.add(token, ttlSeconds);
@@ -115,3 +115,5 @@ export class LoginService {
     };
   }
 }
+
+

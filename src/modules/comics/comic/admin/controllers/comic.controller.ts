@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
   UploadedFile,
   UseInterceptors,
@@ -42,7 +42,7 @@ export class ComicController {
 
   @Permission('comic.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.comicService.getOne(id);
   }
 
@@ -57,7 +57,7 @@ export class ComicController {
   @LogRequest({ fileBaseName: 'comic_update' })
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) dto: UpdateComicDto,
   ) {
     return this.comicService.update(id, dto);
@@ -66,7 +66,7 @@ export class ComicController {
   @Permission('comic.manage')
   @LogRequest({ fileBaseName: 'comic_delete' })
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.comicService.delete(id);
   }
 
@@ -76,7 +76,7 @@ export class ComicController {
   @Post(':id/cover')
   @UseInterceptors(FileInterceptor('file'))
   async uploadCover(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @UploadedFile() file: Express.Multer.File,
   ) {
     // Validate image
@@ -91,3 +91,5 @@ export class ComicController {
     return this.comicService.update(id, { cover_image: uploadResult.url });
   }
 }
+
+

@@ -79,8 +79,9 @@ export class ProjectController {
 
   @Patch(':id/sort-order')
   @Permission('project.manage')
-  updateSortOrder(@Param('id') id: string, @Body('sort_order') sortOrder: number) {
+  updateSortOrder(@Param('id') id: string, @Body('sort_order') sortOrder: any) {
     return this.projectService.updateSortOrder(+id, sortOrder);
   }
 }
+
 

@@ -15,10 +15,11 @@ export class PublicReviewsController {
   @Permission('public')
   @Get('comics/:comicId')
   async getByComic(
-    @Param('comicId', ParseIntPipe) comicId: number,
-    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 20,
+    @Param('comicId') comicId: any,
+    @Query('page', new ParseIntPipe({ optional: true })) page: any = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: any = 20,
   ) {
     return this.reviewsService.getByComic(comicId, page, limit);
   }
 }
+

@@ -14,7 +14,7 @@ export class StatsService {
   /**
    * Lấy stats của comic
    */
-  async getComicStats(comicId: number) {
+  async getComicStats(comicId: any) {
     const comic = await this.comicRepository.findById(comicId);
     if (!comic) {
       throw new NotFoundException('Comic not found');
@@ -33,3 +33,5 @@ export class StatsService {
     };
   }
 }
+
+

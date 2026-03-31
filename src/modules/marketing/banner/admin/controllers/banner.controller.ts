@@ -82,8 +82,9 @@ export class BannerController {
     @Permission('banner.manage')
     updateSortOrder(
         @Param('id') id: string,
-        @Body('sort_order') sortOrder: number,
+        @Body('sort_order') sortOrder: any,
     ) {
         return this.bannerService.updateSortOrder(+id, sortOrder);
     }
 }
+

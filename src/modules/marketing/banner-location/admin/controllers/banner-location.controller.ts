@@ -77,3 +77,4 @@ export class BannerLocationController {
         return this.bannerLocationService.changeStatus(+id, status);
     }
 }
+

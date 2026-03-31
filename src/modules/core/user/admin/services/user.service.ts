@@ -24,12 +24,8 @@ export class UserService extends BaseService<any, UserRepository> {
 
   // ── Password & Action Delegates ───────────────────────────────────────────
 
-  async changePassword(id: number | bigint, dto: ChangePasswordDto) {
+  async changePassword(id: any, dto: ChangePasswordDto) {
     return this.passwordService.changePassword(id, dto);
-  }
-
-  async syncRelations(userId: number, data: any): Promise<void> {
-    return this.actionService.syncRelations(userId, data);
   }
 
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
@@ -43,11 +39,11 @@ export class UserService extends BaseService<any, UserRepository> {
   }
 
   protected override async afterCreate(user: any, data: any): Promise<void> {
-    await this.syncRelations(Number(user.id), data);
+    await this.actionService.syncRelations(user.id, data);
   }
 
   protected override async afterUpdate(user: any, data: any): Promise<void> {
-    await this.syncRelations(Number(user.id), data);
+    await this.actionService.syncRelations(user.id, data);
   }
 
   protected override async beforeCreate(data: any) {
@@ -67,12 +63,7 @@ export class UserService extends BaseService<any, UserRepository> {
     return payload;
   }
 
-  async create(data: any) {
-    const user = await super.create(data);
-    return this.getOne(user.id);
-  }
-
-  protected override async beforeUpdate(id: number | bigint, data: any) {
+  protected override async beforeUpdate(id: any, data: any) {
     const payload = { ...data };
     payload.updated_user_id = getCurrentUserId();
 
@@ -82,7 +73,7 @@ export class UserService extends BaseService<any, UserRepository> {
       delete payload.password;
     }
 
-    await this.validateUniqueness(payload, Number(id));
+    await this.validateUniqueness(payload, id);
 
     delete payload.role_ids;
     delete payload.profile;
@@ -90,14 +81,9 @@ export class UserService extends BaseService<any, UserRepository> {
     return payload;
   }
 
-  async update(id: number | bigint, data: any) {
-    await super.update(id, data);
-    return this.getOne(id);
-  }
-
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  private async validateUniqueness(payload: any, excludeId?: number): Promise<void> {
+  private async validateUniqueness(payload: any, excludeId?: any): Promise<void> {
     const fields = ['email', 'phone', 'username'] as const;
     const labels = {
       email: 'Email',
@@ -122,8 +108,8 @@ export class UserService extends BaseService<any, UserRepository> {
 
     if (groupId && u.user_role_assignments) {
       u.role_ids = (u.user_role_assignments as any[])
-        .filter((ura: any) => Number(ura.group_id) === Number(groupId))
-        .map((ura: any) => Number(ura.role_id));
+        .filter((ura: any) => String(ura.group_id) === String(groupId))
+        .map((ura: any) => ura.role_id);
     } else {
       u.role_ids = u.role_ids || [];
     }
@@ -132,3 +118,4 @@ export class UserService extends BaseService<any, UserRepository> {
     return u;
   }
 }
+

@@ -12,3 +12,4 @@ export class AdminCountryService extends BaseService<Country, ICountryRepository
         super(repository);
     }
 }
+

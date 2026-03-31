@@ -21,7 +21,7 @@ export class ComicCategoryService extends BaseService<ComicCategory, IComicCateg
 
   // ── CRUD Overrides ────────────────────────────────────────────────────────
 
-  override async getOne(id: string | number | bigint): Promise<ComicCategory> {
+  override async getOne(id: any): Promise<ComicCategory> {
     const entity = await super.getOne(id);
     verifyGroupOwnership(entity as any);
     return entity;
@@ -40,7 +40,7 @@ export class ComicCategoryService extends BaseService<ComicCategory, IComicCateg
     return payload;
   }
 
-  protected override async beforeUpdate(id: string | number | bigint, data: any): Promise<any> {
+  protected override async beforeUpdate(id: any, data: any): Promise<any> {
     await this.getOne(id); // Already includes ownership check
 
     const payload = { ...data };
@@ -57,8 +57,10 @@ export class ComicCategoryService extends BaseService<ComicCategory, IComicCateg
     return payload;
   }
 
-  protected override async beforeDelete(id: string | number | bigint): Promise<boolean> {
+  protected override async beforeDelete(id: any): Promise<boolean> {
     await this.getOne(id); // Ownership check
     return true;
   }
 }
+
+

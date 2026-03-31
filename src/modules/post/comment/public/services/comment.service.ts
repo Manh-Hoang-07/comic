@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { IPostCommentRepository, POST_COMMENT_REPOSITORY, PostCommentFilter } from '@/modules/post/comment/domain/post-comment.repository';
 import { POST_REPOSITORY, IPostRepository } from '@/modules/post/post/domain/post.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class PostCommentService {
@@ -12,12 +13,12 @@ export class PostCommentService {
     ) { }
 
     async createComment(data: {
-        post_id: number | bigint;
-        user_id?: number | bigint;
+        post_id: any;
+        user_id?: any;
         guest_name?: string;
         guest_email?: string;
         content: string;
-        parent_id?: number | bigint;
+        parent_id?: any;
     }) {
         const post = await this.postRepo.findById(data.post_id);
         if (!post) throw new NotFoundException('Post not found');
@@ -31,7 +32,7 @@ export class PostCommentService {
         }
 
         return this.commentRepo.create({
-            post_id: BigInt(data.post_id),
+            post_id: toPrimaryKey(data.post_id),
             user_id: data.user_id ? BigInt(data.user_id) : null,
             guest_name: data.guest_name,
             guest_email: data.guest_email,
@@ -41,7 +42,7 @@ export class PostCommentService {
         });
     }
 
-    async getCommentsByPost(postId: number | bigint, options: { page?: number, limit?: number } = {}) {
+    async getCommentsByPost(postId: any, options: { page?: number, limit?: number } = {}) {
         // 1. Phân trang trên Root Comments
         const rootsResult = await this.commentRepo.findAll({
             page: options.page || 1,
@@ -109,3 +110,5 @@ export class PostCommentService {
         return roots;
     }
 }
+
+

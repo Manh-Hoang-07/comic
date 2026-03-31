@@ -4,6 +4,7 @@ import { IBannerLocationRepository, BANNER_LOCATION_REPOSITORY } from '@/modules
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { BaseService } from '@/common/core/services';
 import { Banner } from '@prisma/client';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class PublicBannerService extends BaseService<Banner, IBannerRepository> {
@@ -35,7 +36,7 @@ export class PublicBannerService extends BaseService<Banner, IBannerRepository> 
         const item = super.transform(banner) as any;
         if (item.location) {
             item.location = {
-                id: Number(item.location.id),
+                id: toPrimaryKey(item.location.id),
                 name: item.location.name,
                 code: item.location.code,
             };
@@ -43,6 +44,8 @@ export class PublicBannerService extends BaseService<Banner, IBannerRepository> 
         return item;
     }
 }
+
+
 
 
 

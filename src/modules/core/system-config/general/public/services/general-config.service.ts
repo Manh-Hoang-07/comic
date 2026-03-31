@@ -61,3 +61,4 @@ export class PublicGeneralConfigService extends BaseService<any, IGeneralConfigR
     return item;
   }
 }
+

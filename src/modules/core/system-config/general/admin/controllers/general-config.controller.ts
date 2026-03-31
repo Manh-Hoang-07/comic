@@ -41,3 +41,4 @@ export class GeneralConfigController {
     return this.generalConfigService.updateConfig(dto);
   }
 }
+

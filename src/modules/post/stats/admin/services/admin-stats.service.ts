@@ -3,6 +3,7 @@ import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { IPostRepository, POST_REPOSITORY } from '@/modules/post/post/domain/post.repository';
 import { IPostStatsRepository, POST_STATS_REPOSITORY } from '../../domain/post-stats.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class AdminPostStatsService {
@@ -23,10 +24,10 @@ export class AdminPostStatsService {
         this.postRepository.count({ ...(filter as any), status: 'published' } as any),
         this.postRepository.count({ ...(filter as any), status: 'draft' } as any),
         this.postRepository.count({ ...(filter as any), status: 'scheduled' } as any),
-        (this.prisma as any).postComment.count(filter.group_id ? { where: { post: { group_id: BigInt(filter.group_id as any) } } } : undefined),
+        (this.prisma as any).postComment.count(filter.group_id ? { where: { post: { group_id: toPrimaryKey(filter.group_id as any) } } } : undefined),
         (this.prisma as any).postComment.count(
           filter.group_id
-            ? { where: { status: 'hidden', post: { group_id: BigInt(filter.group_id as any) } } }
+            ? { where: { status: 'hidden', post: { group_id: toPrimaryKey(filter.group_id as any) } } }
             : { where: { status: 'hidden' } },
         ),
         this.statsRepository.sum('view_count', filter as any),
@@ -48,7 +49,7 @@ export class AdminPostStatsService {
     };
   }
 
-  async getPostViews(postId: number, startDate: Date, endDate: Date) {
+  async getPostViews(postId: any, startDate: Date, endDate: Date) {
     return this.statsRepository.getDailyViewStats(postId, startDate, endDate);
   }
 
@@ -82,4 +83,6 @@ export class AdminPostStatsService {
     }));
   }
 }
+
+
 

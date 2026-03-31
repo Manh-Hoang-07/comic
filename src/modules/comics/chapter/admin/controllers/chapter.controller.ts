@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  
   ValidationPipe,
   UploadedFiles,
   UseInterceptors,
@@ -42,7 +42,7 @@ export class ChapterController {
 
   @Permission('comic.manage')
   @Get(':id')
-  async getOne(@Param('id', ParseIntPipe) id: number) {
+  async getOne(@Param('id') id: any) {
     return this.chapterService.getOne(id);
   }
 
@@ -57,7 +57,7 @@ export class ChapterController {
   @LogRequest({ fileBaseName: 'chapter_update' })
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) dto: UpdateChapterDto,
   ) {
     return this.chapterService.update(id, dto);
@@ -66,7 +66,7 @@ export class ChapterController {
   @Permission('comic.manage')
   @LogRequest({ fileBaseName: 'chapter_delete' })
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id') id: any) {
     return this.chapterService.delete(id);
   }
 
@@ -74,7 +74,7 @@ export class ChapterController {
   @Post(':id/pages')
   @UseInterceptors(FilesInterceptor('files', 100))
   async uploadPages(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     // Validate images
@@ -97,13 +97,13 @@ export class ChapterController {
   @Permission('comic.manage')
   @Put(':id/pages')
   async updatePages(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: any,
     @Body(ValidationPipe) body: {
       pages: Array<{
         image_url: string;
-        width?: number;
-        height?: number;
-        file_size?: number;
+        width?: any;
+        height?: any;
+        file_size?: any;
       }>;
     },
   ) {
@@ -112,3 +112,5 @@ export class ChapterController {
 
 
 }
+
+

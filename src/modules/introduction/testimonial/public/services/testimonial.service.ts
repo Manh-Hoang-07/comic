@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { ITestimonialRepository, TESTIMONIAL_REPOSITORY, TestimonialFilter } from '@/modules/introduction/testimonial/domain/testimonial.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { BaseService } from '@/common/core/services';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class PublicTestimonialService extends BaseService<any, ITestimonialRepository> {
@@ -32,7 +33,7 @@ export class PublicTestimonialService extends BaseService<any, ITestimonialRepos
     return result.data as any[];
   }
 
-  async findByProject(projectId: number) {
+  async findByProject(projectId: any) {
     const result = await this.getList({ projectId, limit: 100, page: 1 } as any);
     return result.data as any[];
   }
@@ -43,7 +44,7 @@ export class PublicTestimonialService extends BaseService<any, ITestimonialRepos
     if (item.project_id) item.project_id = Number(item.project_id);
     if (item.project) {
       item.project = {
-        id: Number(item.project.id),
+        id: toPrimaryKey(item.project.id),
         name: item.project.name,
         slug: item.project.slug,
       };
@@ -51,4 +52,6 @@ export class PublicTestimonialService extends BaseService<any, ITestimonialRepos
     return item;
   }
 }
+
+
 

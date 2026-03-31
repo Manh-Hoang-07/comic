@@ -15,7 +15,7 @@ export class PublicProjectController {
 
   @Permission('public')
   @Get('featured')
-  getFeatured(@Query('limit') limit?: number) {
+  getFeatured(@Query('limit') limit?: any) {
     return this.projectService.getFeatured(limit ? Number(limit) : 10);
   }
 
@@ -29,4 +29,5 @@ export class PublicProjectController {
     return project;
   }
 }
+
 

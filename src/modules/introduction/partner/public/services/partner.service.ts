@@ -34,3 +34,4 @@ export class PublicPartnerService extends BaseService<any, IPartnerRepository> {
   }
 }
 
+

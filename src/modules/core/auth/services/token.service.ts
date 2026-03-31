@@ -48,7 +48,7 @@ export class TokenService {
         return Math.random().toString(36).slice(2) + Date.now().toString(36);
     }
 
-    generateTokens(userId: number, email?: string) {
+    generateTokens(userId: any, email?: string) {
         const payload = { sub: userId, email } as Record<string, any>;
         const accessToken = this.jwtService.sign(payload);
         const accessTtlSec = this.getAccessTtlSec();
@@ -88,7 +88,7 @@ export class TokenService {
         }
     }
 
-    async issueAndStoreNewTokens(userId: number, email?: string) {
+    async issueAndStoreNewTokens(userId: any, email?: string) {
         const { accessToken, refreshToken, refreshJti, accessTtlSec } = this.generateTokens(userId, email);
         try {
             if (this.redis && this.redis.isEnabled()) {
@@ -99,10 +99,12 @@ export class TokenService {
         return { accessToken, refreshToken, accessTtlSec } as const;
     }
 
-    buildRefreshKey(userId: number, jti: string): string {
+    buildRefreshKey(userId: any, jti: string): string {
         return `auth:refresh:${userId}:${jti}`;
     }
 }
+
+
 
 
 

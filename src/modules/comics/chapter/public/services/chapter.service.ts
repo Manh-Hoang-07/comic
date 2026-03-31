@@ -67,7 +67,7 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
   /**
    * Lấy danh sách pages của chapter
    */
-  async getPages(chapterId: number) {
+  async getPages(chapterId: any) {
     const chapter = await this.repository.findOne({
       id: chapterId,
       status: { in: PUBLIC_CHAPTER_STATUSES }
@@ -89,7 +89,7 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
   /**
    * Lấy chapter tiếp theo
    */
-  async getNext(chapterId: number) {
+  async getNext(chapterId: any) {
     const chapter = await this.repository.findById(chapterId);
     if (!chapter) throw new NotFoundException('Chapter not found');
 
@@ -108,7 +108,7 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
   /**
    * Lấy chapter trước đó
    */
-  async getPrev(chapterId: number) {
+  async getPrev(chapterId: any) {
     const chapter = await this.repository.findById(chapterId);
     if (!chapter) throw new NotFoundException('Chapter not found');
 
@@ -124,5 +124,7 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
     return prev ? this.transform(prev) : null;
   }
 }
+
+
 
 

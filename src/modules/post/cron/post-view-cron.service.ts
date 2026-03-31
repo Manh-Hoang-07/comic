@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RedisUtil } from '@/core/utils/redis.util';
 import { IPostStatsRepository, POST_STATS_REPOSITORY } from '@/modules/post/stats/domain/post-stats.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class PostViewCronService {
@@ -54,7 +55,7 @@ export class PostViewCronService {
             .map(([postIdStr, countStr]) => {
                 try {
                     return {
-                        postId: BigInt(postIdStr),
+                        postId: toPrimaryKey(postIdStr),
                         postIdStr, // Keep string for hdel
                         count: parseInt(countStr, 10),
                     };
@@ -62,7 +63,7 @@ export class PostViewCronService {
                     return null;
                 }
             })
-            .filter((entry): entry is { postId: bigint; postIdStr: string; count: number } =>
+            .filter((entry): entry is { postId: any; postIdStr: string; count: number } =>
                 entry !== null && !isNaN(entry.count) && entry.count > 0
             );
 
@@ -97,3 +98,5 @@ export class PostViewCronService {
         this.logger.log(`Successfully synced ${entries.length} posts from ${workingKey}`);
     }
 }
+
+

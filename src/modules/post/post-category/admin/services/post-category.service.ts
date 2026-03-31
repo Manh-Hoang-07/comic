@@ -36,7 +36,7 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
     return payload;
   }
 
-  protected override async beforeUpdate(id: number | bigint, data: any) {
+  protected override async beforeUpdate(id: any, data: any) {
     const payload = { ...data };
 
     // Handle Slug
@@ -74,3 +74,5 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
     return item;
   }
 }
+
+

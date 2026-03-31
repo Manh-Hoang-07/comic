@@ -3,6 +3,7 @@ import { NotificationType } from '@/shared/enums/types/notification-type.enum';
 import { IFollowRepository, FOLLOW_REPOSITORY } from '../../follow/domain/follow.repository';
 import { ICommentRepository, COMMENT_REPOSITORY } from '../../comment/domain/comment.repository';
 import { INotificationRepository, NOTIFICATION_REPOSITORY } from '@/modules/core/notification/domain/notification.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class ComicNotificationService {
@@ -42,15 +43,15 @@ export class ComicNotificationService {
     // Tạo notifications cho từng follower
     const notifications = followers.map((follow: any) =>
       this.notificationRepository.create({
-        user_id: BigInt(Number(follow.user_id)),
+        user_id: toPrimaryKey(Number(follow.user_id)),
         title: `Chapter mới: ${chapter.title}`,
         message: `${comic.title} đã có chapter mới: ${chapter.chapter_label || chapter.chapter_index}`,
         type: NotificationType.info as any,
         data: {
-          comic_id: Number(comic.id),
+          comic_id: toPrimaryKey(comic.id),
           comic_slug: comic.slug,
           comic_title: comic.title,
-          chapter_id: Number(chapter.id),
+          chapter_id: toPrimaryKey(chapter.id),
           chapter_index: chapter.chapter_index,
           chapter_label: chapter.chapter_label,
         } as any,
@@ -66,7 +67,7 @@ export class ComicNotificationService {
   /**
    * Notify user khi có comment reply
    */
-  async notifyCommentReply(commentId: number, parentCommentId: number, userId: number) {
+  async notifyCommentReply(commentId: any, parentCommentId: any, userId: any) {
     // Lấy parent comment để biết user cần notify qua repository
     const parentComment = await this.commentRepository.findById(parentCommentId);
 
@@ -89,3 +90,5 @@ export class ComicNotificationService {
     return notification;
   }
 }
+
+

@@ -22,7 +22,7 @@ export class BannerLocationService extends BaseService<BannerLocation, IBannerLo
 
     // ── Extended Operations ────────────────────────────────────────────────────
 
-    async changeStatus(id: number | bigint, status: BasicStatus) {
+    async changeStatus(id: any, status: BasicStatus) {
         return this.update(id, { status: status as any });
     }
 
@@ -35,7 +35,7 @@ export class BannerLocationService extends BaseService<BannerLocation, IBannerLo
         return data;
     }
 
-    protected override async beforeUpdate(id: number | bigint, data: any) {
+    protected override async beforeUpdate(id: any, data: any) {
         const current = await this.getOne(id); // Includes existence check
 
         if (data.code && data.code !== (current as any).code) {
@@ -46,3 +46,5 @@ export class BannerLocationService extends BaseService<BannerLocation, IBannerLo
         return data;
     }
 }
+
+

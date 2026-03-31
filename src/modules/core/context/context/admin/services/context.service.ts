@@ -4,6 +4,7 @@ import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { BaseService } from '@/common/core/services';
 import { ContextType, SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class AdminContextService extends BaseService<any, IContextRepository> {
@@ -23,7 +24,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   protected defaultSort = 'id:desc';
 
 
-  private async isSystemAdmin(userId: number): Promise<boolean> {
+  private async isSystemAdmin(userId: any): Promise<boolean> {
     return this.rbacService.isSystemAdmin(userId);
   }
 
@@ -47,7 +48,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return this.systemContextCache;
   }
 
-  async findById(id: number) {
+  async findById(id: any) {
     const context = await this.contextRepo.findOne({
       id,
       status: 'active'
@@ -55,12 +56,12 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return this.transform(context);
   }
 
-  async findByTypeAndRefId(type: string, refId: number | null) {
+  async findByTypeAndRefId(type: string, refId: any | null) {
     const context = await this.contextRepo.findByTypeAndRefId(type, refId);
     return this.transform(context);
   }
 
-  async createContext(data: any, requesterUserId: number) {
+  async createContext(data: any, requesterUserId: any) {
     const isAdmin = await this.isSystemAdmin(requesterUserId);
     if (!isAdmin) {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
@@ -89,7 +90,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return payload;
   }
 
-  async updateContext(id: number, data: any, requesterUserId: number) {
+  async updateContext(id: any, data: any, requesterUserId: any) {
     const isAdmin = await this.isSystemAdmin(requesterUserId);
     if (!isAdmin) {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
@@ -97,7 +98,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return this.update(id, data);
   }
 
-  protected async beforeUpdate(id: number | bigint, data: any) {
+  protected async beforeUpdate(id: any, data: any) {
     const current = await this.contextRepo.findById(id);
     if (!current) throw new NotFoundException('Context không tồn tại');
 
@@ -119,11 +120,11 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return data;
   }
 
-  async deleteContext(id: number) {
+  async deleteContext(id: any) {
     return this.delete(id);
   }
 
-  protected async beforeDelete(id: number | bigint): Promise<boolean> {
+  protected async beforeDelete(id: any): Promise<boolean> {
     const current = await this.contextRepo.findById(id);
     if (!current) throw new NotFoundException('Context không tồn tại');
 
@@ -132,7 +133,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     }
 
     const groups = await this.groupRepo.findManyRaw({
-      where: { context_id: BigInt(id) },
+      where: { context_id: toPrimaryKey(id) },
     });
 
     if (groups.length > 0) {
@@ -141,3 +142,5 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return true;
   }
 }
+
+

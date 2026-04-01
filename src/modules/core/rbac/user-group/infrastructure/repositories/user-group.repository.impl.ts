@@ -18,7 +18,7 @@ export class UserGroupRepositoryImpl extends PrismaRepository<
 
     }
 
-    async findUnique(userId: number | bigint, groupId: number | bigint): Promise<UserGroup | null> {
+    async findUnique(userId: any, groupId: any): Promise<UserGroup | null> {
         return this.prisma.userGroup.findUnique({
             where: {
                 user_id_group_id: {
@@ -29,7 +29,7 @@ export class UserGroupRepositoryImpl extends PrismaRepository<
         });
     }
 
-    async findByUserId(userId: number | bigint): Promise<UserGroup[]> {
+    async findByUserId(userId: any): Promise<UserGroup[]> {
         return this.findMany({ user_id: userId });
     }
 

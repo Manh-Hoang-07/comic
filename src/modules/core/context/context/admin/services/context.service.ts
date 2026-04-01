@@ -83,7 +83,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
     const payload = {
       ...data,
-      ref_id: data.ref_id ? BigInt(data.ref_id) : null,
+      ref_id: data.ref_id ? toPrimaryKey(data.ref_id) : null,
       code,
       status: data.status || 'active',
     };
@@ -114,7 +114,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     }
 
     if (data.ref_id !== undefined) {
-      data.ref_id = data.ref_id ? BigInt(data.ref_id) : null;
+      data.ref_id = data.ref_id ? toPrimaryKey(data.ref_id) : null;
     }
 
     return data;

@@ -28,7 +28,7 @@ export class NotificationRepositoryImpl extends PrismaRepository<
         }
 
         if (filter.userId) {
-            where.user_id = BigInt(filter.userId);
+            where.user_id = this.toPrimaryKey(filter.userId);
         }
 
         if (filter.isRead !== undefined) {
@@ -46,14 +46,14 @@ export class NotificationRepositoryImpl extends PrismaRepository<
         return where;
     }
 
-    async markAsRead(id: number | bigint): Promise<Notification> {
+    async markAsRead(id: any): Promise<Notification> {
         return this.update(id, {
             is_read: true,
             read_at: new Date(),
         });
     }
 
-    async markAllAsRead(userId: number | bigint): Promise<void> {
+    async markAllAsRead(userId: any): Promise<void> {
         await this.updateMany({ userId, isRead: false }, {
             is_read: true,
             read_at: new Date(),

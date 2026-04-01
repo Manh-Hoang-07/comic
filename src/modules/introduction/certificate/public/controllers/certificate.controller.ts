@@ -23,7 +23,7 @@ export class PublicCertificateController {
   @Permission('public')
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.certificateService.getOne(Number(id));
+    return this.certificateService.getOne(id);
   }
 }
 

@@ -1,10 +1,11 @@
 import { IsString, IsOptional, IsNumber, IsInt, IsEnum, MaxLength, Min } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { ChapterStatus } from '@/shared/enums';
 
 export class UpdateChapterDto {
   @IsOptional()
-  @IsInt()
-  team_id?: number;
+  @IsPrimaryKey()
+  team_id?: any;
 
   @IsOptional()
   @IsString()

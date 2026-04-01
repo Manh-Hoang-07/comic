@@ -19,10 +19,10 @@ export class ComicActionService {
     async initializeStats(comicId: any): Promise<void> {
         await this.statsRepository.create({
             comic_id: comicId,
-            view_count: BigInt(0),
-            follow_count: BigInt(0),
-            rating_count: BigInt(0),
-            rating_sum: BigInt(0),
+            view_count: 0 as any,
+            follow_count: 0 as any,
+            rating_count: 0 as any,
+            rating_sum: 0 as any,
         } as any);
     }
 
@@ -41,11 +41,11 @@ export class ComicActionService {
      */
     async syncRelations(comic: Comic, data: { category_ids?: any[] }, isNew = false): Promise<void> {
         if (isNew) {
-            await this.initializeStats(comic.id as bigint);
+            await this.initializeStats(comic.id);
         }
 
         if (data.category_ids !== undefined) {
-            await this.syncCategories(comic.id as bigint, data.category_ids);
+            await this.syncCategories(comic.id, data.category_ids);
         }
     }
 }

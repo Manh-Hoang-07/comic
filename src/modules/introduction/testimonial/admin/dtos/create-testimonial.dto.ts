@@ -9,6 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
 export class CreateTestimonialDto {
@@ -43,11 +44,9 @@ export class CreateTestimonialDto {
   @Type(() => Number)
   rating?: number;
 
-  @IsInt()
-  @Min(1)
+  @IsPrimaryKey()
   @IsOptional()
-  @Type(() => Number)
-  project_id?: number;
+  project_id?: any;
 
   @IsBoolean()
   @IsOptional()

@@ -4,7 +4,8 @@ import { verifyGroupOwnership } from '@/common/shared/utils';
 import { IPostRepository, POST_REPOSITORY } from '@/modules/post/post/domain/post.repository';
 import { BaseContentService } from '@/common/core/services';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
-import { toBigInt, normalizeDate } from '@/common/core/utils/data.helper';
+import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
+import { normalizeDate } from '@/common/core/utils/data.helper';
 import { PostActionService } from './post-action.service';
 
 @Injectable()
@@ -53,9 +54,9 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     payload.slug = await SlugHelper.uniqueSlug(payload.title, this.postRepo);
 
     // Normalize Fields
-    payload.primary_postcategory_id = toBigInt(payload.primary_postcategory_id);
+    payload.primary_postcategory_id = toPrimaryKey(payload.primary_postcategory_id);
     payload.published_at = normalizeDate(payload.published_at);
-    if (payload.group_id) payload.group_id = toBigInt(payload.group_id);
+    if (payload.group_id) payload.group_id = toPrimaryKey(payload.group_id);
 
     // Relations handled in create() override
     delete payload.tag_ids;
@@ -78,7 +79,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
       );
     }
 
-    payload.primary_postcategory_id = toBigInt(payload.primary_postcategory_id);
+    payload.primary_postcategory_id = toPrimaryKey(payload.primary_postcategory_id);
     payload.published_at = normalizeDate(payload.published_at);
 
     // Relations handled in update() override

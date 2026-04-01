@@ -8,7 +8,7 @@ export interface PostCategoryFilter {
     slug?: string;
     search?: string;
     status?: string | number;
-    parentId?: number | bigint;
+    parentId?: any;
 }
 
 export interface IPostCategoryRepository extends IRepository<PostCategory> {

@@ -49,8 +49,8 @@ export class ViewTrackingService {
     // Tạo view record
     await this.viewRepository.create({
       comic_id: toPrimaryKey(data.comic_id),
-      chapter_id: data.chapter_id ? BigInt(data.chapter_id) : null,
-      user_id: data.user_id ? BigInt(data.user_id) : null,
+      chapter_id: data.chapter_id ? toPrimaryKey(data.chapter_id) : null,
+      user_id: data.user_id ? toPrimaryKey(data.user_id) : null,
       ip: data.ip || null,
       user_agent: data.user_agent || null,
     } as any);

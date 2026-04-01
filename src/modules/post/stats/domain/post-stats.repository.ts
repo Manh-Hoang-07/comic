@@ -4,13 +4,13 @@ import { IRepository } from '@/common/core/repositories';
 export const POST_STATS_REPOSITORY = 'IPostStatsRepository';
 
 export interface PostStatsFilter {
-  post_id?: number | bigint;
-  group_id?: number | bigint;
+  post_id?: any;
+  group_id?: any;
 }
 
 export interface IPostStatsRepository extends IRepository<PostStats> {
   sum(field: keyof PostStats, filter?: PostStatsFilter): Promise<number>;
-  incrementViews(postId: number | bigint, count: number): Promise<void>;
-  getDailyViewStats(postId: number | bigint, startDate: Date, endDate: Date): Promise<any[]>;
+  incrementViews(postId: any, count: number): Promise<void>;
+  getDailyViewStats(postId: any, startDate: Date, endDate: Date): Promise<any[]>;
 }
 

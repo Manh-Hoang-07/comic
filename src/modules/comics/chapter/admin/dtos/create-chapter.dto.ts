@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsNumber, IsArray, IsEnum, MaxLength, IsInt, Min } from 'class-validator';
 import { ChapterStatus } from '@/shared/enums';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class CreateChapterPageDto {
   @IsString()
@@ -20,12 +21,12 @@ export class CreateChapterPageDto {
 }
 
 export class CreateChapterDto {
-  @IsInt()
-  comic_id: number;
+  @IsPrimaryKey()
+  comic_id: any;
 
   @IsOptional()
-  @IsInt()
-  team_id?: number;
+  @IsPrimaryKey()
+  team_id?: any;
 
   @IsString()
   @MaxLength(255)

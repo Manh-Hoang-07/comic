@@ -31,7 +31,7 @@ export class EmailConfigService extends BaseService<any, IEmailConfigRepository>
       delete (dto as any).smtp_password;
     }
 
-    const payload = buildConfigPayload(dto, [], userId as number, existing);
+    const payload = buildConfigPayload(dto, [], userId ?? undefined, existing);
 
     let result: any;
     if (!existing) {

@@ -33,11 +33,11 @@ export class FaqRepositoryImpl extends PrismaRepository<
         return where;
     }
 
-    async incrementViewCount(id: number | bigint): Promise<Faq> {
+    async incrementViewCount(id: any): Promise<Faq> {
         return this.update(id, { view_count: { increment: 1 } });
     }
 
-    async incrementHelpfulCount(id: number | bigint): Promise<Faq> {
+    async incrementHelpfulCount(id: any): Promise<Faq> {
         return this.update(id, { helpful_count: { increment: 1 } });
     }
 }

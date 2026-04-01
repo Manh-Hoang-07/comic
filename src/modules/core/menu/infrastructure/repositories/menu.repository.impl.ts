@@ -62,7 +62,7 @@ export class MenuRepositoryImpl extends PrismaRepository<
 
         const parentId = filter.parentId !== undefined ? filter.parentId : filter.parent_id;
         if (parentId !== undefined) {
-            where.parent_id = parentId === null ? null : BigInt(parentId);
+            where.parent_id = parentId === null ? null : this.toPrimaryKey(parentId);
         }
 
         if (filter.group) {

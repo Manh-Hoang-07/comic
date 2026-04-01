@@ -18,13 +18,13 @@ export class UserRoleAssignmentRepositoryImpl extends PrismaRepository<
 
     }
 
-    async findUnique(userId: number | bigint, roleId: number | bigint, groupId: number | bigint): Promise<UserRoleAssignment | null> {
+    async findUnique(userId: any, roleId: any, groupId: any): Promise<UserRoleAssignment | null> {
         return this.prisma.userRoleAssignment.findUnique({
             where: {
                 user_id_role_id_group_id: {
-                    user_id: typeof userId === 'bigint' ? userId : BigInt(userId),
-                    role_id: typeof roleId === 'bigint' ? roleId : BigInt(roleId),
-                    group_id: typeof groupId === 'bigint' ? groupId : BigInt(groupId),
+                    user_id: this.toPrimaryKey(userId),
+                    role_id: this.toPrimaryKey(roleId),
+                    group_id: this.toPrimaryKey(groupId),
                 },
             },
         });
@@ -40,9 +40,9 @@ export class UserRoleAssignmentRepositoryImpl extends PrismaRepository<
 
     protected buildWhere(filter: any): Prisma.UserRoleAssignmentWhereInput {
         const where: Prisma.UserRoleAssignmentWhereInput = {};
-        if (filter.user_id) where.user_id = BigInt(filter.user_id);
-        if (filter.role_id) where.role_id = BigInt(filter.role_id);
-        if (filter.group_id) where.group_id = BigInt(filter.group_id);
+        if (filter.user_id) where.user_id = this.toPrimaryKey(filter.user_id);
+        if (filter.role_id) where.role_id = this.toPrimaryKey(filter.role_id);
+        if (filter.group_id) where.group_id = this.toPrimaryKey(filter.group_id);
         return where;
     }
 }

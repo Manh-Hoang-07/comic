@@ -42,9 +42,9 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     const entity = await this.repository.create(payload);
 
     // Side effects
-    await this.actionService.syncPages(entity.id as bigint, data.pages);
+    await this.actionService.syncPages(toPrimaryKey(entity.id), data.pages);
     await this.actionService.handleNotifications(entity);
-    await this.actionService.updateComicTimeline(entity.comic_id as bigint);
+    await this.actionService.updateComicTimeline(toPrimaryKey(entity.comic_id));
 
     return this.getOne(entity.id);
   }
@@ -55,7 +55,7 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
 
     // Side effects
     await this.actionService.handleNotifications(entity);
-    await this.actionService.updateComicTimeline(entity.comic_id as bigint);
+    await this.actionService.updateComicTimeline(toPrimaryKey(entity.comic_id));
 
     return this.getOne(id);
   }
@@ -66,7 +66,7 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     const payload = await super.beforeCreate(data);
 
     if (payload.comic_id && payload.chapter_index !== undefined) {
-      await this.actionService.validateUniqueIndex(BigInt(payload.comic_id), payload.chapter_index);
+      await this.actionService.validateUniqueIndex(toPrimaryKey(payload.comic_id), payload.chapter_index);
     }
 
     delete payload.pages;
@@ -78,7 +78,7 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     const payload = { ...data };
 
     if (payload.chapter_index !== undefined && payload.chapter_index !== entity.chapter_index) {
-      await this.actionService.validateUniqueIndex(entity.comic_id as bigint, payload.chapter_index, toPrimaryKey(id));
+      await this.actionService.validateUniqueIndex(toPrimaryKey(entity.comic_id), payload.chapter_index, toPrimaryKey(id));
     }
 
     return payload;
@@ -91,7 +91,7 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
 
   protected override async afterDelete(id: any, entity: Chapter): Promise<void> {
     if (entity && entity.comic_id) {
-      await this.actionService.updateComicTimeline(entity.comic_id as bigint);
+      await this.actionService.updateComicTimeline(toPrimaryKey(entity.comic_id));
     }
   }
 

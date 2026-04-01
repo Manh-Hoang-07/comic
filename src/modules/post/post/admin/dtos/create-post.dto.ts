@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsArray, IsNumber, IsBoolean, IsEnum, IsDateString, IsInt, Min, MaxLength, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { PostStatus, PostType } from '@/shared/enums';
 
 export class CreatePostDto {
@@ -28,8 +29,8 @@ export class CreatePostDto {
   cover_image?: string;
 
   @IsOptional()
-  @IsInt()
-  primary_postcategory_id?: number;
+  @IsPrimaryKey()
+  primary_postcategory_id?: any;
 
   @IsOptional()
   @IsEnum(PostStatus)
@@ -89,12 +90,10 @@ export class CreatePostDto {
 
   @IsOptional()
   @IsArray()
-  @IsNumber({}, { each: true })
-  tag_ids?: number[];
+  tag_ids?: any[];
 
   @IsOptional()
   @IsArray()
-  @IsNumber({}, { each: true })
-  category_ids?: number[];
+  category_ids?: any[];
 }
 

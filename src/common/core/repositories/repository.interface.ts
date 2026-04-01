@@ -26,16 +26,16 @@ export interface IPaginatedResult<T> {
 
 export interface IRepository<T> {
     findAll(options?: IPaginationOptions): Promise<IPaginatedResult<T>>;
-    findById(id: string | number | bigint): Promise<T | null>;
-    findManyByIds(ids: (string | number | bigint)[]): Promise<T[]>;
+    findById(id: string | any): Promise<T | null>;
+    findManyByIds(ids: (string | any)[]): Promise<T[]>;
     findOne(filter: Record<string, any>): Promise<T | null>;
     findMany(filter?: Record<string, any>, options?: IPaginationOptions): Promise<T[]>;
 
     create(data: any): Promise<T>;
-    update(id: string | number | bigint, data: any): Promise<T>;
+    update(id: string | any, data: any): Promise<T>;
     updateMany(filter: Record<string, any>, data: any): Promise<{ count: number }>;
-    upsert(id: string | number | bigint, data: any): Promise<T>;
-    delete(id: string | number | bigint): Promise<boolean>;
+    upsert(id: string | any, data: any): Promise<T>;
+    delete(id: string | any): Promise<boolean>;
 
     exists(filter: Record<string, any>): Promise<boolean>;
     count(filter?: Record<string, any>): Promise<number>;

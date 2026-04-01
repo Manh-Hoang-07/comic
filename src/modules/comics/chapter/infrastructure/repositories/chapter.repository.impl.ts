@@ -46,7 +46,7 @@ export class ChapterRepositoryImpl extends PrismaRepository<
         };
     }
 
-    override async findById(id: string | number | bigint): Promise<Chapter | null> {
+    override async findById(id: string | any): Promise<Chapter | null> {
         return this.prisma.chapter.findUnique({
             where: { id: this.toPrimaryKey(id) },
             include: {
@@ -98,14 +98,14 @@ export class ChapterRepositoryImpl extends PrismaRepository<
         return where;
     }
 
-    async findByComicIdAndIndex(comicId: number | bigint, index: number): Promise<Chapter | null> {
+    async findByComicIdAndIndex(comicId: any, index: number): Promise<Chapter | null> {
         return this.findOne({
             comic_id: this.toPrimaryKey(comicId),
             chapter_index: index,
         } as any);
     }
 
-    async getMaxIndex(comicId: number | bigint): Promise<number> {
+    async getMaxIndex(comicId: any): Promise<number> {
         const result = await this.prisma.chapter.aggregate({
             where: {
                 comic_id: this.toPrimaryKey(comicId),

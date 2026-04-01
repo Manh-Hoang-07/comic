@@ -75,7 +75,7 @@ export class RbacService {
     await this.refreshUserPermissions(userId, groupId);
   }
 
-  async syncRolesInGroup(userId: any, groupId: any, roleIds: number[], skipValidation = false): Promise<void> {
+  async syncRolesInGroup(userId: any, groupId: any, roleIds: any[], skipValidation = false): Promise<void> {
     const group = await this.groupRepo.findById(groupId);
     if (!group) throw new NotFoundException('Group not found');
 
@@ -104,8 +104,8 @@ export class RbacService {
 
   // ── Private Helpers ────────────────────────────────────────────────────────
 
-  private async validateRolesForContext(roleIds: number[], contextId: any): Promise<void> {
-    const rIdsBi = roleIds.map(BigInt);
+  private async validateRolesForContext(roleIds: any[], contextId: any): Promise<void> {
+    const rIdsBi = roleIds.map(id => toPrimaryKey(id));
     const validLinks = await this.roleContextRepo.findMany({
       where: { role_id: { in: rIdsBi }, context_id: toPrimaryKey(contextId) }
     });
@@ -118,7 +118,7 @@ export class RbacService {
     }
   }
 
-  private async getFlattenedPermissions(roleIds: bigint[]): Promise<Set<string>> {
+  private async getFlattenedPermissions(roleIds: any[]): Promise<Set<string>> {
     const result = new Set<string>();
     const links = await this.roleHasPermRepo.findMany({
       where: { role_id: { in: roleIds } },

@@ -1,4 +1,5 @@
 import { IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { Type } from 'class-transformer';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
@@ -23,8 +24,6 @@ export class GetBannersDto {
     status?: BasicStatus;
 
     @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Min(1)
-    location_id?: number;
+    @IsPrimaryKey()
+    location_id?: any;
 }

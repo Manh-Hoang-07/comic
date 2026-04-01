@@ -39,7 +39,7 @@ export class PostStatsRepositoryImpl extends PrismaRepository<
     return Number(result?._sum?.[field] || 0);
   }
 
-  async incrementViews(postId: number | bigint, count: number): Promise<void> {
+  async incrementViews(postId: any, count: number): Promise<void> {
     const pk = this.toPrimaryKey(postId);
     const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
     today.setHours(0, 0, 0, 0);
@@ -73,7 +73,7 @@ export class PostStatsRepositoryImpl extends PrismaRepository<
     });
   }
 
-  async getDailyViewStats(postId: number | bigint, startDate: Date, endDate: Date): Promise<any[]> {
+  async getDailyViewStats(postId: any, startDate: Date, endDate: Date): Promise<any[]> {
     const pk = this.toPrimaryKey(postId);
     const start = new Date(startDate);
     const end = new Date(endDate);

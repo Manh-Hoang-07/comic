@@ -8,13 +8,13 @@ export interface RoleFilter {
     search?: string;
     code?: string;
     status?: string;
-    parentId?: number | bigint;
+    parentId?: any;
 }
 
 export interface IRoleRepository extends IRepository<Role> {
     findByCode(code: string): Promise<Role | null>;
-    syncPermissions(roleId: number | bigint, permissionIds: number[]): Promise<void>;
-    syncContexts(roleId: number | bigint, contextIds: number[]): Promise<void>;
+    syncPermissions(roleId: any, permissionIds: any[]): Promise<void>;
+    syncContexts(roleId: any, contextIds: any[]): Promise<void>;
 }
 
 

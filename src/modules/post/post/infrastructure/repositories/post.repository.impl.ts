@@ -142,7 +142,7 @@ export class PostRepositoryImpl extends PrismaRepository<
         return this.findOne({ slug });
     }
 
-    async incrementViewCount(id: number | bigint): Promise<void> {
+    async incrementViewCount(id: any): Promise<void> {
         try {
             if (this.redis.isEnabled()) {
                 // Buffer vào Redis, cron sẽ flush vào DB (post_stats + post_daily_stats)
@@ -156,7 +156,7 @@ export class PostRepositoryImpl extends PrismaRepository<
         }
     }
 
-    async syncRelations(postId: number | bigint, tagIds?: number[], categoryIds?: number[]): Promise<void> {
+    async syncRelations(postId: any, tagIds?: any[], categoryIds?: any[]): Promise<void> {
         const id = this.toPrimaryKey(postId);
 
         if (tagIds !== undefined && tagIds !== null) {

@@ -1,5 +1,6 @@
 import { IsOptional, IsInt, IsString, IsEnum, IsBoolean, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
 export class QueryMenuDto {
@@ -26,8 +27,8 @@ export class QueryMenuDto {
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  parent_id?: number;
+  @IsPrimaryKey()
+  parent_id?: any;
 
   @IsOptional()
   @Type(() => Boolean)

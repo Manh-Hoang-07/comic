@@ -1,11 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class CreateWardDto {
     @IsNotEmpty()
-    @Type(() => Number)
-    @IsNumber()
-    province_id: number;
+    @IsPrimaryKey()
+    province_id: any;
 
     @IsNotEmpty()
     @IsString()

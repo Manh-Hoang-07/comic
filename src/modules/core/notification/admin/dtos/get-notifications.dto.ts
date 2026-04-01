@@ -1,11 +1,12 @@
-import { IsOptional, IsEnum, IsBoolean, IsNumber } from 'class-validator';
+import { IsOptional, IsEnum, IsBoolean } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { NotificationType } from '@/shared/enums/types/notification-type.enum';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
 export class GetNotificationsDto {
   @IsOptional()
-  @IsNumber()
-  user_id?: number;
+  @IsPrimaryKey()
+  user_id?: any;
 
   @IsOptional()
   @IsEnum(NotificationType)

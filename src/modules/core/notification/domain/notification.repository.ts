@@ -13,8 +13,8 @@ export interface NotificationFilter {
 }
 
 export interface INotificationRepository extends IRepository<Notification> {
-    markAsRead(id: number): Promise<Notification>;
-    markAllAsRead(userId: number): Promise<void>;
+    markAsRead(id: any): Promise<Notification>;
+    markAllAsRead(userId: any): Promise<void>;
 }
 
 

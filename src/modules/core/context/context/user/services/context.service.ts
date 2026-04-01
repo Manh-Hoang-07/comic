@@ -46,7 +46,7 @@ export class UserContextService {
 
     // Filter unique by ID
     const uniqueContexts = allContexts.filter(
-      (ctx, index, self) => index === self.findIndex((c) => Number(c.id) === Number(ctx.id)),
+      (ctx, index, self) => index === self.findIndex((c) => c.id === ctx.id),
     );
 
     return uniqueContexts;

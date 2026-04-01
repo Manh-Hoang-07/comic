@@ -8,7 +8,7 @@ export interface PermissionFilter {
     search?: string;
     code?: string;
     status?: string;
-    parentId?: number | bigint;
+    parentId?: any;
     scope?: string;
 }
 

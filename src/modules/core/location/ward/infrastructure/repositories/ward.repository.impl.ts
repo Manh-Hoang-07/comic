@@ -18,7 +18,7 @@ export class WardRepositoryImpl
         if (filter.status) where.status = filter.status;
         if (filter.code) where.code = filter.code;
         if (filter.province_id) {
-            where.province_id = typeof filter.province_id === 'bigint' ? filter.province_id : BigInt(filter.province_id);
+            where.province_id = this.toPrimaryKey(filter.province_id);
         }
         return where;
     }

@@ -8,19 +8,19 @@ export interface ComicFilter {
     status?: string;
     author?: string;
     search?: string;
-    categoryId?: number | bigint;
-    excludeId?: number | bigint;
-    created_user_id?: number | bigint;
-    group_id?: number | bigint;
+    categoryId?: any;
+    excludeId?: any;
+    created_user_id?: any;
+    group_id?: any;
     is_featured?: boolean;
 }
 
 export interface IComicRepository extends IRepository<Comic> {
     findBySlug(slug: string): Promise<Comic | null>;
-    syncCategories(comicId: number | bigint, categoryIds: (number | bigint)[]): Promise<void>;
-    incrementView(comicId: number | bigint): Promise<void>;
-    batchIncrementView(comicId: number | bigint, count: number): Promise<void>;
-    getChapters(id: number | bigint, options?: any): Promise<any>;
+    syncCategories(comicId: any, categoryIds: any[]): Promise<void>;
+    incrementView(comicId: any): Promise<void>;
+    batchIncrementView(comicId: any, count: number): Promise<void>;
+    getChapters(id: any, options?: any): Promise<any>;
 }
 
 

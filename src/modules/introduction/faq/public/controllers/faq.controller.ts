@@ -24,14 +24,14 @@ export class PublicFaqController {
   async findOne(@Param('id') id: string) {
     const faq = await this.faqService.getOne(+id);
     // Increment view count
-    await this.faqService.incrementViewCount(Number(id));
+    await this.faqService.incrementViewCount(id);
     return faq;
   }
 
   @Permission('public')
   @Post(':id/helpful')
   async markHelpful(@Param('id') id: string) {
-    return this.faqService.incrementHelpfulCount(Number(id));
+    return this.faqService.incrementHelpfulCount(id);
   }
 }
 

@@ -139,7 +139,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Đăng xuất', description: 'Đăng xuất và đưa access token hiện tại vào blacklist.' })
   @Post('logout')
   async logout(@Headers('authorization') authHeader: string, @Res({ passthrough: true }) res: Response) {
-    const userId = Auth.id(undefined) as number;
+    const userId = Auth.id(undefined);
     // Extract token from authorization header
     let token: string | null = null;
     if (authHeader && authHeader.startsWith('Bearer ')) {

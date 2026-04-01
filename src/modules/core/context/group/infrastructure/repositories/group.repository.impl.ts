@@ -41,11 +41,11 @@ export class GroupRepositoryImpl extends PrismaRepository<
         }
 
         if (filter.contextId) {
-            where.context_id = BigInt(filter.contextId);
+            where.context_id = this.toPrimaryKey(filter.contextId);
         }
 
         if (filter.ownerId) {
-            where.owner_id = BigInt(filter.ownerId);
+            where.owner_id = this.toPrimaryKey(filter.ownerId);
         }
 
         if (filter.ids) {
@@ -59,7 +59,7 @@ export class GroupRepositoryImpl extends PrismaRepository<
         return this.findOne({ code });
     }
 
-    async findActiveByIds(ids: (number | bigint)[]): Promise<Group[]> {
+    async findActiveByIds(ids: any[]): Promise<Group[]> {
         return this.findMany({ ids, status: 'active' });
     }
 }

@@ -10,8 +10,8 @@ export interface FaqFilter {
 }
 
 export interface IFaqRepository extends IRepository<Faq> {
-    incrementViewCount(id: number): Promise<Faq>;
-    incrementHelpfulCount(id: number): Promise<Faq>;
+    incrementViewCount(id: any): Promise<Faq>;
+    incrementHelpfulCount(id: any): Promise<Faq>;
 }
 
 

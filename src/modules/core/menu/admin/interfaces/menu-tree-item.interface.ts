@@ -1,5 +1,5 @@
 export interface MenuTreeItem {
-  id: number;
+  id: any;
   code: string;
   name: string;
   path?: string | null;

@@ -57,7 +57,7 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     return {
       ...data,
       context_id: toPrimaryKey(data.context_id),
-      owner_id: data.owner_id ? BigInt(data.owner_id) : null,
+      owner_id: data.owner_id ? toPrimaryKey(data.owner_id) : null,
       status: data.status || 'active',
     };
   }

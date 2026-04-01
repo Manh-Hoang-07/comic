@@ -32,7 +32,7 @@ export class TestimonialRepositoryImpl extends PrismaRepository<
         }
 
         if (filter.projectId !== undefined) {
-            where.project_id = filter.projectId === null ? null : BigInt(filter.projectId);
+            where.project_id = filter.projectId === null ? null : this.toPrimaryKey(filter.projectId);
         }
 
         return where;

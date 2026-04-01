@@ -2,7 +2,7 @@ import { ExecutionContext } from '@nestjs/common';
 import { RequestContext } from '@/common/shared/utils';
 
 export interface AuthenticatedUser {
-    id: number | bigint;
+    id: any;
     email?: string;
     username?: string;
     status?: string;

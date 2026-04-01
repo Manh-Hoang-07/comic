@@ -74,7 +74,7 @@ export abstract class PrismaRepository<
         };
     }
 
-    async findById(id: string | number | bigint): Promise<Model | null> {
+    async findById(id: string | any): Promise<Model | null> {
         const selection = resolveQuerySelection(
             {},
             { select: this.defaultSelect, include: this.defaultInclude },
@@ -89,7 +89,7 @@ export abstract class PrismaRepository<
         });
     }
 
-    async findManyByIds(ids: (string | number | bigint)[]): Promise<Model[]> {
+    async findManyByIds(ids: (string | any)[]): Promise<Model[]> {
         if (!ids?.length) return [];
         const selection = resolveQuerySelection(
             {},
@@ -139,7 +139,7 @@ export abstract class PrismaRepository<
         return this.delegate.create({ data });
     }
 
-    async update(id: string | number | bigint, data: any): Promise<Model> {
+    async update(id: string | any, data: any): Promise<Model> {
         return this.delegate.update({
             where: { id: toPrimaryKey(id) } as any,
             data,
@@ -153,7 +153,7 @@ export abstract class PrismaRepository<
         });
     }
 
-    async upsert(id: string | number | bigint, data: any): Promise<Model> {
+    async upsert(id: string | any, data: any): Promise<Model> {
         const pk = toPrimaryKey(id);
         return this.delegate.upsert({
             where: { id: pk } as any,
@@ -162,7 +162,7 @@ export abstract class PrismaRepository<
         });
     }
 
-    async delete(id: string | number | bigint): Promise<boolean> {
+    async delete(id: string | any): Promise<boolean> {
         try {
             await this.delegate.delete({
                 where: { id: toPrimaryKey(id) } as any,

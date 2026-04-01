@@ -1,11 +1,12 @@
-import { IsString, IsOptional, IsEnum, IsNumber, IsObject, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsObject, IsBoolean } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { NotificationType } from '@/shared/enums/types/notification-type.enum';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
 export class UpdateNotificationDto {
   @IsOptional()
-  @IsNumber()
-  user_id?: number;
+  @IsPrimaryKey()
+  user_id?: any;
 
   @IsOptional()
   @IsString()
@@ -32,6 +33,6 @@ export class UpdateNotificationDto {
   status?: BasicStatus;
 
   @IsOptional()
-  @IsNumber()
-  updated_user_id?: number;
+  @IsPrimaryKey()
+  updated_user_id?: any;
 }

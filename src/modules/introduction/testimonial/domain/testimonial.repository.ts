@@ -7,7 +7,7 @@ export const TESTIMONIAL_REPOSITORY = 'ITestimonialRepository';
 export interface TestimonialFilter {
     search?: string;
     status?: string;
-    projectId?: number | bigint;
+    projectId?: any;
 }
 
 export interface ITestimonialRepository extends IRepository<Testimonial> {

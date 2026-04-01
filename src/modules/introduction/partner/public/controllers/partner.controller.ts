@@ -23,7 +23,7 @@ export class PublicPartnerController {
   @Permission('public')
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.partnerService.getOne(Number(id));
+    return this.partnerService.getOne(id);
   }
 }
 

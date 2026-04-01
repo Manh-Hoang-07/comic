@@ -3,7 +3,7 @@ import { PostCategory } from '@prisma/client';
 import { IPostCategoryRepository, POST_CATEGORY_REPOSITORY } from '@/modules/post/post-category/domain/post-category.repository';
 import { BaseContentService } from '@/common/core/services';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
-import { toBigInt } from '@/common/core/utils/data.helper';
+import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 
 @Injectable()
 export class PostCategoryService extends BaseContentService<PostCategory, IPostCategoryRepository> {
@@ -32,7 +32,7 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
       payload.slug = await SlugHelper.uniqueSlug(payload.name, this.categoryRepo);
     }
 
-    payload.parent_id = toBigInt(payload.parent_id);
+    payload.parent_id = toPrimaryKey(payload.parent_id);
     return payload;
   }
 
@@ -48,7 +48,7 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
       );
     }
 
-    payload.parent_id = toBigInt(payload.parent_id);
+    payload.parent_id = toPrimaryKey(payload.parent_id);
     return payload;
   }
 

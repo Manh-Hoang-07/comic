@@ -15,7 +15,7 @@ export interface UserFilter {
   phone?: string;
   username?: string;
   status?: string;
-  groupId?: number | bigint;
+  groupId?: any;
   NOT?: any;
 }
 
@@ -96,7 +96,7 @@ export class UserRepository extends PrismaRepository<
     return this.findOne({ username });
   }
 
-  async findByIdForAuth(id: number | bigint): Promise<User | null> {
+  async findByIdForAuth(id: any): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: {
         id: toPrimaryKey(id),
@@ -104,7 +104,7 @@ export class UserRepository extends PrismaRepository<
     });
   }
 
-  async checkUnique(field: 'email' | 'phone' | 'username', value: string, excludeUserId?: number | bigint): Promise<boolean> {
+  async checkUnique(field: 'email' | 'phone' | 'username', value: string, excludeUserId?: any): Promise<boolean> {
     const filter: Record<string, any> = { [field]: value };
     if (excludeUserId) {
       filter.NOT = { id: toPrimaryKey(excludeUserId) };
@@ -112,7 +112,7 @@ export class UserRepository extends PrismaRepository<
     return !(await this.exists(filter));
   }
 
-  async upsertProfile(userId: number | bigint, data: Prisma.ProfileUncheckedCreateInput): Promise<Profile> {
+  async upsertProfile(userId: any, data: Prisma.ProfileUncheckedCreateInput): Promise<Profile> {
     const pk = toPrimaryKey(userId);
 
     // Valid fields according to Prisma schema
@@ -149,11 +149,11 @@ export class UserRepository extends PrismaRepository<
     });
   }
 
-  async updateLastLogin(userId: number | bigint): Promise<void> {
+  async updateLastLogin(userId: any): Promise<void> {
     await this.update(userId, { last_login_at: new Date() });
   }
 
-  async findByIdWithBasicInfo(userId: number | bigint) {
+  async findByIdWithBasicInfo(userId: any) {
     return this.prisma.user.findFirst({
         where: { id: toPrimaryKey(userId) },
         select: {

@@ -1,5 +1,6 @@
 import { IsOptional, IsString, IsNumber, IsEnum, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { PostStatus } from '@/shared/enums';
 
 export class GetPostsDto {
@@ -22,14 +23,12 @@ export class GetPostsDto {
   status?: PostStatus;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  categoryId?: number;
+  @IsPrimaryKey()
+  categoryId?: any;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  tagId?: number;
+  @IsPrimaryKey()
+  tagId?: any;
 
   @IsOptional()
   @Type(() => Boolean)

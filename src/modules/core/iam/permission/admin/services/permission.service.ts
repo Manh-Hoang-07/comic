@@ -31,7 +31,7 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
       throw new BadRequestException('Permission code already exists');
     }
 
-    if (payload.parent_id) payload.parent_id = BigInt(payload.parent_id);
+    if (payload.parent_id) payload.parent_id = toPrimaryKey(payload.parent_id);
 
     return payload;
   }
@@ -49,7 +49,7 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
       }
     }
 
-    if (payload.parent_id) payload.parent_id = BigInt(payload.parent_id);
+    if (payload.parent_id) payload.parent_id = toPrimaryKey(payload.parent_id);
 
     return payload;
   }

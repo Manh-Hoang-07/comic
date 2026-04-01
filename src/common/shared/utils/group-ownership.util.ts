@@ -5,7 +5,7 @@ import { RequestContext } from '@/common/shared/utils';
  * Interface cho entity có group_id
  */
 export interface GroupOwnedEntity {
-  group_id?: number | bigint | null;
+  group_id?: any | null;
 }
 
 /**
@@ -60,7 +60,7 @@ export function verifyContextOwnership(entity: GroupOwnedEntity): void {
  * Nếu là system context (quản trị toàn hệ thống) thì không lọc theo group_id (trả về {})
  * Nếu là group khác thì trả về { group_id: groupId }
  */
-export function getGroupFilter(): { group_id?: number | bigint } {
+export function getGroupFilter(): { group_id?: any } {
   const context = RequestContext.get<any>('context');
   const contextId = RequestContext.get<number>('contextId');
   const groupId = RequestContext.get<number | null>('groupId');

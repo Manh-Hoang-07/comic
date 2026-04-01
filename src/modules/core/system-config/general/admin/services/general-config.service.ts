@@ -36,7 +36,7 @@ export class GeneralConfigService extends BaseService<any, IGeneralConfigReposit
       'site_ward_id',
     ];
 
-    const payload = buildConfigPayload(dto, bigIntFields, userId as number, existing);
+    const payload = buildConfigPayload(dto, bigIntFields, userId ?? undefined, existing);
 
     let result: any;
     if (!existing) {

@@ -31,7 +31,7 @@ export class RoleRepositoryImpl extends PrismaRepository<
         };
     }
 
-    protected buildWhere(filter: RoleFilter & { contextId?: number | bigint }): Prisma.RoleWhereInput {
+    protected buildWhere(filter: RoleFilter & { contextId?: any }): Prisma.RoleWhereInput {
         const where: Prisma.RoleWhereInput = {};
 
         if (filter.search) {
@@ -50,12 +50,12 @@ export class RoleRepositoryImpl extends PrismaRepository<
         }
 
         if (filter.parentId !== undefined) {
-            where.parent_id = filter.parentId === null ? null : BigInt(filter.parentId);
+            where.parent_id = filter.parentId === null ? null : this.toPrimaryKey(filter.parentId);
         }
 
         if (filter.contextId) {
             where.role_contexts = {
-                some: { context_id: BigInt(filter.contextId) }
+                some: { context_id: this.toPrimaryKey(filter.contextId) }
             };
         }
 
@@ -66,32 +66,32 @@ export class RoleRepositoryImpl extends PrismaRepository<
         return this.findOne({ code });
     }
 
-    async syncPermissions(roleId: number | bigint, permissionIds: number[]): Promise<void> {
+    async syncPermissions(roleId: any, permissionIds: any[]): Promise<void> {
         await this.prisma.roleHasPermission.deleteMany({
-            where: { role_id: BigInt(roleId) },
+            where: { role_id: this.toPrimaryKey(roleId) },
         });
 
         if (permissionIds.length > 0) {
             await this.prisma.roleHasPermission.createMany({
                 data: permissionIds.map((pid) => ({
-                    role_id: BigInt(roleId),
-                    permission_id: BigInt(pid),
+                    role_id: this.toPrimaryKey(roleId),
+                    permission_id: this.toPrimaryKey(pid),
                 })),
                 skipDuplicates: true,
             });
         }
     }
 
-    async syncContexts(roleId: number | bigint, contextIds: number[]): Promise<void> {
+    async syncContexts(roleId: any, contextIds: any[]): Promise<void> {
         await this.prisma.roleContext.deleteMany({
-            where: { role_id: BigInt(roleId) },
+            where: { role_id: this.toPrimaryKey(roleId) },
         });
 
         if (contextIds.length > 0) {
             await this.prisma.roleContext.createMany({
                 data: contextIds.map((cid) => ({
-                    role_id: BigInt(roleId),
-                    context_id: BigInt(cid),
+                    role_id: this.toPrimaryKey(roleId),
+                    context_id: this.toPrimaryKey(cid),
                 })),
                 skipDuplicates: true,
             });

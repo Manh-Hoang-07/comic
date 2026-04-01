@@ -53,7 +53,7 @@ export function buildMenuTree(menus: any[]): MenuTreeItem[] {
 /**
  * Filters a list of menus based on client-side constraints (public or logged in).
  */
-export function filterClientMenus(menus: any[], userId?: number | bigint): any[] {
+export function filterClientMenus(menus: any[], userId?: any): any[] {
     return menus.filter((menu) => {
         if (menu.is_public) return true;
         if (userId) return true;

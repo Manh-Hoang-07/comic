@@ -26,18 +26,18 @@ export class PostCommentService {
         if (data.parent_id) {
             const parent = await this.commentRepo.findById(data.parent_id);
             if (!parent) throw new NotFoundException('Parent comment not found');
-            if (parent.post_id !== BigInt(data.post_id)) {
+            if (parent.post_id !== toPrimaryKey(data.post_id)) {
                 throw new ForbiddenException('Parent comment belongs to a different post');
             }
         }
 
         return this.commentRepo.create({
             post_id: toPrimaryKey(data.post_id),
-            user_id: data.user_id ? BigInt(data.user_id) : null,
+            user_id: data.user_id ? toPrimaryKey(data.user_id) : null,
             guest_name: data.guest_name,
             guest_email: data.guest_email,
             content: data.content,
-            parent_id: data.parent_id ? BigInt(data.parent_id) : null,
+            parent_id: data.parent_id ? toPrimaryKey(data.parent_id) : null,
             status: 'visible' as any,
         });
     }

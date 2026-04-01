@@ -9,6 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { MenuType } from '@/shared/enums/types/menu-type.enum';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
@@ -47,10 +48,8 @@ export class UpdateMenuDto {
   status?: BasicStatus;
 
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  @Min(0)
-  parent_id?: number;
+  @IsPrimaryKey()
+  parent_id?: any;
 
   @IsOptional()
   @IsNumber()
@@ -69,10 +68,8 @@ export class UpdateMenuDto {
   show_in_menu?: boolean;
 
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  @Min(1)
-  required_permission_id?: number;
+  @IsPrimaryKey()
+  required_permission_id?: any;
 
   @IsOptional()
   @IsString()

@@ -10,13 +10,13 @@ export interface ContextFilter {
     type?: string;
     refId?: number | null;
     status?: string;
-    ids?: (number | bigint)[];
+    ids?: any[];
 }
 
 export interface IContextRepository extends IRepository<Context> {
-    findByTypeAndRefId(type: string, refId: number | null): Promise<Context | null>;
+    findByTypeAndRefId(type: string, refId: any): Promise<Context | null>;
     findByCode(code: string): Promise<Context | null>;
-    findActiveByIds(ids: (number | bigint)[]): Promise<Context[]>;
+    findActiveByIds(ids: any[]): Promise<Context[]>;
 }
 
 

@@ -24,7 +24,7 @@ export class FollowRepositoryImpl extends PrismaRepository<
         return where;
     }
 
-    async syncFollowCount(comicId: number | bigint): Promise<void> {
+    async syncFollowCount(comicId: any): Promise<void> {
         const id = this.toPrimaryKey(comicId);
         const count = await this.prisma.comicFollow.count({
             where: { comic_id: id },

@@ -126,7 +126,7 @@ export class ComicRepositoryImpl extends PrismaRepository<
         return this.findOne({ slug } as any);
     }
 
-    async syncCategories(comicId: number | bigint, categoryIds: (number | bigint)[]): Promise<void> {
+    async syncCategories(comicId: any, categoryIds: (any)[]): Promise<void> {
         const id = this.toPrimaryKey(comicId);
 
         // Delete existing category links
@@ -145,7 +145,7 @@ export class ComicRepositoryImpl extends PrismaRepository<
         }
     }
 
-    async incrementView(id: number | bigint): Promise<void> {
+    async incrementView(id: any): Promise<void> {
         try {
             const pk = this.toPrimaryKey(id);
             if (this.redis.isEnabled()) {
@@ -160,7 +160,7 @@ export class ComicRepositoryImpl extends PrismaRepository<
         }
     }
 
-    async batchIncrementView(id: number | bigint, count: number): Promise<void> {
+    async batchIncrementView(id: any, count: number): Promise<void> {
         const pk = this.toPrimaryKey(id);
         const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
         today.setHours(0, 0, 0, 0);
@@ -196,7 +196,7 @@ export class ComicRepositoryImpl extends PrismaRepository<
         });
     }
 
-    async getChapters(id: number | bigint, options: any = {}): Promise<any> {
+    async getChapters(id: any, options: any = {}): Promise<any> {
         const comicId = this.toPrimaryKey(id);
         const page = Math.max(Number(options.page) || 1, 1);
         const limit = Math.max(Number(options.limit) || 10, 1);

@@ -1,5 +1,6 @@
 import { IsOptional, IsInt, Min, IsString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class GetCategoriesDto {
   @IsOptional()
@@ -20,8 +21,8 @@ export class GetCategoriesDto {
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  parent_id?: number;
+  @IsPrimaryKey()
+  parent_id?: any;
 
   @IsOptional()
   @IsEnum(['active', 'inactive'])

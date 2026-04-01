@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class CreateProvinceDto {
     @IsNotEmpty()
@@ -23,9 +23,8 @@ export class CreateProvinceDto {
     phone_code?: string;
 
     @IsNotEmpty()
-    @Type(() => Number)
-    @IsNumber()
-    country_id: number;
+    @IsPrimaryKey()
+    country_id: any;
 
     @IsOptional()
     @IsString()

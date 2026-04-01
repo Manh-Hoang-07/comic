@@ -28,7 +28,7 @@ export class PublicTestimonialController {
   @Permission('public')
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.testimonialService.getOne(Number(id));
+    return this.testimonialService.getOne(id);
   }
 }
 

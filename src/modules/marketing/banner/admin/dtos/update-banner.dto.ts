@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsUrl, MaxLength, IsInt, Min, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { BannerLinkTarget } from '@/shared/enums/types/banner-link-target.enum';
 
@@ -53,11 +54,10 @@ export class UpdateBannerDto {
     @MaxLength(20)
     text_color?: string;
 
-    @IsInt()
-    @Min(1)
     @IsOptional()
+    @IsPrimaryKey()
     @Type(() => Number)
-    location_id?: number;
+    location_id?: any;
 
     @IsInt()
     @Min(0)

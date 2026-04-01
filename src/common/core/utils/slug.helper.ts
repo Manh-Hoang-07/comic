@@ -18,7 +18,7 @@ export class SlugHelper {
     static async uniqueSlug(
         title: string,
         repository: SlugRepository,
-        excludeId?: string | number | bigint,
+        excludeId?: string | any,
     ): Promise<string> {
         let slug = StringUtil.toSlug(title);
 

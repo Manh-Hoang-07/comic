@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsString } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -23,19 +23,16 @@ export class UpdateProfileDto {
   address?: string;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  country_id?: number;
+  @IsPrimaryKey()
+  country_id?: any;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  province_id?: number;
+  @IsPrimaryKey()
+  province_id?: any;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  ward_id?: number;
+  @IsPrimaryKey()
+  ward_id?: any;
 
   @IsOptional()
   @IsString()

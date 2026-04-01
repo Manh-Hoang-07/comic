@@ -4,8 +4,8 @@ import { IRepository } from '@/common/core/repositories';
 export const COMIC_STATS_REPOSITORY = 'IComicStatsRepository';
 
 export interface ComicStatsFilter {
-    comic_id?: number | bigint;
-    group_id?: number | bigint;
+    comic_id?: any;
+    group_id?: any;
 }
 
 export interface IComicStatsRepository extends IRepository<ComicStats> {

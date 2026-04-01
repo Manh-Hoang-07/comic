@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsInt, IsEnum, MaxLength } from 'class-validator';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class CreatePostCategoryDto {
   @IsString()
@@ -15,8 +16,8 @@ export class CreatePostCategoryDto {
   description?: string;
 
   @IsOptional()
-  @IsInt()
-  parent_id?: number;
+  @IsPrimaryKey()
+  parent_id?: any;
 
   @IsOptional()
   @IsString()

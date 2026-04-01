@@ -1,5 +1,6 @@
-import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength, ValidateNested, IsNumber } from 'class-validator';
+import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class UserProfilePayloadDto {
   @IsOptional()
@@ -15,19 +16,16 @@ export class UserProfilePayloadDto {
   address?: string;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  country_id?: number;
+  @IsPrimaryKey()
+  country_id?: any;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  province_id?: number;
+  @IsPrimaryKey()
+  province_id?: any;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  ward_id?: number;
+  @IsPrimaryKey()
+  ward_id?: any;
 
   @IsOptional()
   @IsString()
@@ -62,7 +60,7 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsArray()
-  role_ids?: number[];
+  role_ids?: any[];
 
   @IsOptional()
   @ValidateNested()

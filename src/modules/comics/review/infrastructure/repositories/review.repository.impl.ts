@@ -43,7 +43,7 @@ export class ReviewRepositoryImpl extends PrismaRepository<
         return where;
     }
 
-    async syncRatingStats(comicId: number | bigint): Promise<void> {
+    async syncRatingStats(comicId: any): Promise<void> {
         const id = this.toPrimaryKey(comicId);
 
         // Calculate aggregate

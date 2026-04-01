@@ -7,7 +7,7 @@ export const BANNER_REPOSITORY = 'IBannerRepository';
 export interface BannerFilter {
     search?: string;
     status?: string;
-    locationId?: number | bigint;
+    locationId?: any;
     locationCode?: string;
 }
 

@@ -6,6 +6,7 @@ import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { MenuTreeItem } from '@/modules/core/menu/admin/interfaces/menu-tree-item.interface';
 import { BaseService } from '@/common/core/services';
 import { buildMenuTree, filterAdminMenus, filterClientMenus } from '@/modules/core/menu/utils/menu.helper';
+import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 
 @Injectable()
 export class MenuService extends BaseService<any, IMenuRepository> {
@@ -101,7 +102,7 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     const bigIntFields = ['parent_id', 'required_permission_id', 'created_user_id', 'updated_user_id'];
     bigIntFields.forEach((field) => {
       if (payload[field] !== undefined && payload[field] !== null && payload[field] !== '') {
-        payload[field] = BigInt(payload[field]);
+        payload[field] = toPrimaryKey(payload[field]);
       } else if (payload[field] === '' || payload[field] === null) {
         payload[field] = null;
       }

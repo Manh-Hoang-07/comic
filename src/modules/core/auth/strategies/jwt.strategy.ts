@@ -37,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // 2. Load thông tin user từ DB nếu cache miss
-    const user = await this.userRepo.findByIdWithBasicInfo(BigInt(userId));
+    const user = await this.userRepo.findByIdWithBasicInfo(userId);
 
     if (!user) return null;
 

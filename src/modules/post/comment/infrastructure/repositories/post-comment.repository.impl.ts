@@ -52,7 +52,7 @@ export class PostCommentRepositoryImpl extends PrismaRepository<
         return where;
     }
 
-    async findWithReplies(postId: number | bigint): Promise<PostComment[]> {
+    async findWithReplies(postId: any): Promise<PostComment[]> {
         return this.findManyRaw({
             where: {
                 post_id: this.toPrimaryKey(postId),
@@ -82,7 +82,7 @@ export class PostCommentRepositoryImpl extends PrismaRepository<
         }) as unknown as PostComment[];
     }
 
-    async updateStatus(id: number | bigint, status: string): Promise<PostComment> {
+    async updateStatus(id: any, status: string): Promise<PostComment> {
         return this.update(id, { status: status as any });
     }
 }

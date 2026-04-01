@@ -18,7 +18,7 @@ export class ProvinceRepositoryImpl
         if (filter.status) where.status = filter.status;
         if (filter.code) where.code = filter.code;
         if (filter.country_id) {
-            where.country_id = typeof filter.country_id === 'bigint' ? filter.country_id : BigInt(filter.country_id);
+            where.country_id = this.toPrimaryKey(filter.country_id);
         }
         return where;
     }

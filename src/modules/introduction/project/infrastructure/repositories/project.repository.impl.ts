@@ -45,7 +45,7 @@ export class ProjectRepositoryImpl extends PrismaRepository<
         return this.findOne({ slug });
     }
 
-    async incrementViewCount(id: number | bigint): Promise<Project> {
+    async incrementViewCount(id: any): Promise<Project> {
         return this.update(id, { view_count: { increment: 1 } });
     }
 }

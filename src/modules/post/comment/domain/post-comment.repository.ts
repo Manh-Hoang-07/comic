@@ -5,16 +5,16 @@ import { IRepository } from '@/common/core/repositories';
 export const POST_COMMENT_REPOSITORY = 'IPostCommentRepository';
 
 export interface PostCommentFilter {
-    postId?: number | bigint;
-    userId?: number | bigint;
+    postId?: any;
+    userId?: any;
     status?: string;
-    parentId?: number | bigint | null;
+    parentId?: any | null;
     search?: string;
     startDate?: Date | string;
     endDate?: Date | string;
 }
 
 export interface IPostCommentRepository extends IRepository<PostComment> {
-    findWithReplies(postId: number | bigint): Promise<PostComment[]>;
-    updateStatus(id: number | bigint, status: string): Promise<PostComment>;
+    findWithReplies(postId: any): Promise<PostComment[]>;
+    updateStatus(id: any, status: string): Promise<PostComment>;
 }

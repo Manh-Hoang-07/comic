@@ -65,7 +65,7 @@ export class TestimonialController {
   @Patch(':id/featured')
   @Permission('testimonial.manage')
   toggleFeatured(@Param('id') id: string, @Body('featured') featured: boolean) {
-    return this.testimonialService.toggleFeatured(Number(id), featured);
+    return this.testimonialService.toggleFeatured(id, featured);
   }
 }
 

@@ -5,6 +5,7 @@ import { IChapterRepository, CHAPTER_REPOSITORY } from '../../domain/chapter.rep
 import { IChapterPageRepository, CHAPTER_PAGE_REPOSITORY } from '../../domain/chapter-page.repository';
 import { IComicRepository, COMIC_REPOSITORY } from '../../../comic/domain/comic.repository';
 import { ComicNotificationService } from '@/modules/comics/shared/services/comic-notification.service';
+import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 
 @Injectable()
 export class ChapterActionService {
@@ -21,7 +22,7 @@ export class ChapterActionService {
     /**
      * Validates that chapter_index is unique within a comic.
      */
-    async validateUniqueIndex(comicId: any, index: number, excludeId?: bigint): Promise<void> {
+    async validateUniqueIndex(comicId: any, index: number, excludeId?: any): Promise<void> {
         const existing = await this.chapterRepository.findByComicIdAndIndex(comicId, index);
         if (existing && (!excludeId || existing.id !== excludeId)) {
             throw new BadRequestException(`Chapter với index ${index} đã tồn tại trong comic này`);
@@ -45,7 +46,7 @@ export class ChapterActionService {
                     image_url: p.image_url,
                     width: p.width,
                     height: p.height,
-                    file_size: p.file_size ? BigInt(p.file_size) : null,
+                    file_size: p.file_size ? toPrimaryKey(p.file_size) : null,
                 }))
             );
         }

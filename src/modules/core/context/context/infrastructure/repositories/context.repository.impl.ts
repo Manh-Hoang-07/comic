@@ -37,7 +37,7 @@ export class ContextRepositoryImpl extends PrismaRepository<
 
         if (filter.refId !== undefined || (filter as any).ref_id !== undefined) {
             const rid = filter.refId !== undefined ? filter.refId : (filter as any).ref_id;
-            where.ref_id = rid === null ? null : BigInt(rid);
+            where.ref_id = rid === null ? null : this.toPrimaryKey(rid);
         }
 
         if (filter.status) {
@@ -51,15 +51,15 @@ export class ContextRepositoryImpl extends PrismaRepository<
         return where;
     }
 
-    async findByTypeAndRefId(type: string, refId: number | null): Promise<Context | null> {
-        return this.findOne({ type, ref_id: refId === null ? null : BigInt(refId) });
+    async findByTypeAndRefId(type: string, refId: any): Promise<Context | null> {
+        return this.findOne({ type, ref_id: refId === null ? null : this.toPrimaryKey(refId) });
     }
 
     async findByCode(code: string): Promise<Context | null> {
         return this.findOne({ code });
     }
 
-    async findActiveByIds(ids: (number | bigint)[]): Promise<Context[]> {
+    async findActiveByIds(ids: any[]): Promise<Context[]> {
         return this.findMany({ ids, status: 'active' });
     }
 }

@@ -4,12 +4,12 @@ import { IRepository } from '@/common/core/repositories';
 export const COMMENT_REPOSITORY = 'ICommentRepository';
 
 export interface CommentFilter {
-    user_id?: number | bigint;
-    comic_id?: number | bigint;
-    chapter_id?: number | bigint;
-    parent_id?: number | bigint;
+    user_id?: any;
+    comic_id?: any;
+    chapter_id?: any;
+    parent_id?: any;
     status?: string;
-    group_id?: number | bigint;
+    group_id?: any;
 }
 
 export interface ICommentRepository extends IRepository<ComicComment> {

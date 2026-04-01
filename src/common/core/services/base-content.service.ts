@@ -16,7 +16,7 @@ export abstract class BaseContentService<T, R extends IRepository<T>> extends Ba
      */
     protected async ensureSlug(
         data: any,
-        currentId?: number | bigint,
+        currentId?: any,
         currentSlug?: string,
         slugField: string = 'slug',
         nameField: string = 'name'
@@ -72,21 +72,21 @@ export abstract class BaseContentService<T, R extends IRepository<T>> extends Ba
     /**
      * Thay đổi trạng thái
      */
-    async changeStatus(id: number | bigint, status: string) {
+    async changeStatus(id: any, status: string) {
         return this.update(id, { status });
     }
 
     /**
      * Thay đổi thứ tự sắp xếp
      */
-    async updateSortOrder(id: number | bigint, sortOrder: number) {
+    async updateSortOrder(id: any, sortOrder: number) {
         return this.update(id, { sort_order: sortOrder });
     }
 
     /**
      * Toggle Featured
      */
-    async toggleFeatured(id: number | bigint, featured: boolean) {
+    async toggleFeatured(id: any, featured: boolean) {
         // Thử cập nhật is_featured hoặc featured tùy theo model
         try {
             return await this.update(id, { is_featured: featured });
@@ -102,7 +102,7 @@ export abstract class BaseContentService<T, R extends IRepository<T>> extends Ba
     /**
      * Tăng view count (Sử dụng increment logic của repository nếu có, hoặc update tay)
      */
-    async incrementViewCount(id: number | bigint, field: string = 'view_count'): Promise<any> {
+    async incrementViewCount(id: any, field: string = 'view_count'): Promise<any> {
         // If repository has specialized increment logic (e.g. atomic increment), use it
         if (typeof (this.repository as any).incrementViewCount === 'function') {
             return (this.repository as any).incrementViewCount(id, field);

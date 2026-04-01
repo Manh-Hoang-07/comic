@@ -53,7 +53,7 @@ export class PermissionRepositoryImpl extends PrismaRepository<
         }
 
         if (filter.parentId !== undefined) {
-            where.parent_id = filter.parentId === null ? null : BigInt(filter.parentId);
+            where.parent_id = filter.parentId === null ? null : this.toPrimaryKey(filter.parentId);
         }
 
         return where;

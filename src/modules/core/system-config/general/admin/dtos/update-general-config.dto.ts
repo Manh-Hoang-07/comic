@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsEmail, MaxLength, IsArray, IsBoolean, IsNumber, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsPrimaryKey } from '@/common/shared/decorators';
 import { ContactChannel } from '@/shared/interfaces/contact-channel.interface';
 
 class ContactChannelDto implements ContactChannel {
@@ -67,19 +68,16 @@ export class UpdateGeneralConfigDto {
   site_address?: string;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  site_country_id?: number;
+  @IsPrimaryKey()
+  site_country_id?: any;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  site_province_id?: number;
+  @IsPrimaryKey()
+  site_province_id?: any;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  site_ward_id?: number;
+  @IsPrimaryKey()
+  site_ward_id?: any;
 
   @IsString()
   @IsOptional()

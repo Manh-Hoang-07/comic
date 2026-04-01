@@ -7,8 +7,8 @@ export const MENU_REPOSITORY = 'IMenuRepository';
 export interface MenuFilter {
     search?: string;
     status?: string;
-    parentId?: number | bigint;
-    parent_id?: number | bigint;
+    parentId?: any;
+    parent_id?: any;
     type?: string;
     group?: string;
 }

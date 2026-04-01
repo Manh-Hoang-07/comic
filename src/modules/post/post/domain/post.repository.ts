@@ -16,12 +16,12 @@ export interface PostFilter {
 }
 
 export interface IPostRepository extends IRepository<Post> {
-    incrementViewCount(id: number | bigint): Promise<void>;
+    incrementViewCount(id: any): Promise<void>;
     findPublishedBySlug(slug: string): Promise<Post | null>;
     findBySlug(slug: string): Promise<Post | null>;
 
     // Admin specific methods
-    syncRelations(postId: number | bigint, tagIds?: number[], categoryIds?: number[]): Promise<void>;
+    syncRelations(postId: any, tagIds?: any[], categoryIds?: any[]): Promise<void>;
 }
 
 

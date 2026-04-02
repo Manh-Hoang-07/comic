@@ -56,7 +56,6 @@ export class UpdateBannerDto {
 
     @IsOptional()
     @IsPrimaryKey()
-    @Type(() => Number)
     location_id?: any;
 
     @IsInt()

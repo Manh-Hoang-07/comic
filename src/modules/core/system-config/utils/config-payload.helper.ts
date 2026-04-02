@@ -6,7 +6,7 @@ import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 export function buildConfigPayload<T extends object>(
     dto: T,
     bigIntFields: string[],
-    updatedBy?: number,
+    updatedBy?: any,
     existing?: any,
 ): any {
     const payload: any = { ...dto };

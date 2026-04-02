@@ -54,8 +54,8 @@ export class NotificationController {
     @Request() req: { user: AuthUser },
   ) {
     // Current getOne only takes ID, we should ensure user owns it.
-    const notification = await this.notificationService.getOne(+id);
-    if (!notification || notification.user_id !== req.user.id) {
+    const notification = await this.notificationService.getOne(id);
+    if (!notification || String(notification.user_id) !== String(req.user.id)) {
       throw new NotFoundException('Notification not found');
     }
     return notification;
@@ -68,7 +68,7 @@ export class NotificationController {
     @Param('id') id: string,
     @Request() req: { user: AuthUser },
   ) {
-    return this.notificationService.markAsReadForUser(+id, req.user.id);
+    return this.notificationService.markAsReadForUser(id, req.user.id);
   }
 
   @LogRequest()

@@ -3,6 +3,7 @@ import { IContextRepository, CONTEXT_REPOSITORY } from '@/modules/core/context/c
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
 
 @Injectable()
 export class UserContextService {
@@ -33,8 +34,8 @@ export class UserContextService {
   }
 
   async getUserContextsForTransfer(userId: any) {
-    // ID 1 should be system context as per business logic
-    const systemContext = await this.contextRepo.findById(1);
+    // Look up system context by its code to remain DB agnostic (avoiding hardcoded ID 1)
+    const systemContext = await this.contextRepo.findByCode(SYSTEM_CONTEXT_CODE);
 
     const userContexts = await this.getUserContexts(userId);
 
@@ -46,7 +47,7 @@ export class UserContextService {
 
     // Filter unique by ID
     const uniqueContexts = allContexts.filter(
-      (ctx, index, self) => index === self.findIndex((c) => c.id === ctx.id),
+      (ctx, index, self) => index === self.findIndex((c) => String(c.id) === String(ctx.id)),
     );
 
     return uniqueContexts;
@@ -57,7 +58,7 @@ export class UserContextService {
     return {
       ...context,
       id: toPrimaryKey(context.id),
-      ref_id: context.ref_id ? Number(context.ref_id) : null,
+      ref_id: context.ref_id ? context.ref_id : null,
     };
   }
 }

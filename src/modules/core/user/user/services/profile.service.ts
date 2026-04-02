@@ -9,7 +9,9 @@ import { UpdateProfileDto } from '../dtos/update-profile.dto';
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly userRepo: UserRepository) {}
+  constructor(private readonly userRepo: UserRepository) { }
+
+  // ── Profile Operations ─────────────────────────────────────────────────────
 
   async getProfile(userId: any) {
     const user = await this.userRepo.findById(userId);
@@ -22,28 +24,31 @@ export class ProfileService {
     const profileFields = ['birthday', 'gender', 'address', 'about', 'country_id', 'province_id', 'ward_id'];
 
     const userPayload: any = {};
-    const profileData: any = {};
+    const profileRawData: any = {};
     const dtoAny = dto as any;
 
     Object.keys(dto).forEach(key => {
       if (userFields.includes(key)) {
-          userPayload[key] = dtoAny[key];
+        userPayload[key] = dtoAny[key];
       } else if (profileFields.includes(key)) {
-          profileData[key] = dtoAny[key];
+        profileRawData[key] = dtoAny[key];
       }
     });
 
-    if (Object.keys(profileData).length > 0) {
-      userPayload.profile = { 
-          upsert: {
-              create: profileData,
-              update: profileData
-          }
+    if (Object.keys(profileRawData).length > 0) {
+      const profileData = this.userRepo.prepareProfileData(profileRawData);
+      userPayload.profile = {
+        upsert: {
+          create: profileData,
+          update: profileData
+        }
       };
     }
 
     return this.userRepo.update(userId, userPayload);
   }
+
+  // ── Password Operations ────────────────────────────────────────────────────
 
   async changePassword(userId: any, oldPassword: string, newPassword: string) {
     const user = await this.userRepo.findByIdForAuth(userId);

@@ -9,13 +9,15 @@ export function normalizeIdArray(input: any): any[] | null {
     return input;
 }
 
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+
 /**
  * Unified transformer for Permission objects in Role/Permission responses.
  */
 export function transformPermission(perm: any) {
     if (!perm) return null;
     const { id, code, name, status } = perm;
-    return { id, code, name, status };
+    return { id: toPrimaryKey(id), code, name, status };
 }
 
 /**
@@ -24,11 +26,11 @@ export function transformPermission(perm: any) {
 export function transformContext(ctx: any) {
     if (!ctx) return null;
     return {
-        id: ctx.id,
+        id: toPrimaryKey(ctx.id),
         type: ctx.type,
         name: ctx.name,
         status: ctx.status,
-        ref_id: ctx.ref_id,
+        ref_id: ctx.ref_id ? toPrimaryKey(ctx.ref_id) : null,
     };
 }
 
@@ -43,7 +45,7 @@ export function resolveRoleContexts(roleContexts: any[]) {
 
     let filtered = roleContexts;
     if (currentContext && currentContext.type !== 'system') {
-        filtered = roleContexts.filter((rc) => rc.context_id === currentContextId);
+        filtered = roleContexts.filter((rc) => String(rc.context_id) === String(currentContextId));
     }
 
     return {

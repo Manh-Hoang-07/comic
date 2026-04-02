@@ -1,1 +1,1 @@
-export * from './parse-bigint.pipe';
+export * from './parse-id.pipe';

@@ -1,31 +1,38 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { RequestContext } from '@/common/shared/utils';
+import { Injectable } from '@nestjs/common';
 import { BaseService } from '@/common/core/services';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { UserRepository } from '@/modules/core/user/repositories/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
-import { UserPasswordService } from './user-password.service';
-import { UserActionService } from './user-action.service';
+import { PasswordService } from './password.service';
+import { RelationService } from './relation.service';
 
 @Injectable()
 export class UserService extends BaseService<any, UserRepository> {
   constructor(
     private readonly userRepo: UserRepository,
-    private readonly passwordService: UserPasswordService,
-    private readonly actionService: UserActionService,
+    private readonly passwordService: PasswordService,
+    private readonly actionService: RelationService,
   ) {
     super(userRepo);
   }
 
-  // ── Password & Action Delegates ───────────────────────────────────────────
+  // ── Password & Action Delegates ────────────────────────────────────────────
 
   async changePassword(id: any, dto: ChangePasswordDto) {
     return this.passwordService.changePassword(id, dto);
+  }
+
+  async getUserRoles(id: any) {
+    const assignments = await this.userRepo.findAssignments(id);
+    return assignments.map((assignment: any) => ({
+      group_id: assignment.group_id,
+      role_id: assignment.role_id,
+      group_code: assignment.group?.code,
+      group_name: assignment.group?.name,
+      role_code: assignment.role?.code,
+      role_name: assignment.role?.name,
+    }));
   }
 
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
@@ -36,14 +43,6 @@ export class UserService extends BaseService<any, UserRepository> {
       return { ...filter, groupId: groupFilter.group_id };
     }
     return filter;
-  }
-
-  protected override async afterCreate(user: any, data: any): Promise<void> {
-    await this.actionService.syncRelations(user.id, data);
-  }
-
-  protected override async afterUpdate(user: any, data: any): Promise<void> {
-    await this.actionService.syncRelations(user.id, data);
   }
 
   protected override async beforeCreate(data: any) {
@@ -57,10 +56,14 @@ export class UserService extends BaseService<any, UserRepository> {
 
     await this.validateUniqueness(payload);
 
-    delete payload.role_ids;
+    // Ensure we don't accidentally save relational data in main table
     delete payload.profile;
 
     return payload;
+  }
+
+  protected override async afterCreate(user: any, data: any): Promise<void> {
+    await this.actionService.sync(user.id, data);
   }
 
   protected override async beforeUpdate(id: any, data: any) {
@@ -75,46 +78,32 @@ export class UserService extends BaseService<any, UserRepository> {
 
     await this.validateUniqueness(payload, id);
 
-    delete payload.role_ids;
+    // Ensure we don't accidentally save relational data in main table
     delete payload.profile;
 
     return payload;
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  protected override async afterUpdate(user: any, data: any): Promise<void> {
+    await this.actionService.sync(user.id, data);
+  }
+
+  // ── Helpers & Transformations ──────────────────────────────────────────────
 
   private async validateUniqueness(payload: any, excludeId?: any): Promise<void> {
-    const fields = ['email', 'phone', 'username'] as const;
-    const labels = {
-      email: 'Email',
-      phone: 'Số điện thoại',
-      username: 'Tên đăng nhập',
-    };
-
-    for (const field of fields) {
-      if (payload[field]) {
-        const isUnique = await this.userRepo.checkUnique(field, payload[field], excludeId);
-        if (!isUnique) {
-          throw new BadRequestException(`${labels[field]} đã được sử dụng.`);
-        }
-      }
-    }
+    await this.userRepo.checkMultipleUniques(
+      {
+        email: payload.email,
+        phone: payload.phone,
+        username: payload.username,
+      },
+      excludeId,
+    );
   }
 
   protected override transform(user: any) {
     if (!user) return user;
-    const u = { ...user } as any;
-    const groupId = RequestContext.get<number | null>('groupId');
-
-    if (groupId && u.user_role_assignments) {
-      u.role_ids = (u.user_role_assignments as any[])
-        .filter((ura: any) => String(ura.group_id) === String(groupId))
-        .map((ura: any) => ura.role_id);
-    } else {
-      u.role_ids = u.role_ids || [];
-    }
-
-    delete u.user_role_assignments;
+    const { password, ...u } = user;
     return u;
   }
 }

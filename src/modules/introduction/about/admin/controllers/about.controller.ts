@@ -46,19 +46,19 @@ export class AboutController {
   @Get(':id')
   @Permission('about.manage')
   findOne(@Param('id') id: string) {
-    return this.aboutService.getOne(+id);
+    return this.aboutService.getOne(id);
   }
 
   @Put(':id')
   @Permission('about.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updateAboutDto: UpdateAboutDto) {
-    return this.aboutService.update(+id, updateAboutDto);
+    return this.aboutService.update(id, updateAboutDto);
   }
 
   @Delete(':id')
   @Permission('about.manage')
   remove(@Param('id') id: string) {
-    return this.aboutService.delete(+id);
+    return this.aboutService.delete(id);
   }
 }
 

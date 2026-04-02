@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Post } from '@prisma/client';
 import { IPostRepository, POST_REPOSITORY } from '../../domain/post.repository';
 import { normalizeIdArray } from '@/common/core/utils/data.helper';
+import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 
 @Injectable()
 export class PostActionService {
@@ -19,7 +20,7 @@ export class PostActionService {
 
         if (tagIds !== null || categoryIds !== null) {
             await this.postRepo.syncRelations(
-                Number(postId),
+                toPrimaryKey(postId),
                 tagIds || undefined,
                 categoryIds || undefined
             );

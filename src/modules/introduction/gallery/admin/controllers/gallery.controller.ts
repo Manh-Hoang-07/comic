@@ -46,19 +46,19 @@ export class GalleryController {
   @Get(':id')
   @Permission('gallery.manage')
   findOne(@Param('id') id: string) {
-    return this.galleryService.getOne(+id);
+    return this.galleryService.getOne(id);
   }
 
   @Put(':id')
   @Permission('gallery.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updateGalleryDto: UpdateGalleryDto) {
-    return this.galleryService.update(+id, updateGalleryDto);
+    return this.galleryService.update(id, updateGalleryDto);
   }
 
   @Delete(':id')
   @Permission('gallery.manage')
   remove(@Param('id') id: string) {
-    return this.galleryService.delete(+id);
+    return this.galleryService.delete(id);
   }
 }
 

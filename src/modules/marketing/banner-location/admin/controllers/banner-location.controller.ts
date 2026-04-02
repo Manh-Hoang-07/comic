@@ -47,7 +47,7 @@ export class BannerLocationController {
     @Get(':id')
     @Permission('banner_location.manage')
     findOne(@Param('id') id: string) {
-        return this.bannerLocationService.getOne(+id);
+        return this.bannerLocationService.getOne(id);
     }
 
     @LogRequest()
@@ -57,14 +57,14 @@ export class BannerLocationController {
         @Param('id') id: string,
         @Body(ValidationPipe) updateBannerLocationDto: UpdateBannerLocationDto,
     ) {
-        return this.bannerLocationService.update(+id, updateBannerLocationDto);
+        return this.bannerLocationService.update(id, updateBannerLocationDto);
     }
 
     @LogRequest()
     @Delete(':id')
     @Permission('banner_location.manage')
     remove(@Param('id') id: string) {
-        return this.bannerLocationService.delete(+id);
+        return this.bannerLocationService.delete(id);
     }
 
     @LogRequest()
@@ -74,7 +74,7 @@ export class BannerLocationController {
         @Param('id') id: string,
         @Body('status') status: BasicStatus,
     ) {
-        return this.bannerLocationService.changeStatus(+id, status);
+        return this.bannerLocationService.changeStatus(id, status);
     }
 }
 

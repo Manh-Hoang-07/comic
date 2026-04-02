@@ -73,7 +73,7 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
         if (payload.parent_id) {
             const parent = await this.repository.findById(payload.parent_id);
             if (!parent) throw new NotFoundException('Parent comment not found');
-            if (Number(parent.post_id) !== Number(payload.post_id)) {
+            if (String(parent.post_id) !== String(payload.post_id)) {
                 throw new BadRequestException('Parent comment must be from the same post');
             }
         }
@@ -85,8 +85,8 @@ export class UserPostCommentsService extends BaseService<PostComment, IPostComme
         if (entity.parent_id) {
             await this.notificationService.notifyCommentReply(
                 entity.id,
-                Number(entity.parent_id),
-                Number(entity.user_id)
+                entity.parent_id,
+                entity.user_id
             );
         }
     }

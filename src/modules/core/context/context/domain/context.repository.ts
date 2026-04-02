@@ -8,7 +8,7 @@ export interface ContextFilter {
     search?: string;
     code?: string;
     type?: string;
-    refId?: number | null;
+    refId?: any;
     status?: string;
     ids?: any[];
 }

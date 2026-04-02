@@ -4,12 +4,12 @@ import { MenuTreeItem } from '../admin/interfaces/menu-tree-item.interface';
  * Builds a hierarchical tree from a flat list of menu items.
  */
 export function buildMenuTree(menus: any[]): MenuTreeItem[] {
-    const menuMap = new Map<number, MenuTreeItem>();
+    const menuMap = new Map<any, MenuTreeItem>();
     const rootMenus: MenuTreeItem[] = [];
 
     // Initialize map
     menus.forEach((menu) => {
-        const id = Number(menu.id);
+        const id = menu.id;
         menuMap.set(id, {
             id,
             code: menu.code,
@@ -26,8 +26,8 @@ export function buildMenuTree(menus: any[]): MenuTreeItem[] {
 
     // Link children to parents
     menus.forEach((menu) => {
-        const item = menuMap.get(Number(menu.id))!;
-        const parentId = menu.parent_id ? Number(menu.parent_id) : null;
+        const item = menuMap.get(menu.id)!;
+        const parentId = menu.parent_id;
 
         if (parentId && menuMap.has(parentId)) {
             menuMap.get(parentId)!.children!.push(item);
@@ -36,14 +36,18 @@ export function buildMenuTree(menus: any[]): MenuTreeItem[] {
         }
     });
 
-    // Sort root and children recursively
+    // Define recursive sort
     const sortTree = (items: MenuTreeItem[]) => {
         items.sort((a, b) => {
-            const menuA = menus.find((m) => Number(m.id) === a.id);
-            const menuB = menus.find((m) => Number(m.id) === b.id);
+            const menuA = menus.find((m) => String(m.id) === String(a.id));
+            const menuB = menus.find((m) => String(m.id) === String(b.id));
             return (menuA?.sort_order || 0) - (menuB?.sort_order || 0);
         });
-        items.forEach((item) => item.children && sortTree(item.children));
+        items.forEach((item) => {
+            if (item.children?.length) {
+                sortTree(item.children);
+            }
+        });
     };
 
     sortTree(rootMenus);

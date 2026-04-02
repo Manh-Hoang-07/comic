@@ -16,7 +16,7 @@ export class PostCommentController {
         @Query('page') page: string = '1',
         @Query('limit') limit: string = '10',
     ) {
-        return this.commentService.getCommentsByPost(Number(postId), {
+        return this.commentService.getCommentsByPost(postId, {
             page: parseInt(page),
             limit: parseInt(limit),
         });
@@ -34,8 +34,7 @@ export class PostCommentController {
             post_id: toPrimaryKey(postId),
             user_id: req.user.id,
             content: body.content,
-            parent_id: body.parent_id ? Number(body.parent_id) : undefined,
+            parent_id: body.parent_id ? toPrimaryKey(body.parent_id) : undefined,
         });
     }
 }
-

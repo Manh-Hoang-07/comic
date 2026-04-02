@@ -41,6 +41,9 @@ model User {
   reading_histories    ReadingHistory[]
   bookmarks            Bookmark[]
 
+  @@index([status], map: "users_idx_status")
+  @@index([created_at], map: "users_idx_created_at")
+  @@index([status, created_at], map: "users_idx_status_created")
   @@map("users")
 }
 
@@ -61,7 +64,9 @@ model Profile {
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([user_id], map: "profiles_UQ_profiles_user_id")
+  @@index([province_id], map: "profiles_idx_province_id")
+  @@index([country_id], map: "profiles_idx_country_id")
+  @@index([user_id], map: "profiles_idx_user_id")
   @@map("profiles")
 }
 

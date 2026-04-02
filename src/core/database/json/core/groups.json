@@ -4,8 +4,16 @@
             "id": 1,
             "type": "system",
             "ref_id": null,
-            "name": "System",
+            "name": "Toàn hệ thống (System)",
             "code": "system",
+            "status": "active"
+        },
+        {
+            "id": 2,
+            "type": "group",
+            "ref_id": null,
+            "name": "Nội bộ Nhóm (Group)",
+            "code": "group",
             "status": "active"
         }
     ],
@@ -13,9 +21,16 @@
         {
             "type": "system",
             "code": "system",
-            "name": "System Group",
+            "name": "System Admin Group",
             "status": "active",
             "context_code": "system"
+        },
+        {
+            "type": "group",
+            "code": "group_demo",
+            "name": "Group Demo Default",
+            "status": "active",
+            "context_code": "group"
         }
     ]
 }

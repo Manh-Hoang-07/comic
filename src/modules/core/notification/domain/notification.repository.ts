@@ -6,7 +6,7 @@ export const NOTIFICATION_REPOSITORY = 'INotificationRepository';
 
 export interface NotificationFilter {
     search?: string;
-    userId?: number;
+    userId?: any;
     isRead?: boolean;
     type?: string;
     status?: string;

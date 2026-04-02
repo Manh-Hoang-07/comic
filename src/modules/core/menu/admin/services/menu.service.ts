@@ -29,12 +29,12 @@ export class MenuService extends BaseService<any, IMenuRepository> {
 
   // ── Extended CRUD Operations ───────────────────────────────────────────────
 
-  async createWithUser(data: any, userId?: number) {
+  async createWithUser(data: any, userId?: any) {
     if (userId) data.created_user_id = userId;
     return this.create(data);
   }
 
-  async updateById(id: any, data: any, userId?: number) {
+  async updateById(id: any, data: any, userId?: any) {
     if (userId) data.updated_user_id = userId;
     return this.update(id, data);
   }
@@ -87,7 +87,7 @@ export class MenuService extends BaseService<any, IMenuRepository> {
       filtered = filterClientMenus(menus, userId);
     } else {
       if (!userId) return [];
-      const groupId = RequestContext.get<number | null>('groupId');
+      const groupId = RequestContext.get<any>('groupId');
       const userPerms = await this.rbacService.getUserPermissions(userId, groupId ?? null);
       filtered = filterAdminMenus(menus, userPerms);
     }
@@ -117,9 +117,9 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     if (item.menu_permissions) {
       item.menu_permissions = item.menu_permissions.map((mp: any) => ({
         ...mp,
-        id: mp.id ? Number(mp.id) : mp.id,
-        menu_id: mp.menu_id ? Number(mp.menu_id) : mp.menu_id,
-        permission_id: mp.permission_id ? Number(mp.permission_id) : mp.permission_id,
+        id: mp.id,
+        menu_id: mp.menu_id,
+        permission_id: mp.permission_id,
       }));
     }
     return item;

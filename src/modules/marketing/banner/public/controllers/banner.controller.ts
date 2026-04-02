@@ -15,7 +15,7 @@ export class PublicBannerController {
     @Permission('public')
     @Get(':id')
     findBannerById(@Param('id') id: string) {
-        return this.bannerService.getOne(+id);
+        return this.bannerService.getOne(id);
     }
 }
 

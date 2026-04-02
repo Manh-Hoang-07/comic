@@ -4,13 +4,6 @@
         "email": "systemadmin@example.com",
         "status": "active",
         "group_code": "system",
-        "role_code": "system"
-    },
-    {
-        "username": "systemuser",
-        "email": "systemuser@example.com",
-        "status": "active",
-        "group_code": "system",
-        "role_code": "system_manager"
+        "role_code": "super_admin"
     }
 ]

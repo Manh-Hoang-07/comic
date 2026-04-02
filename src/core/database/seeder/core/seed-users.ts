@@ -4,6 +4,7 @@ import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs';
 import * as path from 'path';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class SeedUsers {
@@ -42,8 +43,11 @@ export class SeedUsers {
     const systemAdmin = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
     if (systemAdmin) {
       const systemGroup = await this.prisma.group.findFirst({ where: { code: 'system' } });
-      if (systemGroup && Number(systemGroup.owner_id) !== Number(systemAdmin.id)) {
-        await this.prisma.group.update({ where: { id: systemGroup.id }, data: { owner_id: systemAdmin.id } });
+      if (systemGroup && toPrimaryKey(systemGroup.owner_id).toString() !== toPrimaryKey(systemAdmin.id).toString()) {
+        await this.prisma.group.update({
+          where: { id: systemGroup.id },
+          data: { owner_id: toPrimaryKey(systemAdmin.id) }
+        });
       }
     }
   }

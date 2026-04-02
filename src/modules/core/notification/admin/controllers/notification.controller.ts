@@ -46,7 +46,7 @@ export class NotificationController {
   @Get(':id')
   @Permission('notification.manage')
   async getOne(@Param('id') id: string) {
-    return this.notificationService.getOne(+id);
+    return this.notificationService.getOne(id);
   }
 
   @LogRequest()
@@ -56,14 +56,14 @@ export class NotificationController {
     @Param('id') id: string,
     @Body() dto: UpdateNotificationDto,
   ) {
-    return this.notificationService.update(+id, dto);
+    return this.notificationService.update(id, dto);
   }
 
   @LogRequest()
   @Delete(':id')
   @Permission('notification.manage')
   async delete(@Param('id') id: string) {
-    return this.notificationService.delete(+id);
+    return this.notificationService.delete(id);
   }
 }
 

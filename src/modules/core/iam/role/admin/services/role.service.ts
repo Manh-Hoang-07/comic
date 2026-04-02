@@ -7,7 +7,6 @@ import { BaseService } from '@/common/core/services';
 import { normalizeIdArray, transformPermission, resolveRoleContexts } from '@/modules/core/iam/utils/iam-transform.helper';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-
 @Injectable()
 export class RoleService extends BaseService<any, IRoleRepository> {
   constructor(
@@ -22,7 +21,11 @@ export class RoleService extends BaseService<any, IRoleRepository> {
 
   protected override async prepareFilters(filter: any) {
     const context = RequestContext.get<any>('context');
-    const contextId = RequestContext.get<number>('contextId') || 1;
+    const contextId = RequestContext.get<any>('contextId');
+
+    if (!contextId) {
+      throw new BadRequestException('Context ID is required to access roles');
+    }
 
     // Filter by contextId if not in system context
     if (context && context.type !== 'system') {

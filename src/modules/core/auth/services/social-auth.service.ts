@@ -56,12 +56,12 @@ export class SocialAuthService {
         }
 
         // Generate and store response
-        const numericUserId = Number(dbUser.id);
-        const tokens = this.tokenService.generateTokens(numericUserId, dbUser.email!);
+        const userId = dbUser.id;
+        const tokens = this.tokenService.generateTokens(userId, dbUser.email!);
 
         await this.redis
             .set(
-                `auth:refresh:${numericUserId}:${tokens.refreshJti}`,
+                `auth:refresh:${userId}:${tokens.refreshJti}`,
                 '1',
                 this.tokenService.getRefreshTtlSec(),
             )

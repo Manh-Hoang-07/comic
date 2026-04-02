@@ -27,7 +27,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
 
   override async getOne(id: any): Promise<Post> {
     const entity = await super.getOne(id);
-    verifyGroupOwnership({ group_id: entity.group_id ? Number(entity.group_id) : null });
+    verifyGroupOwnership({ group_id: entity.group_id });
     return entity;
   }
 

@@ -47,7 +47,7 @@ export class BannerController {
     @Get(':id')
     @Permission('banner.manage')
     findOne(@Param('id') id: string) {
-        return this.bannerService.getOne(+id);
+        return this.bannerService.getOne(id);
     }
 
     @LogRequest()
@@ -57,14 +57,14 @@ export class BannerController {
         @Param('id') id: string,
         @Body(ValidationPipe) updateBannerDto: UpdateBannerDto,
     ) {
-        return this.bannerService.update(+id, updateBannerDto);
+        return this.bannerService.update(id, updateBannerDto);
     }
 
     @LogRequest()
     @Delete(':id')
     @Permission('banner.manage')
     remove(@Param('id') id: string) {
-        return this.bannerService.delete(+id);
+        return this.bannerService.delete(id);
     }
 
     @LogRequest()
@@ -74,7 +74,7 @@ export class BannerController {
         @Param('id') id: string,
         @Body('status') status: BasicStatus,
     ) {
-        return this.bannerService.changeStatus(+id, status);
+        return this.bannerService.changeStatus(id, status);
     }
 
     @LogRequest()
@@ -84,7 +84,7 @@ export class BannerController {
         @Param('id') id: string,
         @Body('sort_order') sortOrder: any,
     ) {
-        return this.bannerService.updateSortOrder(+id, sortOrder);
+        return this.bannerService.updateSortOrder(id, sortOrder);
     }
 }
 

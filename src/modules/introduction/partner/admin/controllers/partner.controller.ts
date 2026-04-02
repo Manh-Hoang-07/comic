@@ -46,19 +46,19 @@ export class PartnerController {
   @Get(':id')
   @Permission('partner.manage')
   findOne(@Param('id') id: string) {
-    return this.partnerService.getOne(+id);
+    return this.partnerService.getOne(id);
   }
 
   @Put(':id')
   @Permission('partner.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updatePartnerDto: UpdatePartnerDto) {
-    return this.partnerService.update(+id, updatePartnerDto);
+    return this.partnerService.update(id, updatePartnerDto);
   }
 
   @Delete(':id')
   @Permission('partner.manage')
   remove(@Param('id') id: string) {
-    return this.partnerService.delete(+id);
+    return this.partnerService.delete(id);
   }
 }
 

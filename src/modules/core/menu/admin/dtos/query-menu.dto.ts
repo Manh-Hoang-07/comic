@@ -26,7 +26,6 @@ export class QueryMenuDto {
   status?: BasicStatus;
 
   @IsOptional()
-  @Type(() => Number)
   @IsPrimaryKey()
   parent_id?: any;
 
@@ -43,4 +42,3 @@ export class QueryMenuDto {
   @IsString()
   sort?: string = 'sort_order:ASC';
 }
-

@@ -90,10 +90,10 @@ export class LoginService {
     const decoded = this.tokenService.decodeRefresh(refreshToken);
     if (!decoded) throw new UnauthorizedException('Invalid or expired token');
 
-    const userId = Number(decoded.sub);
+    const userId = decoded.sub;
     const jti = decoded.jti as string | undefined;
 
-    if (!userId || !jti || isNaN(userId)) {
+    if (!userId || !jti) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 

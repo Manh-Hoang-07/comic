@@ -21,7 +21,6 @@ import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';
 import { RbacGuard } from '@/common/auth/guards';
-import { ParseBigIntPipe } from '@/common/http/pipes';
 
 @Controller('admin/projects')
 @UseGuards(JwtAuthGuard, RbacGuard)
@@ -50,37 +49,37 @@ export class ProjectController {
   @Get(':id')
   @Permission('project.manage')
   findOne(@Param('id') id: string) {
-    return this.projectService.getOne(+id);
+    return this.projectService.getOne(id);
   }
 
   @Put(':id')
   @Permission('project.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updateProjectDto: UpdateProjectDto) {
-    return this.projectService.update(+id, updateProjectDto);
+    return this.projectService.update(id, updateProjectDto);
   }
 
   @Delete(':id')
   @Permission('project.manage')
   remove(@Param('id') id: string) {
-    return this.projectService.delete(+id);
+    return this.projectService.delete(id);
   }
 
   @Patch(':id/status')
   @Permission('project.manage')
   changeStatus(@Param('id') id: string, @Body('status') status: ProjectStatus) {
-    return this.projectService.changeStatus(+id, status);
+    return this.projectService.changeStatus(id, status);
   }
 
   @Patch(':id/featured')
   @Permission('project.manage')
   toggleFeatured(@Param('id') id: string, @Body('featured') featured: boolean) {
-    return this.projectService.toggleFeatured(+id, featured);
+    return this.projectService.toggleFeatured(id, featured);
   }
 
   @Patch(':id/sort-order')
   @Permission('project.manage')
   updateSortOrder(@Param('id') id: string, @Body('sort_order') sortOrder: any) {
-    return this.projectService.updateSortOrder(+id, sortOrder);
+    return this.projectService.updateSortOrder(id, sortOrder);
   }
 }
 

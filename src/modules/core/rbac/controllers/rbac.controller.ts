@@ -3,8 +3,7 @@ import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RequestContext } from '@/common/shared/utils';
-import { Auth } from '@/common/auth/utils';
-import { ExecutionContext } from '@nestjs/common';
+import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { PERM } from '@/modules/core/rbac/rbac.constants';
 
 @Controller('admin/users')
@@ -13,34 +12,32 @@ export class RbacController {
 
   /**
    * Sync roles cho user trong group (thay thế toàn bộ roles hiện tại trong group)
-   * System admin có thể bỏ qua validation
-   * Group_id tự động lấy từ RequestContext (không cần truyền trong body)
+   * Super Admin: truyền group_id trong body để chuyển group tùy ý.
+   * Group Admin: không cần group_id, tự lấy từ RequestContext (x-group-id header).
    */
-  @Permission(PERM.ROLE.MANAGE)
+  @Permission(PERM.ASSIGNMENT.MANAGE)
   @LogRequest()
   @Put(':id/roles')
   async syncRoles(
     @Param('id') targetUserId: any,
-    @Body() body: { role_ids: any[] },
-    context?: ExecutionContext,
+    @Body() body: { role_ids: any[]; group_id?: any },
   ) {
-    // Lấy groupId từ RequestContext (đã được set bởi GroupInterceptor)
-    const groupId = RequestContext.get<number | null>('groupId');
+    // 1. Group ID: ưu tiên body (Super Admin), fallback RequestContext (Group Admin)
+    const groupId = body.group_id || RequestContext.get<any>('groupId');
 
     if (!groupId) {
-      throw new BadRequestException('Group ID is required. Please specify X-Group-Id header or group_id query parameter');
+      throw new BadRequestException(
+        'Group ID is required. Please specify group_id in body or X-Group-Id header.',
+      );
     }
 
-    // Check nếu user hiện tại là System Admin
-    const currentUserId = Auth.id(context);
+    // 2. Check System Admin để bỏ qua validation context
+    const currentUserId = getCurrentUserId();
     const isSystemAdmin = currentUserId
       ? await this.service.isSystemAdmin(currentUserId)
       : false;
 
-    // System admin có thể bỏ qua validation (có thể gán bất kỳ role nào)
-    const skipValidation = isSystemAdmin;
-
-    return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids || [], skipValidation);
+    return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids || [], isSystemAdmin);
   }
 }
 

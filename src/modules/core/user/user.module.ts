@@ -1,8 +1,8 @@
 import { Module, Global } from '@nestjs/common';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { UserService } from './admin/services/user.service';
-import { UserPasswordService } from './admin/services/user-password.service';
-import { UserActionService } from './admin/services/user-action.service';
+import { PasswordService } from './admin/services/password.service';
+import { RelationService } from './admin/services/relation.service';
 import { ProfileService } from './user/services/profile.service';
 import { UserRepository } from './repositories/user.repository';
 import { UserController } from './admin/controllers/user.controller';
@@ -13,8 +13,8 @@ import { ProfileController } from './user/controllers/profile.controller';
   imports: [RbacModule],
   providers: [
     UserService, 
-    UserPasswordService,
-    UserActionService,
+    PasswordService,
+    RelationService,
     ProfileService, 
     UserRepository,
     {
@@ -28,8 +28,8 @@ import { ProfileController } from './user/controllers/profile.controller';
   ],
   exports: [
     UserService, 
-    UserPasswordService,
-    UserActionService,
+    PasswordService,
+    RelationService,
     ProfileService, 
     UserRepository,
     'IUserRepository'

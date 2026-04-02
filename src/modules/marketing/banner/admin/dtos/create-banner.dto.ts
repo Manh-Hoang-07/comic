@@ -55,13 +55,11 @@ export class CreateBannerDto {
     text_color?: string;
 
     @IsPrimaryKey()
-    @Type(() => Number)
     location_id: any;
 
     @IsInt()
     @Min(0)
     @IsOptional()
-    @Type(() => Number)
     sort_order?: number = 0;
 
     @IsOptional()

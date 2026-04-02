@@ -1,23 +1,31 @@
 import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import { getDbIdType } from '@/common/core/utils/primary-key.util';
 
 @ValidatorConstraint({ name: 'isPrimaryKey', async: false })
 export class IsPrimaryKeyConstraint implements ValidatorConstraintInterface {
     validate(value: any, args: ValidationArguments) {
         if (value === null || value === undefined) return true; // Let @IsNotEmpty handle this
 
+        const idType = getDbIdType();
+
+        // 1. UUID logic
+        if (idType === 'uuid') {
+            if (typeof value !== 'string') return false;
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        }
+
+        // 2. ObjectId logic
+        if (idType === 'objectid') {
+            if (typeof value !== 'string') return false;
+            return /^[0-9a-fA-F]{24}$/.test(value);
+        }
+
+        // 3. Default: BigInt logic
         // If it's a number or bigint
-        if (typeof value === 'number' || typeof value === 'bigint') return true;
+        if (typeof value === 'number' && !isNaN(value)) return true;
+        if (typeof value === 'bigint') return true;
 
         if (typeof value === 'string') {
-            // 1. UUID
-            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-            if (isUuid) return true;
-
-            // 2. MongoDB ObjectId
-            const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
-            if (isObjectId) return true;
-
-            // 3. Numeric string (for BigInt)
             const isNumeric = /^\d+$/.test(value);
             if (isNumeric) return true;
         }
@@ -27,7 +35,10 @@ export class IsPrimaryKeyConstraint implements ValidatorConstraintInterface {
     }
 
     defaultMessage(args: ValidationArguments) {
-        return `${args.property} must be a valid Primary Key (Number, BigInt, UUID, or ObjectId)`;
+        const idType = getDbIdType();
+        if (idType === 'uuid') return `${args.property} must be a valid UUID`;
+        if (idType === 'objectid') return `${args.property} must be a valid ObjectId`;
+        return `${args.property} must be a valid Primary Key (Number or BigInt string)`;
     }
 }
 

@@ -22,7 +22,7 @@ export class RbacGuard implements CanActivate {
 
     if (permissions.some(p => [RbacPermission.AUTHENTICATED, RbacPermission.USER, 'authenticated', 'user'].includes(p as any))) return true;
 
-    const groupId = RequestContext.get<number | null>('groupId') ?? null;
+    const groupId = RequestContext.get<any>('groupId') ?? null;
     if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) return true;
 
     const res = ResponseUtil.forbidden(`Access denied. Need: ${permissions.join(',')}`);

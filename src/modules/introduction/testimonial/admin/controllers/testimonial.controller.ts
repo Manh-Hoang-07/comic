@@ -47,19 +47,19 @@ export class TestimonialController {
   @Get(':id')
   @Permission('testimonial.manage')
   findOne(@Param('id') id: string) {
-    return this.testimonialService.getOne(+id);
+    return this.testimonialService.getOne(id);
   }
 
   @Put(':id')
   @Permission('testimonial.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updateTestimonialDto: UpdateTestimonialDto) {
-    return this.testimonialService.update(+id, updateTestimonialDto);
+    return this.testimonialService.update(id, updateTestimonialDto);
   }
 
   @Delete(':id')
   @Permission('testimonial.manage')
   remove(@Param('id') id: string) {
-    return this.testimonialService.delete(+id);
+    return this.testimonialService.delete(id);
   }
 
   @Patch(':id/featured')

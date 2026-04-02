@@ -24,7 +24,7 @@ export class ComicNotificationService {
       return;
     }
 
-    const comicId = Number(chapter.comic_id);
+    const comicId = toPrimaryKey(chapter.comic_id);
 
     // Lấy tất cả followers của comic qua repository
     const followers = await this.followRepository.findMany({ comic_id: comicId }, {
@@ -43,7 +43,7 @@ export class ComicNotificationService {
     // Tạo notifications cho từng follower
     const notifications = followers.map((follow: any) =>
       this.notificationRepository.create({
-        user_id: toPrimaryKey(Number(follow.user_id)),
+        user_id: toPrimaryKey(follow.user_id),
         title: `Chapter mới: ${chapter.title}`,
         message: `${comic.title} đã có chapter mới: ${chapter.chapter_label || chapter.chapter_index}`,
         type: NotificationType.info as any,
@@ -71,7 +71,7 @@ export class ComicNotificationService {
     // Lấy parent comment để biết user cần notify qua repository
     const parentComment = await this.commentRepository.findById(parentCommentId);
 
-    if (!parentComment || Number(parentComment.user_id) === userId) {
+    if (!parentComment || String(parentComment.user_id) === String(userId)) {
       return; // Không notify chính mình
     }
 

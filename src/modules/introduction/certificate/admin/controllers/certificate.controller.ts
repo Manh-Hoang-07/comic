@@ -46,19 +46,19 @@ export class CertificateController {
   @Get(':id')
   @Permission('certificate.manage')
   findOne(@Param('id') id: string) {
-    return this.certificateService.getOne(+id);
+    return this.certificateService.getOne(id);
   }
 
   @Put(':id')
   @Permission('certificate.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updateCertificateDto: UpdateCertificateDto) {
-    return this.certificateService.update(+id, updateCertificateDto);
+    return this.certificateService.update(id, updateCertificateDto);
   }
 
   @Delete(':id')
   @Permission('certificate.manage')
   remove(@Param('id') id: string) {
-    return this.certificateService.delete(+id);
+    return this.certificateService.delete(id);
   }
 }
 

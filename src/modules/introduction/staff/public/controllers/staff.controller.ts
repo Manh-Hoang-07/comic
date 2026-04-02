@@ -22,7 +22,7 @@ export class PublicStaffController {
   @Permission('public')
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.staffService.getOne(+id);
+    return this.staffService.getOne(id);
   }
 }
 

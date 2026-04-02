@@ -18,7 +18,7 @@ export class Auth {
   }
 
   /** Get current user ID. */
-  static id(context?: ExecutionContext): number | null {
+  static id(context?: ExecutionContext): any | null {
     return getCurrentUserId(context);
   }
 

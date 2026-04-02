@@ -21,19 +21,22 @@ export interface GroupOwnedEntity {
  * ```
  */
 export function verifyGroupOwnership(entity: GroupOwnedEntity): void {
-  const groupId = RequestContext.get<number | null>('groupId');
-  const contextId = RequestContext.get<number>('contextId');
+  const context = RequestContext.get<any>('context');
+  const groupId = RequestContext.get<any>('groupId');
 
-  // System context (id=1) hoặc không có groupId → có thể truy cập tất cả entities
-  if (contextId === 1 || !groupId) {
+  // Nếu là system context -> có thể truy cập tất cả entities
+  if (context?.type === 'system') {
     return;
+  }
+
+  // Nếu không có cả context lẫn groupId -> không có quyền (không có thông tin context điều hướng)
+  if (!context && !groupId) {
+    throw new ForbiddenException('Unable to verify record ownership: no context information available.');
   }
 
   // Group khác: chỉ được truy cập entities có group_id = groupId hiện tại
   if (entity.group_id !== null && entity.group_id !== undefined) {
-    // Convert to Number for comparison to handle bigint
-    const entityGroupId = typeof entity.group_id === 'bigint' ? Number(entity.group_id) : entity.group_id;
-    if (entityGroupId !== groupId) {
+    if (String(entity.group_id) !== String(groupId)) {
       throw new ForbiddenException(
         'Bạn không có quyền truy cập bản ghi này. Bản ghi thuộc về group khác.'
       );
@@ -62,11 +65,10 @@ export function verifyContextOwnership(entity: GroupOwnedEntity): void {
  */
 export function getGroupFilter(): { group_id?: any } {
   const context = RequestContext.get<any>('context');
-  const contextId = RequestContext.get<number>('contextId');
-  const groupId = RequestContext.get<number | null>('groupId');
+  const groupId = RequestContext.get<any>('groupId');
 
   // Nếu là system context (quản trị toàn hệ thống) thì không lọc theo group_id
-  if (context?.type === 'system' || contextId === 1) {
+  if (context?.type === 'system') {
     return {};
   }
 
@@ -81,7 +83,7 @@ export function getGroupFilter(): { group_id?: any } {
  */
 export function assignGroupOwnership(payload: any): void {
   const context = RequestContext.get<any>('context');
-  const groupId = RequestContext.get<number | null>('groupId');
+  const groupId = RequestContext.get<any>('groupId');
 
   // Nếu đã có group_id trong payload (do người dùng chủ động gửi), không ghi đè
   if (payload.group_id !== undefined) {

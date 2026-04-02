@@ -23,13 +23,18 @@ export class RbacService {
   ) { }
 
   async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
-    if (!(await this.rbacCache.isCached(userId, groupId))) {
-      await this.refreshUserPermissions(userId, groupId);
-    }
+    // 1. Check in System Context first (Master Key / Super Admin)
+    // If not system already, we fetch system permissions as a fallback
+    const systemPerms = await this.getUserPermissions(userId, null);
+    if (systemPerms.has(PERM.SYSTEM.MANAGE)) return true;
+
+    // 2. Check in specific Group
+    const groupPerms = groupId !== null ? await this.getUserPermissions(userId, groupId) : systemPerms;
 
     for (const need of required) {
-      if (await this.rbacCache.hasPermission(userId, groupId, need)) return true;
+      if (groupPerms.has(need) || systemPerms.has(need)) return true;
     }
+
     return false;
   }
 
@@ -80,10 +85,31 @@ export class RbacService {
     if (!group) throw new NotFoundException('Group not found');
 
     if (roleIds.length && !skipValidation) {
-      await this.validateRolesForContext(roleIds, Number((group as any).context_id));
+      await this.validateRolesForContext(roleIds, (group as any).context_id);
     }
 
     await this.prisma.$transaction(async (tx) => {
+      // 1. Ensure UserGroup membership if roles are being assigned
+      if (roleIds.length > 0) {
+        const userIdPk = toPrimaryKey(userId);
+        const groupIdPk = toPrimaryKey(groupId);
+        await tx.userGroup.upsert({
+          where: {
+            user_id_group_id: {
+              user_id: userIdPk,
+              group_id: groupIdPk,
+            },
+          },
+          create: {
+            user_id: userIdPk,
+            group_id: groupIdPk,
+            joined_at: new Date(),
+          },
+          update: {}, // No change if already exists
+        });
+      }
+
+      // 2. Sync Role Assignments
       await tx.userRoleAssignment.deleteMany({
         where: { user_id: toPrimaryKey(userId), group_id: toPrimaryKey(groupId) }
       });
@@ -130,13 +156,13 @@ export class RbacService {
       .filter(p => p && p.status === 'active');
 
     const all = await this.prisma.permission.findMany({ where: { status: 'active' as any } });
-    const map = new Map(all.map(p => [p.id, p]));
+    const map = new Map(all.map(p => [String(p.id), p]));
 
     for (const p of directPerms) {
       let cur = p;
       if (cur.code) result.add(cur.code);
-      while (cur.parent_id && map.has(cur.parent_id)) {
-        cur = map.get(cur.parent_id);
+      while (cur.parent_id && map.has(String(cur.parent_id))) {
+        cur = map.get(String(cur.parent_id));
         if (cur.code) result.add(cur.code);
       }
     }

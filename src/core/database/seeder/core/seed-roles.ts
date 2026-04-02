@@ -41,10 +41,28 @@ export class SeedRoles {
     const allPermissions = await this.prisma.permission.findMany({ where: { status: 'active' } });
 
     const roleConfigs = [
-      { code: 'system', filter: () => true },
-      { code: 'system_manager', filter: (p: any) => !['role.manage', 'permission.manage'].includes(p.code) },
-      { code: 'shop_admin', filter: (p: any) => !['role.manage', 'permission.manage', 'system.manage'].includes(p.code) },
-      { code: 'shop_manager', filter: (p: any) => !['role.manage', 'permission.manage', 'system.manage', 'user.manage'].includes(p.code) },
+      {
+        code: 'super_admin',
+        filter: () => true, // All permissions
+      },
+      {
+        code: 'group_owner',
+        filter: (p: any) =>
+          p.code.startsWith('comic.') ||
+          p.code.startsWith('chapter.') ||
+          p.code.startsWith('user.') ||
+          p.code.startsWith('profile.'),
+      },
+      {
+        code: 'group_editor',
+        filter: (p: any) =>
+          ['comic.create', 'comic.update', 'comic.view', 'chapter.create', 'chapter.view', 'profile.view'].includes(p.code),
+      },
+      {
+        code: 'group_uploader',
+        filter: (p: any) =>
+          ['chapter.create', 'chapter.update', 'chapter.view', 'profile.view'].includes(p.code),
+      },
     ];
 
     for (const config of roleConfigs) {
@@ -61,15 +79,15 @@ export class SeedRoles {
 
   private async assignRolesToContexts(createdRoles: Map<string, any>): Promise<void> {
     const systemContext = await this.prisma.context.findFirst({ where: { code: 'system' } });
-    const shopContext = await this.prisma.context.findFirst({ where: { code: 'shop' } });
+    const groupContext = await this.prisma.context.findFirst({ where: { code: 'group' } });
 
-    if (!systemContext) return;
+    if (!systemContext || !groupContext) return;
 
     const mappings = [
-      { roleCode: 'system', context: systemContext },
-      { roleCode: 'system_manager', context: systemContext },
-      { roleCode: 'shop_admin', context: shopContext },
-      { roleCode: 'shop_manager', context: shopContext },
+      { roleCode: 'super_admin', context: systemContext },
+      { roleCode: 'group_owner', context: groupContext },
+      { roleCode: 'group_editor', context: groupContext },
+      { roleCode: 'group_uploader', context: groupContext },
     ];
 
     for (const map of mappings) {

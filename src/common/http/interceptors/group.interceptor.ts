@@ -26,7 +26,7 @@ export class GroupInterceptor implements NestInterceptor {
     const isPublicEndpoint = permissions.includes(PUBLIC_PERMISSION);
 
     const groupIdRaw = request.headers['x-group-id'] || request.headers['group-id'] || request.headers['group_id'];
-    const groupId = groupIdRaw ? Number(groupIdRaw) : null;
+    const groupId = groupIdRaw || null;
 
     if (groupId) {
       const group = await this.groupService.getOne(groupId).catch(() => null);
@@ -42,8 +42,9 @@ export class GroupInterceptor implements NestInterceptor {
       }
 
       RequestContext.set('groupId', group.id);
+      RequestContext.set('context', group.context);
       const contextId = group.context?.id || group.context_id;
-      RequestContext.set('contextId', Number(contextId));
+      RequestContext.set('contextId', contextId);
     } else {
       return this.setSysCtx(next);
     }
@@ -52,7 +53,8 @@ export class GroupInterceptor implements NestInterceptor {
 
   private async setSysCtx(next: CallHandler) {
     const sys = await this.contextService.getSystemContext();
-    RequestContext.set('contextId', sys ? Number(sys.id) : null);
+    RequestContext.set('contextId', sys ? sys.id : null);
+    RequestContext.set('context', sys);
     RequestContext.set('groupId', null);
     return next.handle();
   }

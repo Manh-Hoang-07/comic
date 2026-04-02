@@ -9,8 +9,8 @@ export interface GroupFilter {
     code?: string;
     type?: string;
     status?: string;
-    contextId?: number;
-    ownerId?: number;
+    contextId?: any;
+    ownerId?: any;
     ids?: any[];
 }
 

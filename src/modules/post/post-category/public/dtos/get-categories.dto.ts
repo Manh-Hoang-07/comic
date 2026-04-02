@@ -20,7 +20,6 @@ export class GetCategoriesDto {
   search?: string;
 
   @IsOptional()
-  @Type(() => Number)
   @IsPrimaryKey()
   parent_id?: any;
 
@@ -32,4 +31,3 @@ export class GetCategoriesDto {
   @IsString()
   sort?: string = 'sort_order:ASC';
 }
-

@@ -50,7 +50,7 @@ export class NotificationService extends BaseService<any, INotificationRepositor
 
   async markAsReadForUser(id: any, userId: any) {
     const notification = await this.getOne(id);
-    if (!notification || Number((notification as any).user_id) !== userId) {
+    if (!notification || String((notification as any).user_id) !== String(userId)) {
       throw new NotFoundException('Notification not found');
     }
     const updated = await this.notificationRepo.markAsRead(id);

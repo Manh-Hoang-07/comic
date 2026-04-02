@@ -1,3 +1,5 @@
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+
 /**
  * Common selection/inclusion for Comment queries to ensure consistent tree structure.
  */
@@ -54,7 +56,7 @@ export function normalizeCommentFilters(filters: any) {
         if (prepared.parent_id === null || prepared.parent_id === 'null') {
             prepared.parent_id = null;
         } else {
-            prepared.parent_id = Number(prepared.parent_id);
+            prepared.parent_id = toPrimaryKey(prepared.parent_id);
         }
     } else {
         prepared.parent_id = null;

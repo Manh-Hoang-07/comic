@@ -46,7 +46,7 @@ export class ContactController {
   @Permission('contact.manage')
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.contactService.getOne(+id);
+    return this.contactService.getOne(id);
   }
 
   @Permission('contact.manage')
@@ -56,14 +56,14 @@ export class ContactController {
     @Param('id') id: string,
     @Body(ValidationPipe) updateContactDto: UpdateContactDto,
   ) {
-    return this.contactService.update(+id, updateContactDto);
+    return this.contactService.update(id, updateContactDto);
   }
 
   @Permission('contact.manage')
   @LogRequest()
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.contactService.delete(+id);
+    return this.contactService.delete(id);
   }
 
   @Permission('contact.manage')
@@ -73,21 +73,21 @@ export class ContactController {
     @Param('id') id: string,
     @Body('reply') reply: string,
   ) {
-    return this.contactService.replyToContact(+id, reply);
+    return this.contactService.replyToContact(id, reply);
   }
 
   @Permission('contact.manage')
   @LogRequest()
   @Put(':id/read')
   markAsRead(@Param('id') id: string) {
-    return this.contactService.markAsRead(+id);
+    return this.contactService.markAsRead(id);
   }
 
   @Permission('contact.manage')
   @LogRequest()
   @Put(':id/close')
   close(@Param('id') id: string) {
-    return this.contactService.closeContact(+id);
+    return this.contactService.closeContact(id);
   }
 }
 

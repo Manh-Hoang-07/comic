@@ -22,7 +22,7 @@ export class PublicFaqController {
   @Permission('public')
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const faq = await this.faqService.getOne(+id);
+    const faq = await this.faqService.getOne(id);
     // Increment view count
     await this.faqService.incrementViewCount(id);
     return faq;

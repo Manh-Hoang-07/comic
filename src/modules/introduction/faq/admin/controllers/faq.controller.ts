@@ -46,19 +46,19 @@ export class FaqController {
   @Get(':id')
   @Permission('faq.manage')
   findOne(@Param('id') id: string) {
-    return this.faqService.getOne(+id);
+    return this.faqService.getOne(id);
   }
 
   @Put(':id')
   @Permission('faq.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updateFaqDto: UpdateFaqDto) {
-    return this.faqService.update(+id, updateFaqDto);
+    return this.faqService.update(id, updateFaqDto);
   }
 
   @Delete(':id')
   @Permission('faq.manage')
   remove(@Param('id') id: string) {
-    return this.faqService.delete(+id);
+    return this.faqService.delete(id);
   }
 }
 

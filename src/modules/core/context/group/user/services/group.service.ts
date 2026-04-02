@@ -32,7 +32,7 @@ export class UserGroupService {
   async isOwner(groupId: any, userId: any): Promise<boolean> {
     const group = await this.groupRepo.findById(groupId);
     if (!group) return false;
-    return group.owner_id != null && Number(group.owner_id) === userId;
+    return group.owner_id != null && String(group.owner_id) === String(userId);
   }
 
   /**
@@ -42,7 +42,7 @@ export class UserGroupService {
     const group = await this.groupRepo.findById(groupId);
     if (!group) return false;
 
-    if (group.owner_id != null && Number(group.owner_id) === userId) return true;
+    if (group.owner_id != null && String(group.owner_id) === String(userId)) return true;
 
     // Check system admin via centralized RbacService logic
     const isSystemAdmin = await this.rbacService.isSystemAdmin(userId);
@@ -56,7 +56,7 @@ export class UserGroupService {
   async addMember(
     groupId: any,
     memberUserId: any,
-    roleIds: number[],
+    roleIds: any[],
     requesterUserId: any,
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
@@ -90,7 +90,7 @@ export class UserGroupService {
   async assignRolesToMember(
     groupId: any,
     memberUserId: any,
-    roleIds: number[],
+    roleIds: any[],
     requesterUserId: any,
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
@@ -119,7 +119,7 @@ export class UserGroupService {
     const group = await this.groupRepo.findById(groupId);
     if (!group) throw new NotFoundException('Group not found');
 
-    if (group.owner_id != null && Number(group.owner_id) === memberUserId) {
+    if (group.owner_id != null && String(group.owner_id) === String(memberUserId)) {
       throw new BadRequestException('Cannot remove owner from group');
     }
 
@@ -151,11 +151,12 @@ export class UserGroupService {
     });
 
     // Gom nhóm assignments theo user_id để tránh trả về duplicate user (vì 1 user có N roles)
-    const userMap = new Map<number, any>();
+    const userMap = new Map<string, any>();
     for (const a of (assignments as any[])) {
-      const userId = Number(a.user_id);
-      if (!userMap.has(userId)) {
-        userMap.set(userId, {
+      const userId = a.user_id;
+      const userIdStr = String(userId);
+      if (!userMap.has(userIdStr)) {
+        userMap.set(userIdStr, {
           user_id: userId,
           user: a.user ? {
             id: toPrimaryKey(a.user.id),
@@ -166,7 +167,7 @@ export class UserGroupService {
         });
       }
       if (a.role) {
-        userMap.get(userId).roles.push({
+        userMap.get(userIdStr).roles.push({
           id: toPrimaryKey(a.role.id),
           code: a.role.code,
           name: a.role.name,

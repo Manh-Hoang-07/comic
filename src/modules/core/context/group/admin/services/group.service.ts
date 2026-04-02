@@ -77,7 +77,7 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
       item.context = {
         ...item.context,
         id: toPrimaryKey(item.context.id),
-        ref_id: item.context.ref_id ? Number(item.context.ref_id) : null,
+        ref_id: item.context.ref_id ? item.context.ref_id : null,
       };
     }
     return item;

@@ -23,10 +23,10 @@ export function getCurrentUser(context?: ExecutionContext): AuthenticatedUser | 
 /**
  * Get current authenticated user ID.
  */
-export function getCurrentUserId(context?: ExecutionContext): number | null {
+export function getCurrentUserId(context?: ExecutionContext): any | null {
     const user = getCurrentUser(context);
     if (!user) return null;
-    return typeof user.id === 'bigint' ? Number(user.id) : user.id;
+    return user.id;
 }
 
 /**

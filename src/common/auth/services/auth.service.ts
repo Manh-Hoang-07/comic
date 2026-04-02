@@ -36,7 +36,7 @@ export class AuthService {
    * Lấy user ID hiện tại
    * Tương tự Auth::id()
    */
-  id(): number | null {
+  id(): any | null {
     const user = this.user();
     return user?.id || null;
   }

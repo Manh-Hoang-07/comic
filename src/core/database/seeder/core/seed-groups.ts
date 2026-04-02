@@ -46,10 +46,10 @@ export class SeedGroups {
       groupMap.set(group.code, group);
     }
 
-    const shopContext = contextMap.get('shop');
-    const shop1Group = groupMap.get('shop1');
-    if (shopContext && shop1Group && shopContext.ref_id !== shop1Group.id) {
-      await this.prisma.context.update({ where: { id: shopContext.id }, data: { ref_id: shop1Group.id } });
+    const groupContext = contextMap.get('group');
+    const groupDemo = groupMap.get('group_demo');
+    if (groupContext && groupDemo && groupContext.ref_id !== groupDemo.id) {
+      await this.prisma.context.update({ where: { id: groupContext.id }, data: { ref_id: groupDemo.id } });
     }
   }
 

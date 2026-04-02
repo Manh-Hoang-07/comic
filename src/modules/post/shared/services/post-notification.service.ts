@@ -20,12 +20,12 @@ export class PostNotificationService {
         // Lấy parent comment để biết user cần notify qua repository
         const parentComment = await this.commentRepository.findById(parentCommentId);
 
-        if (!parentComment || Number(parentComment.user_id) === userId) {
+        if (!parentComment || String(parentComment.user_id) === String(userId)) {
             return; // Không notify chính mình
         }
 
         const notification = await this.notificationRepository.create({
-            user_id: toPrimaryKey(Number(parentComment.user_id)),
+            user_id: toPrimaryKey(parentComment.user_id),
             title: 'Có người trả lời bình luận bài viết của bạn',
             message: 'Bạn có một phản hồi mới cho bình luận bài viết của bạn',
             type: NotificationType.info as any,

@@ -31,7 +31,7 @@ export class PublicProjectService extends BaseContentService<any, IProjectReposi
     if (!allowed.includes((project as any).status)) return null;
 
     // Increment view count
-    await this.incrementViewCount(Number(project.id));
+    await this.incrementViewCount(project.id);
 
     return this.transform(project);
   }

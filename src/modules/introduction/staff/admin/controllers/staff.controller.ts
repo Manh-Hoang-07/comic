@@ -46,19 +46,19 @@ export class StaffController {
   @Get(':id')
   @Permission('staff.manage')
   findOne(@Param('id') id: string) {
-    return this.staffService.getOne(+id);
+    return this.staffService.getOne(id);
   }
 
   @Put(':id')
   @Permission('staff.manage')
   update(@Param('id') id: string, @Body(ValidationPipe) updateStaffDto: UpdateStaffDto) {
-    return this.staffService.update(+id, updateStaffDto);
+    return this.staffService.update(id, updateStaffDto);
   }
 
   @Delete(':id')
   @Permission('staff.manage')
   remove(@Param('id') id: string) {
-    return this.staffService.delete(+id);
+    return this.staffService.delete(id);
   }
 }
 

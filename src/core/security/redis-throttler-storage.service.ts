@@ -34,11 +34,11 @@ export class RedisThrottlerStorageService implements ThrottlerStorage {
     try {
       const redisKey = `throttler:${throttlerName}:${key}`;
       const blockKey = `throttler:${throttlerName}:block:${key}`;
-      
-      // Check if currently blocked
-      const blockData = await this.redis.get(blockKey);
       const now = Math.floor(Date.now() / 1000);
-      
+
+      // MGET: một round-trip thay vì hai GET tuần tự (quan trọng khi Redis xa vùng)
+      const [blockData, currentData] = await this.redis.mget(blockKey, redisKey);
+
       if (blockData) {
         const blockUntil = parseInt(blockData, 10);
         if (blockUntil > now) {
@@ -48,14 +48,11 @@ export class RedisThrottlerStorageService implements ThrottlerStorage {
             isBlocked: true,
             timeToBlockExpire: blockUntil - now,
           };
-        } else {
-          // Block expired, remove it
-          await this.redis.del(blockKey);
         }
+        await this.redis.del(blockKey);
       }
 
-      // Get current count
-      const currentData = await this.redis.get(redisKey);
+      // current count đã có từ MGET ở trên
       let totalHits = 0;
       
       if (currentData) {

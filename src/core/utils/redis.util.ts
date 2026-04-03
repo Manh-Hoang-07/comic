@@ -68,6 +68,13 @@ export class RedisUtil implements OnModuleDestroy {
     return this.client.get(key);
   }
 
+  /** Một round-trip cho nhiều key (Redis MGET). */
+  async mget(...keys: string[]): Promise<(string | null)[]> {
+    if (!this.client || keys.length === 0) return keys.map(() => null);
+    const out = await this.client.mget(...keys);
+    return out.map((v) => (v == null ? null : v));
+  }
+
   async del(key: string): Promise<void> {
     if (!this.client) return;
     await this.client.del(key);

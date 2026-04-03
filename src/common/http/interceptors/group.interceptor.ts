@@ -12,7 +12,6 @@ import { Observable } from 'rxjs';
 import { RequestContext } from '@/common/shared/utils';
 import { AdminContextService } from '@/modules/core/context/context/admin/services/context.service';
 import { AdminGroupService } from '@/modules/core/context/group/admin/services/group.service';
-import { Auth } from '@/common/auth/utils';
 import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import {
@@ -29,11 +28,11 @@ export class GroupInterceptor implements NestInterceptor {
     @Inject(USER_GROUP_REPOSITORY)
     private readonly userGroupRepo: IUserGroupRepository,
     private readonly rbacService: RbacService,
-  ) {}
+  ) { }
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
-    
+
     // 2. Extract groupId and permissions
     const groupId = request.headers['x-group-id'] || request.headers['group-id'] || request.headers['group_id'] || null;
     const permissions = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [
@@ -46,7 +45,7 @@ export class GroupInterceptor implements NestInterceptor {
     if (groupId) {
       // Load group if not allerede in request/cache
       const group = await this.groupService.getOne(groupId).catch(() => null);
-      
+
       if (!group) {
         if (isPublicEndpoint) return this.setSysCtx(next);
         throw new BadRequestException('Group not found');

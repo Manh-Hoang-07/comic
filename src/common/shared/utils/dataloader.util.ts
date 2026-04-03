@@ -171,44 +171,46 @@ export class DataLoader<K, V> {
       batches.push(queue.slice(i, i + this.options.maxBatchSize));
     }
 
-    // Process each batch
-    for (const batch of batches) {
-      const keys = batch.map((item) => item.key);
+    // Process each batch in parallel
+    await Promise.all(
+      batches.map(async (batch) => {
+        const keys = batch.map((item) => item.key);
 
-      try {
-        const results = await this.batchLoadFn(keys);
+        try {
+          const results = await this.batchLoadFn(keys);
 
-        // Validate results length
-        if (results.length !== keys.length) {
-          throw new Error(
-            `DataLoader batch function must return array of same length as keys. ` +
-            `Expected ${keys.length}, got ${results.length}`
-          );
-        }
+          // Validate results length
+          if (results.length !== keys.length) {
+            throw new Error(
+              `DataLoader batch function must return array of same length as keys. ` +
+              `Expected ${keys.length}, got ${results.length}`
+            );
+          }
 
-        // Resolve/reject each promise
-        batch.forEach((item, index) => {
-          const result = results[index];
+          // Resolve/reject each promise
+          batch.forEach((item, index) => {
+            const result = results[index];
 
-          if (result instanceof Error) {
-            item.reject(result);
+            if (result instanceof Error) {
+              item.reject(result);
+              // Remove from cache on error
+              const cacheKey = this.options.cacheKeyFn(item.key);
+              this.cache.delete(cacheKey);
+            } else {
+              item.resolve(result);
+            }
+          });
+        } catch (error) {
+          // Reject all promises in batch
+          batch.forEach((item) => {
+            item.reject(error as Error);
             // Remove from cache on error
             const cacheKey = this.options.cacheKeyFn(item.key);
             this.cache.delete(cacheKey);
-          } else {
-            item.resolve(result);
-          }
-        });
-      } catch (error) {
-        // Reject all promises in batch
-        batch.forEach((item) => {
-          item.reject(error as Error);
-          // Remove from cache on error
-          const cacheKey = this.options.cacheKeyFn(item.key);
-          this.cache.delete(cacheKey);
-        });
-      }
-    }
+          });
+        }
+      })
+    );
   }
 }
 

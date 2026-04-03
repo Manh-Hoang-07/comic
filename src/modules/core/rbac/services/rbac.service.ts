@@ -4,7 +4,6 @@ import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '
 import { IRoleHasPermissionRepository, ROLE_HAS_PERMISSION_REPOSITORY } from '@/modules/core/rbac/role-has-permission/domain/role-has-permission.repository';
 import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { ContextType, PERM } from '@/modules/core/rbac/rbac.constants';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
@@ -22,16 +21,20 @@ export class RbacService {
     private readonly prisma: PrismaService,
   ) { }
 
-  async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
-    // 1. Fetch system permissions (Global level)
-    const systemPerms = await this.getUserPermissions(userId, null);
+  private permissionMapCache: Map<string, any> = new Map();
+  private lastPermFetch: number = 0;
+  private readonly PERM_CACHE_TTL = 300000; // 5 minutes
 
-    // 2. Fetch specific Group permissions
-    const groupPerms = groupId !== null ? await this.getUserPermissions(userId, groupId) : systemPerms;
+  async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
+    // 1. Fetch system & Group permissions in parallel (Global level)
+    const [systemPerms, groupPerms] = await Promise.all([
+      this.getUserPermissions(userId, null),
+      groupId !== null ? this.getUserPermissions(userId, groupId) : null
+    ]);
 
     // A user has access if they have the required permission either at the Group level OR the System level
     for (const need of required) {
-      if (groupPerms.has(need) || systemPerms.has(need)) return true;
+      if (systemPerms.has(need) || (groupPerms && groupPerms.has(need))) return true;
     }
 
     return false;
@@ -40,12 +43,13 @@ export class RbacService {
 
 
   async getUserPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
+    // 1. Check if the user's permissions are already in Redis (L2) or memory (L1)
     if (!(await this.rbacCache.isCached(userId, groupId))) {
       await this.refreshUserPermissions(userId, groupId);
     }
-    const key = groupId === null ? `rbac:u:${userId}:system` : `rbac:u:${userId}:g:${groupId}`;
-    const perms = await (this.rbacCache as any).redis.smembers(key);
-    return new Set(perms);
+
+    // 2. Fetch from cache (will handle L1-hit automatically)
+    return this.rbacCache.getPermissions(userId, groupId);
   }
 
   async refreshUserPermissions(userId: any, groupId: any | null): Promise<void> {
@@ -143,6 +147,16 @@ export class RbacService {
 
   private async getFlattenedPermissions(roleIds: any[]): Promise<Set<string>> {
     const result = new Set<string>();
+
+    // 1. Load active permissions to local cache if missing or expired (L1-lite)
+    if (Date.now() - this.lastPermFetch > this.PERM_CACHE_TTL || this.permissionMapCache.size === 0) {
+      const all = await this.prisma.permission.findMany({ where: { status: 'active' as any } });
+      this.permissionMapCache = new Map(all.map(p => [String(p.id), p]));
+      this.lastPermFetch = Date.now();
+    }
+    const map = this.permissionMapCache;
+
+    // 2. Fetch direct permissions for roles
     const links = await this.roleHasPermRepo.findMany({
       where: { role_id: { in: roleIds } },
       include: { permission: true }
@@ -152,9 +166,7 @@ export class RbacService {
       .map(l => (l as any).permission)
       .filter(p => p && p.status === 'active');
 
-    const all = await this.prisma.permission.findMany({ where: { status: 'active' as any } });
-    const map = new Map(all.map(p => [String(p.id), p]));
-
+    // 3. Traverse parent hierarchy to collect all inherited permissions
     for (const p of directPerms) {
       let cur = p;
       if (cur.code) result.add(cur.code);

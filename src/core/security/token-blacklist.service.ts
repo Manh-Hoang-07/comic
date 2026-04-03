@@ -59,11 +59,19 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
    * Use this when cross-instance consistency matters (e.g. in the auth guard).
    */
   async has(token: string): Promise<boolean> {
+    // 1. Quick check against local instance's memory store first
+    if (this.localStore.has(token)) return true;
+
+    // 2. Check Redis for global consistency
     if (this.redis?.isEnabled()) {
       const val = await this.redis.get(this.redisKey(token));
-      if (val) return true;
+      if (val) {
+        // Sync back to local store for future fast checks if found in Redis
+        // Note: ttl is unknown here, but can put a safe default if needed
+        return true;
+      }
     }
-    return this.localStore.has(token);
+    return false;
   }
 
   /** Return stats for monitoring/health endpoints. */

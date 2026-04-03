@@ -1,9 +1,6 @@
-/**
- * Formats a date to ISO string with current timezone offset.
- * Handles fixing +07:00 for VN timezone specifically.
- */
+const APP_TZ = process.env.APP_TIMEZONE || 'Asia/Ho_Chi_Minh';
+
 export function formatResponseTimestamp(): string {
-    const tz = process.env.APP_TIMEZONE || 'Asia/Ho_Chi_Minh';
     const date = new Date();
     const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
 
@@ -14,7 +11,7 @@ export function formatResponseTimestamp(): string {
     const minutes = pad(date.getMinutes());
     const seconds = pad(date.getSeconds());
 
-    if (tz === 'Asia/Ho_Chi_Minh') {
+    if (APP_TZ === 'Asia/Ho_Chi_Minh') {
         return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+07:00`;
     }
 

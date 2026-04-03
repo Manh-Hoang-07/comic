@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, HttpException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
@@ -6,7 +6,6 @@ import { Auth } from '@/common/auth/utils';
 import { RequestContext } from '@/common/shared/utils';
 import { ResponseUtil } from '@/common/shared/utils';
 import { RbacPermission } from '@/modules/core/rbac/rbac.constants';
-import { CustomLoggerService } from '@/core/logger/logger.service';
 
 @Injectable()
 export class RbacGuard implements CanActivate {

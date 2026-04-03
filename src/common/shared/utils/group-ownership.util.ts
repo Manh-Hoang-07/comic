@@ -36,7 +36,7 @@ export function verifyGroupOwnership(entity: GroupOwnedEntity): void {
 
   // Group khác: chỉ được truy cập entities có group_id = groupId hiện tại
   if (entity.group_id !== null && entity.group_id !== undefined) {
-    if (String(entity.group_id) !== String(groupId)) {
+    if (entity.group_id !== groupId) {
       throw new ForbiddenException(
         'Bạn không có quyền truy cập bản ghi này. Bản ghi thuộc về group khác.'
       );

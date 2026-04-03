@@ -58,10 +58,32 @@ export class RbacCacheService implements OnModuleInit {
     const l1 = this.l1Cache.get(key);
     if (l1 && l1.expiry > Date.now()) return l1.data.has(permission);
     if (await this.redis.sismember(key, permission)) {
-      await this.loadToL1(userId, groupId);
+      await this.getPermissions(userId, groupId); // Load all to L1
       return true;
     }
     return false;
+  }
+
+  /**
+   * Get all permissions for a user in a specific group.
+   * Utilizes L1 (memory) and L2 (Redis) caches.
+   */
+  async getPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
+    const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
+    
+    // 1. Check L1 Cache
+    const l1 = this.l1Cache.get(key);
+    if (l1 && l1.expiry > Date.now()) return l1.data;
+
+    // 2. Check Redis (L2)
+    const permissions = await this.redis.smembers(key);
+    if (permissions.length > 0) {
+      const data = new Set(permissions);
+      this.l1Cache.set(key, { data, expiry: Date.now() + this.l1TtlMs });
+      return data;
+    }
+
+    return new Set();
   }
 
   private async loadToL1(userId: any, groupId: any | null) {

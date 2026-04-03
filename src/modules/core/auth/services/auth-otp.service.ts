@@ -57,8 +57,7 @@ export class AuthOtpService {
         const nodeEnv = this.configService.get<string>('NODE_ENV');
         const isValid =
             providedOtp === cached ||
-            ((nodeEnv === 'development' || nodeEnv === 'test') &&
-                providedOtp === '123456');
+            (nodeEnv === 'development' && providedOtp === '123456');
 
         if (isValid) {
             await this.redis.del(key);

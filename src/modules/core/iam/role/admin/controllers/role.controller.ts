@@ -36,7 +36,7 @@ export class RoleController {
     // Sử dụng AuthService thay vì @Req() decorator
     const userId = this.auth.id();
     if (!userId) {
-      throw new Error('User not authenticated');
+      throw new Error('User not logged in');
     }
     return this.service.create(dto);
   }
@@ -50,7 +50,7 @@ export class RoleController {
   ) {
     // Sử dụng AuthService trong hàm
     if (!this.auth.isLogin()) {
-      throw new Error('User not authenticated');
+      throw new Error('User not logged in');
     }
     return this.service.update(id, dto);
   }

@@ -5,7 +5,6 @@ export enum ContextType {
 }
 
 export enum RbacPermission {
-    AUTHENTICATED = 'authenticated',
     USER = 'user'
 }
 

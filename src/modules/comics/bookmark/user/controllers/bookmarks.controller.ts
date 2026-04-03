@@ -15,19 +15,19 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 export class BookmarksController {
   constructor(private readonly bookmarksService: BookmarksService) { }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Get()
   async getList() {
     return this.bookmarksService.getList();
   }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Post()
   async create(@Body(ValidationPipe) body: { chapter_id: any; page_number: any }) {
     return this.bookmarksService.createBookmark(body.chapter_id, body.page_number);
   }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Delete(':id')
   async delete(@Param('id') id: any) {
     return this.bookmarksService.removeBookmark(id);

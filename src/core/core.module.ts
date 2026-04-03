@@ -29,7 +29,7 @@ import { AppQueueModule } from '@/core/queue/queue.module';
       load: [appConfig, jwtConfig, mailConfig, storageConfig, googleOAuthConfig],
       validationSchema: Joi.object({
         // App
-        NODE_ENV: Joi.string().valid('development', 'test', 'staging', 'production').default('development'),
+        NODE_ENV: Joi.string().valid('development', 'staging', 'production').default('development'),
         PORT: Joi.number().port().default(3000),
         GLOBAL_PREFIX: Joi.string().default('api'),
         APP_TIMEZONE: Joi.string().default('Asia/Ho_Chi_Minh'),

@@ -21,7 +21,7 @@ import { SanitizeHtmlPipe } from '@/modules/post/shared/pipes/sanitize-html.pipe
 export class UserPostCommentsController {
     constructor(private readonly commentsService: UserPostCommentsService) { }
 
-    @Permission('authenticated')
+    @Permission('user')
     @Get()
     async getMyComments(
         @Query('page', new ParseIntPipe({ optional: true })) page: any = 1,
@@ -30,7 +30,7 @@ export class UserPostCommentsController {
         return this.commentsService.getList({ by_current_user: true, page, limit });
     }
 
-    @Permission('authenticated')
+    @Permission('user')
     @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 comments per minute
     @Post()
     @UsePipes(new SanitizeHtmlPipe())
@@ -45,7 +45,7 @@ export class UserPostCommentsController {
         return this.commentsService.create(body);
     }
 
-    @Permission('authenticated')
+    @Permission('user')
     @Put(':id')
     @UsePipes(new SanitizeHtmlPipe())
     async update(
@@ -55,7 +55,7 @@ export class UserPostCommentsController {
         return this.commentsService.updateComment(id, body.content);
     }
 
-    @Permission('authenticated')
+    @Permission('user')
     @Delete(':id')
     async delete(@Param('id') id: any) {
         return this.commentsService.removeComment(id);

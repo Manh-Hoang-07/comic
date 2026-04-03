@@ -23,9 +23,9 @@ export function isValidOtp(provided: string, cached: string | null | undefined):
     // Normal verification
     if (provided === cached) return true;
 
-    // Development/Test bypass
-    const isTestEnv = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-    if (isTestEnv && provided === '123456') return true;
+    // Development bypass
+    const isDevEnv = process.env.NODE_ENV === 'development';
+    if (isDevEnv && provided === '123456') return true;
 
     return false;
 }

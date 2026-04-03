@@ -11,14 +11,14 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 export class UserStatsController {
   constructor(private readonly dashboardService: UserStatsService) { }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Get()
   async getDashboard() {
     const userId = 1; // TODO: Get from request context
     return this.dashboardService.getDashboard(userId);
   }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Get('library')
   async getLibrary(
     @Query('page', new ParseIntPipe({ optional: true })) page: any = 1,

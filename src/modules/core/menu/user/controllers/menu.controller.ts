@@ -11,7 +11,7 @@ export class UserMenuController {
     private readonly auth: AuthService,
   ) { }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Get()
   async getUserMenus() {
     const userId = this.auth.id();

@@ -18,7 +18,7 @@ export class ProfileController {
   // ── Profile Management ─────────────────────────────────────────────────────
 
   @ApiOperation({ summary: 'Lấy thông tin cá nhân' })
-  @Permission('authenticated')
+  @Permission('user')
   @Get()
   async getMe() {
     const userId = Auth.id();
@@ -26,7 +26,7 @@ export class ProfileController {
   }
 
   @ApiOperation({ summary: 'Cập nhật thông tin cá nhân' })
-  @Permission('authenticated')
+  @Permission('user')
   @LogRequest({ fileBaseName: 'user_update_profile' })
   @Patch()
   async updateMe(@Body() dto: UpdateProfileDto) {
@@ -35,7 +35,7 @@ export class ProfileController {
   }
 
   @ApiOperation({ summary: 'Đổi mật khẩu cá nhân' })
-  @Permission('authenticated')
+  @Permission('user')
   @LogRequest({ fileBaseName: 'user_change_password' })
   @Patch('change-password')
   async changePassword(@Body() dto: UserChangePasswordDto) {

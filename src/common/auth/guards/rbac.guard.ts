@@ -20,7 +20,7 @@ export class RbacGuard implements CanActivate {
     const userId = Auth.id(context);
     if (!userId) throw new HttpException(ResponseUtil.unauthorized('Auth required'), 401);
 
-    if (permissions.some(p => [RbacPermission.AUTHENTICATED, RbacPermission.USER, 'authenticated', 'user'].includes(p as any))) return true;
+    if (permissions.some(p => [RbacPermission.USER, 'user'].includes(p as any))) return true;
 
     const groupId = RequestContext.get<any>('groupId') ?? null;
     if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) return true;

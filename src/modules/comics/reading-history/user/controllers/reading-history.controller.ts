@@ -15,19 +15,19 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 export class ReadingHistoryController {
   constructor(private readonly readingHistoryService: ReadingHistoryService) { }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Get()
   async getList() {
     return this.readingHistoryService.getList();
   }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Post()
   async updateOrCreate(@Body(ValidationPipe) body: { comic_id: any; chapter_id: any }) {
     return this.readingHistoryService.updateOrCreate(body.comic_id, body.chapter_id);
   }
 
-  @Permission('authenticated')
+  @Permission('user')
   @Delete(':comicId')
   async delete(@Param('comicId') comicId: any) {
     return this.readingHistoryService.clearHistory(comicId);

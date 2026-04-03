@@ -24,7 +24,7 @@ export class PostCommentController {
 
     @Post()
     @UseGuards(JwtAuthGuard)
-    @Permission('authenticated')
+    @Permission('user')
     async createComment(
         @Param('postId') postId: string,
         @Body() body: { content: string; parent_id?: string },

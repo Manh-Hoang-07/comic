@@ -17,7 +17,7 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
 
   protected override async prepareFilters(filters: any = {}): Promise<any> {
     const prepared = normalizeReviewFilters(filters);
-    return { ...prepared, ...getGroupFilter() };
+    return { ...prepared, ...getGroupFilter(prepared) };
   }
 
   protected override async prepareOptions(options: IPaginationOptions): Promise<IPaginationOptions> {

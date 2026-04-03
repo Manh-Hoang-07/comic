@@ -3,8 +3,11 @@ import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group
 import { CONTEXT_REPOSITORY, IContextRepository } from '@/modules/core/context/context/domain/context.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { BaseService } from '@/common/core/services';
+import { RequestContext } from '@/common/shared/utils';
 import { GroupActionService } from './group-action.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+
+import { RedisUtil } from '@/core/utils/redis.util';
 
 @Injectable()
 export class AdminGroupService extends BaseService<any, IGroupRepository> {
@@ -15,6 +18,7 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     private readonly contextRepo: IContextRepository,
     private readonly rbacService: RbacService,
     private readonly groupAction: GroupActionService,
+    private readonly redis: RedisUtil,
   ) {
     super(groupRepo);
   }
@@ -23,14 +27,33 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
 
   // ── Operations ─────────────────────────────────────────────────────────────
 
-  async isSystemAdmin(userId: any): Promise<boolean> {
-    return this.rbacService.isSystemAdmin(userId);
+  async getOne(id: any): Promise<any> {
+    const cacheKey = `ctx:group:${id}`;
+    
+    // 1. Check Redis cache
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+
+    // 2. Load from DB
+    const entity = await this.groupRepo.findById(id);
+    if (!entity) throw new NotFoundException(`Group with ID ${id} not found`);
+
+    const transformed = this.transform(entity);
+    
+    // 3. Cache for 5 minutes (300s)
+    await this.redis.set(cacheKey, JSON.stringify(transformed), 300);
+    
+    return transformed;
   }
 
   async createGroup(data: any, requesterUserId: any) {
-    const isAdmin = await this.isSystemAdmin(requesterUserId);
-    if (!isAdmin) {
-      throw new ForbiddenException('Only system admin can create groups');
+    const context = RequestContext.get<any>('context');
+    if (context?.type !== 'system') {
+      throw new ForbiddenException('Groups can only be created under the system context');
     }
     return this.create(data);
   }

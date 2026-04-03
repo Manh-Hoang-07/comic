@@ -23,15 +23,17 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     const context = RequestContext.get<any>('context');
     const contextId = RequestContext.get<any>('contextId');
 
-    if (!contextId) {
-      throw new BadRequestException('Context ID is required to access roles');
+    // Nếu là system context (ngữ cảnh toàn cục) -> Cứ để filter tự do (không đè)
+    if (context?.type === 'system') {
+      return filter;
     }
 
-    // Filter by contextId if not in system context
-    if (context && context.type !== 'system') {
-      return { ...filter, contextId };
+    // Ngữ cảnh cục bộ -> bắt buộc phải ép chặt filter vào contextId hiện tại
+    if (!contextId) {
+      throw new BadRequestException('Context ID is required to access roles in non-system scope');
     }
-    return filter;
+
+    return { ...filter, contextId };
   }
 
   // ── Extended CRUD Operations ───────────────────────────────────────────────

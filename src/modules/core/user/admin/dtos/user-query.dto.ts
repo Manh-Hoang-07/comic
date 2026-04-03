@@ -8,6 +8,11 @@ export class UserQueryDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({ description: 'Lọc theo nhóm (Chỉ có tác dụng với System Context)' })
+  @IsOptional()
+  @IsString()
+  groupId?: string;
+
   @ApiPropertyOptional({ description: 'Lọc theo email' })
   @IsOptional()
   @IsString()

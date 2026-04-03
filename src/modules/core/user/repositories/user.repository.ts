@@ -66,9 +66,19 @@ export class UserRepository extends PrismaRepository<
    * Fetch explicit role and group assignments for a user.
    * This is separated for performance optimization.
    */
-  async findAssignments(userId: any) {
+  async findAssignments(userId: any, groupIds?: any[]) {
+    const where: Prisma.UserRoleAssignmentWhereInput = {
+      user_id: toPrimaryKey(userId),
+    };
+
+    if (groupIds && groupIds.length > 0) {
+      where.group_id = {
+        in: groupIds.map((id) => toPrimaryKey(id)),
+      };
+    }
+
     return this.prisma.userRoleAssignment.findMany({
-      where: { user_id: toPrimaryKey(userId) },
+      where,
       include: {
         role: { select: { code: true, name: true } },
         group: { select: { code: true, name: true } },
@@ -98,10 +108,11 @@ export class UserRepository extends PrismaRepository<
     if (filter.username) where.username = filter.username;
     if (filter.status) where.status = filter.status as any;
 
-    if (filter.groupId) {
+    const gid = filter.groupId || (filter as any).group_id;
+    if (gid) {
       where.user_groups = {
         some: {
-          group_id: toPrimaryKey(filter.groupId),
+          group_id: toPrimaryKey(gid),
         },
       };
     }

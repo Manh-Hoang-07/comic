@@ -20,13 +20,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
   }
 
   private handleSuccess(raw: any): any {
-    // 1. Transform BigInt values to Number globally
     const safeData = deepConvertBigInt(raw);
 
-    // 2. If it's already an ApiResponse format, return as-is
     if (isApiResponse(safeData)) return safeData;
 
-    // 3. Handle paginated results
     if (safeData && typeof safeData === 'object' && 'data' in safeData && 'meta' in safeData) {
       const { data, meta } = safeData;
       return ResponseUtil.paginated(

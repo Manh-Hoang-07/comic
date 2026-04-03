@@ -41,8 +41,8 @@ export class UserController {
   @ApiOperation({ summary: 'Lấy danh sách vai trò của người dùng' })
   @Permission(PERM.USER.VIEW)
   @Get(':id/roles')
-  getRoles(@Param('id') id: any) {
-    return this.service.getUserRoles(id);
+  getRoles(@Param('id') id: any, @Query('groupIds') groupIds?: string) {
+    return this.service.getUserRoles(id, groupIds);
   }
 
   @ApiOperation({ summary: 'Tạo người dùng mới' })

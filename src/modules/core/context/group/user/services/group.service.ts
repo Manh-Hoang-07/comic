@@ -9,6 +9,7 @@ import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
 import { RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { RequestContext } from '@/common/shared/utils';
 
 @Injectable()
 export class UserGroupService {
@@ -44,9 +45,9 @@ export class UserGroupService {
 
     if (group.owner_id != null && String(group.owner_id) === String(userId)) return true;
 
-    // Check system admin via centralized RbacService logic
-    const isSystemAdmin = await this.rbacService.isSystemAdmin(userId);
-    if (isSystemAdmin) return true;
+    // Check system context
+    const context = RequestContext.get<any>('context');
+    if (context?.type === 'system') return true;
 
     return this.rbacService.userHasPermissionsInGroup(userId, groupId, [
       PERM.ROLE.MANAGE, // Thay thế cho các quyền group.manage/add không có trong DB

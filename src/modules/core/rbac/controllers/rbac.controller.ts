@@ -31,13 +31,10 @@ export class RbacController {
       );
     }
 
-    // 2. Check System Admin để bỏ qua validation context
-    const currentUserId = getCurrentUserId();
-    const isSystemAdmin = currentUserId
-      ? await this.service.isSystemAdmin(currentUserId)
-      : false;
+    // 2. Check System Context
+    const isSystemContext = RequestContext.get<any>('context')?.type === 'system';
 
-    return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids || [], isSystemAdmin);
+    return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids || [], isSystemContext);
   }
 }
 

@@ -17,7 +17,7 @@ export class CommentsService extends BaseService<ComicComment, ICommentRepositor
 
   protected override async prepareFilters(filters: any = {}): Promise<any> {
     const prepared = normalizeCommentFilters(filters);
-    return { ...prepared, ...getGroupFilter() };
+    return { ...prepared, ...getGroupFilter(prepared) };
   }
 
   protected override async prepareOptions(options: IPaginationOptions): Promise<IPaginationOptions> {

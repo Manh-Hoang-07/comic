@@ -26,23 +26,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const userId = payload.sub;
     const cacheKey = `user:profile:${userId}`;
 
-    // 1. Kiểm tra cache Redis trước
+    // 1. Check Redis cache first
     const cachedUser = await this.redis.get(cacheKey);
     if (cachedUser) {
       try {
         return JSON.parse(cachedUser);
       } catch (e) {
-        // Nếu lỗi parse, bỏ qua và load lại từ DB
+        // Skip and reload from DB on parse error
       }
     }
 
-    // 2. Load thông tin user từ DB nếu cache miss
+    // 2. Load user and admin status if cache miss
     const user = await this.userRepo.findByIdWithBasicInfo(userId);
 
     if (!user) return null;
 
     const userProfile = {
-      id: user.id.toString(), // Convert BigInt to string for caching/response
+      id: user.id.toString(),
       username: user.username,
       email: user.email,
       phone: user.phone,
@@ -54,9 +54,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       updated_at: user.updated_at,
     };
 
-    // 3. Lưu vào cache (TTL 1 giờ hoặc tùy config)
-    // Dùng JSON.stringify sẽ hoạt động tốt vì id đã chuyển sang string
-    await this.redis.set(cacheKey, JSON.stringify(userProfile), 3600); // 1 giờ
+    // 3. Store in cache (1h TTL)
+    await this.redis.set(cacheKey, JSON.stringify(userProfile), 3600);
 
     return userProfile;
   }

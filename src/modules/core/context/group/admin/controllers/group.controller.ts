@@ -3,6 +3,7 @@ import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { AdminGroupService } from '../services/group.service';
 import { prepareQuery } from '@/common/core/utils';
+import { RequestContext } from '@/common/shared/utils';
 
 /**
  * Controller cho System Admin quản lý Groups
@@ -94,10 +95,10 @@ export class AdminGroupController {
       throw new ForbiddenException('Authentication required');
     }
 
-    // Check system admin
-    const isAdmin = await this.groupService.isSystemAdmin(userId);
-    if (!isAdmin) {
-      throw new ForbiddenException('Only system admin can update group');
+    // Check system context
+    const context = RequestContext.get<any>('context');
+    if (context?.type !== 'system') {
+      throw new ForbiddenException('Groups can only be updated under the system context');
     }
 
     return this.groupService.update(id, body);
@@ -114,10 +115,10 @@ export class AdminGroupController {
       throw new ForbiddenException('Authentication required');
     }
 
-    // Check system admin
-    const isAdmin = await this.groupService.isSystemAdmin(userId);
-    if (!isAdmin) {
-      throw new ForbiddenException('Only system admin can delete group');
+    // Check system context
+    const context = RequestContext.get<any>('context');
+    if (context?.type !== 'system') {
+      throw new ForbiddenException('Groups can only be deleted under the system context');
     }
 
     await this.groupService.delete(id);

@@ -20,7 +20,7 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
   }
 
   protected override async prepareFilters(filters?: any): Promise<any> {
-    return { ...(filters || {}), ...getGroupFilter() };
+    return { ...(filters || {}), ...getGroupFilter(filters) };
   }
 
   // ── CRUD Overrides ────────────────────────────────────────────────────────

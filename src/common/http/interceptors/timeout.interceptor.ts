@@ -30,8 +30,3 @@ export class TimeoutInterceptor implements NestInterceptor {
     );
   }
 }
-
-/**
- * Factory function to create timeout interceptor with custom timeout
- */
-// Factory removed; interceptor reads timeout from ConfigService

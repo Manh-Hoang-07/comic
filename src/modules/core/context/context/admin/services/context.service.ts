@@ -5,6 +5,7 @@ import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group
 import { BaseService } from '@/common/core/services';
 import { ContextType, SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { RequestContext } from '@/common/shared/utils';
 
 @Injectable()
 export class AdminContextService extends BaseService<any, IContextRepository> {
@@ -23,10 +24,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
   protected defaultSort = 'id:desc';
 
-
-  private async isSystemAdmin(userId: any): Promise<boolean> {
-    return this.rbacService.isSystemAdmin(userId);
-  }
 
   /**
    * Lấy System Context (có cache)
@@ -62,8 +59,8 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   }
 
   async createContext(data: any, requesterUserId: any) {
-    const isAdmin = await this.isSystemAdmin(requesterUserId);
-    if (!isAdmin) {
+    const context = RequestContext.get<any>('context');
+    if (context?.type !== 'system') {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
     }
     return this.create(data);
@@ -91,8 +88,8 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   }
 
   async updateContext(id: any, data: any, requesterUserId: any) {
-    const isAdmin = await this.isSystemAdmin(requesterUserId);
-    if (!isAdmin) {
+    const context = RequestContext.get<any>('context');
+    if (context?.type !== 'system') {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
     }
     return this.update(id, data);

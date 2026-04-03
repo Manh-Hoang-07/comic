@@ -23,14 +23,13 @@ export class RbacService {
   ) { }
 
   async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
-    // 1. Check in System Context first (Master Key / Super Admin)
-    // If not system already, we fetch system permissions as a fallback
+    // 1. Fetch system permissions (Global level)
     const systemPerms = await this.getUserPermissions(userId, null);
-    if (systemPerms.has(PERM.SYSTEM.MANAGE)) return true;
 
-    // 2. Check in specific Group
+    // 2. Fetch specific Group permissions
     const groupPerms = groupId !== null ? await this.getUserPermissions(userId, groupId) : systemPerms;
 
+    // A user has access if they have the required permission either at the Group level OR the System level
     for (const need of required) {
       if (groupPerms.has(need) || systemPerms.has(need)) return true;
     }
@@ -38,9 +37,7 @@ export class RbacService {
     return false;
   }
 
-  async isSystemAdmin(userId: any): Promise<boolean> {
-    return this.userHasPermissionsInGroup(userId, null, [PERM.SYSTEM.MANAGE]);
-  }
+
 
   async getUserPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
     if (!(await this.rbacCache.isCached(userId, groupId))) {

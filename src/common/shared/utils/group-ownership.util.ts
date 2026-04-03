@@ -60,19 +60,20 @@ export function verifyContextOwnership(entity: GroupOwnedEntity): void {
 /**
  * Helper to get group filter based on context
  * 
- * Nếu là system context (quản trị toàn hệ thống) thì không lọc theo group_id (trả về {})
- * Nếu là group khác thì trả về { group_id: groupId }
+ * Nếu là system context (quản trị toàn cục) thì không ép lọc theo group_id (trả về {})
+ * Ngược lại, ép chặt vào groupId hiện hành trả về { group_id: groupId }
  */
-export function getGroupFilter(): { group_id?: any } {
+export function getGroupFilter(currentFilter?: any): { group_id?: any; groupId?: any } {
   const context = RequestContext.get<any>('context');
   const groupId = RequestContext.get<any>('groupId');
 
-  // Nếu là system context (quản trị toàn hệ thống) thì không lọc theo group_id
+  // 1. Ngữ cảnh toàn cục (system context) -> không bị ép group_id (view tất cả).
   if (context?.type === 'system') {
     return {};
   }
 
-  return groupId ? { group_id: groupId } : {};
+  // 2. Không phải system -> bị ép chặt vào groupId hiện hành!
+  return groupId ? { group_id: groupId, groupId } : {};
 }
 /**
  * Tự động gán group_id cho payload dựa trên context hiện tại.

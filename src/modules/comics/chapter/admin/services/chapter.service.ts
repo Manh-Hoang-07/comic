@@ -18,7 +18,7 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
   }
 
   protected override async prepareFilters(filters?: any): Promise<any> {
-    return { ...(filters || {}), ...getGroupFilter() };
+    return { ...(filters || {}), ...getGroupFilter(filters) };
   }
 
   // ── Extended Operations ────────────────────────────────────────────────────

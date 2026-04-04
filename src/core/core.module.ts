@@ -71,6 +71,9 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         MAIL_TEMPLATE_DIR: Joi.string().default('./templates'),
         MAIL_TEMPLATE_ADAPTER: Joi.string().valid('handlebars', 'nunjucks', 'pug').default('handlebars'),
 
+        // Rate limit (load test / dev: tắt toàn bộ throttle khi true)
+        THROTTLE_DISABLED: Joi.string().valid('true', 'false').optional(),
+
         // RBAC cache
         RBAC_CACHE_TTL: Joi.number().min(30).max(1800).default(300),
 

@@ -5,16 +5,22 @@ import { IComicRepository, COMIC_REPOSITORY } from '../../domain/comic.repositor
 import { RequestContext } from '@/common/shared/utils';
 import { PUBLIC_COMIC_STATUSES, ComicStatus } from '@/shared/enums';
 import { IFollowRepository, FOLLOW_REPOSITORY } from '@/modules/comics/follow/domain/follow.repository';
+import { CacheService } from '@/common/cache/services/cache.service';
 
 @Injectable()
 export class PublicComicsService extends BaseService<Comic, IComicRepository> {
+  /** getList cache: đặt 0 hoặc để `cacheForGetList` null (trong constructor) để tắt. */
+  protected cacheForGetListTtlSec = 90;
+
   constructor(
     @Inject(COMIC_REPOSITORY)
     protected readonly comicRepository: IComicRepository,
     @Inject(FOLLOW_REPOSITORY)
     private readonly followRepository: IFollowRepository,
+    cacheService: CacheService,
   ) {
     super(comicRepository);
+    this.cacheForGetList = cacheService;
   }
 
   protected override async prepareFilters(filters?: any) {
@@ -151,7 +157,13 @@ export class PublicComicsService extends BaseService<Comic, IComicRepository> {
       throw new NotFoundException('Comic not found');
     }
 
-    return this.getOne(comic.id);
+    // Một lần query: cùng select với findById(getOne), không gọi findById lại
+    const transformed = this.transform(comic) as any;
+    const final = await this.afterGetOne(transformed);
+    if (!final) {
+      throw new NotFoundException('Comic not found');
+    }
+    return final;
   }
 
   /**

@@ -41,6 +41,15 @@ export class QueryFailedFilter implements ExceptionFilter {
           message = 'Referenced record does not exist';
           break;
           
+        case 'P2024':
+          status = HttpStatus.SERVICE_UNAVAILABLE;
+          message = 'Database is busy; try again shortly';
+          this.logger.warn(
+            'Prisma pool timeout (P2024) — consider raising DB pool / cache / single-flight',
+            JSON.stringify({ code: error.code, meta: error.meta }),
+          );
+          break;
+
         case 'P2025':
           status = HttpStatus.NOT_FOUND;
           message = 'Record not found';

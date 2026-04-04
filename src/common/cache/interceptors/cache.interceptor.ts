@@ -104,8 +104,7 @@ export class CacheInterceptor implements NestInterceptor {
   private async deletePattern(pattern: string): Promise<void> {
     const keys = await this.redis.scan(pattern); // Non-blocking SCAN iteration
     if (keys.length > 0) {
-      // Parallel delete
-      await Promise.all(keys.map(k => this.redis.del(k)));
+      await this.redis.unlinkMany(keys);
     }
   }
 

@@ -1,9 +1,9 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Redis, { Redis as RedisClient } from 'ioredis';
+import Redis, { Redis as RedisClient, ChainableCommander } from 'ioredis';
 
 @Injectable()
-export class RedisUtil implements OnModuleDestroy {
+export class RedisUtil implements OnModuleInit, OnModuleDestroy {
   private client: RedisClient | null = null;
   private readonly url: string | undefined;
 
@@ -22,6 +22,18 @@ export class RedisUtil implements OnModuleDestroy {
 
       this.client.on('error', () => { });
       this.subClient.on('error', () => { });
+    }
+  }
+
+  /** Kết nối sớm tránh hàng trăm request đồng thời cùng lazyConnect một lúc. */
+  async onModuleInit(): Promise<void> {
+    if (!this.client) return;
+    try {
+      const tasks: Promise<void>[] = [this.client.connect()];
+      if (this.subClient) tasks.push(this.subClient.connect());
+      await Promise.all(tasks);
+    } catch {
+      // Redis tùy chọn: lỗi khởi động không chặn app; lệnh sau vẫn thử reconnect theo ioredis
     }
   }
 
@@ -78,6 +90,42 @@ export class RedisUtil implements OnModuleDestroy {
   async del(key: string): Promise<void> {
     if (!this.client) return;
     await this.client.del(key);
+  }
+
+  /**
+   * FLUSHDB — xóa mọi key trong Redis DB đang chọn (cache app, RBAC cache, throttle, blacklist trong cùng DB, …).
+   */
+  async flushDb(): Promise<void> {
+    if (!this.client) return;
+    await this.client.flushdb();
+  }
+
+  async expire(key: string, ttlSeconds: number): Promise<void> {
+    if (!this.client || ttlSeconds <= 0) return;
+    await this.client.expire(key, ttlSeconds);
+  }
+
+  async exists(key: string): Promise<boolean> {
+    if (!this.client) return false;
+    return (await this.client.exists(key)) === 1;
+  }
+
+  /** Gộp UNLINK nhiều key trong một round-trip (ít RTT hơn del tuần tự). */
+  async unlinkMany(keys: string[]): Promise<void> {
+    if (!this.client || keys.length === 0) return;
+    const pipeline = this.client.pipeline();
+    for (const k of keys) {
+      pipeline.unlink(k);
+    }
+    await pipeline.exec();
+  }
+
+  /** Gom nhiều lệnh Redis vào một round-trip (pipeline). Không gắn logic nghiệp vụ cụ thể. */
+  async withPipeline(handler: (pipe: ChainableCommander) => void): Promise<void> {
+    if (!this.client) return;
+    const p = this.client.pipeline();
+    handler(p);
+    await p.exec();
   }
 
   async hdel(key: string, ...fields: string[]): Promise<void> {

@@ -95,12 +95,15 @@ export class RbacCacheService implements OnModuleInit {
   async setPermissions(userId: any, groupId: any | null, permissions: string[]) {
     if (!this.redis.isEnabled()) return;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
-    await this.redis.del(key);
-    if (permissions.length) {
-      await this.redis.sadd(key, ...permissions);
-      await (this.redis as any).client?.expire(key, this.ttlSeconds);
-      await this.redis.trackKey(userId, key);
-    }
+    const trackKeysSet = `rbac:u:${userId}:keys`;
+    await this.redis.withPipeline((p) => {
+      p.del(key);
+      if (permissions.length > 0) {
+        p.sadd(key, ...permissions);
+        p.expire(key, this.ttlSeconds);
+        p.sadd(trackKeysSet, key);
+      }
+    });
     this.l1Cache.delete(key);
     await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'specific_key', key }));
   }
@@ -114,8 +117,9 @@ export class RbacCacheService implements OnModuleInit {
   async clearAllUserCaches(userId: any) {
     if (!this.redis.isEnabled()) return;
     const keys = await this.redis.getTrackedKeys(userId);
-    for (const key of keys) await this.redis.del(key);
-    await this.redis.clearTrackedKeys(userId);
+    const trackKey = `rbac:u:${userId}:keys`;
+    const toUnlink = keys.length ? [...keys, trackKey] : [trackKey];
+    await this.redis.unlinkMany(toUnlink);
     this.clearL1ByUser(userId);
     await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'user_all', userId }));
   }
@@ -123,7 +127,7 @@ export class RbacCacheService implements OnModuleInit {
   async isCached(userId: any, groupId: any | null): Promise<boolean> {
     if (!this.redis.isEnabled()) return false;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
-    return this.l1Cache.has(key) || (await (this.redis as any).client?.exists(key)) === 1;
+    return this.l1Cache.has(key) || (await this.redis.exists(key));
   }
 
   /**
@@ -133,9 +137,10 @@ export class RbacCacheService implements OnModuleInit {
   async bumpVersion(): Promise<void> {
     this.l1Cache.clear();
     if (this.redis.isEnabled()) {
-      const keys = await this.redis.keys('rbac:*');
-      if (keys.length > 0) {
-        await Promise.all(keys.map((k) => this.redis.del(k)));
+      const keys = await this.redis.scan('rbac:*');
+      const batch = 500;
+      for (let i = 0; i < keys.length; i += batch) {
+        await this.redis.unlinkMany(keys.slice(i, i + batch));
       }
       await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'clear_all' }));
     }

@@ -108,9 +108,9 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     const post = await this.postRepo.findPublishedBySlug(slug);
     if (!post) return this.transform(post);
 
+    // View buffer Redis không cập nhật stats trong DB ngay — đọc lại slug là thừa
     await this.postRepo.incrementViewCount((post as any).id);
-    const refreshed = await this.postRepo.findPublishedBySlug(slug);
-    return this.transform(refreshed);
+    return this.transform(post);
   }
 
   // Keep original name for compatibility if needed, though getOneBySlug is clearer

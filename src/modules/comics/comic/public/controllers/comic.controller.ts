@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
 import { PublicComicsService } from '../services/comic.service';
 
@@ -6,6 +7,7 @@ import { PublicComicsService } from '../services/comic.service';
 export class PublicComicsController {
   constructor(private readonly comicsService: PublicComicsService) { }
 
+  @SkipThrottle()
   @Permission('public')
   @Get()
   async getList(@Query(ValidationPipe) query: any) {

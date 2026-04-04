@@ -55,6 +55,13 @@ export class GroupInterceptor implements NestInterceptor {
       RequestContext.set('context', group.context);
       RequestContext.set('contextId', group.context?.id || group.context_id);
     } else {
+      // Public + không group: không cần load system context từ DB — các service public chỉ dùng groupId (null).
+      if (isPublicEndpoint) {
+        RequestContext.set('groupId', null);
+        RequestContext.set('contextId', null);
+        RequestContext.set('context', null);
+        return next.handle();
+      }
       return this.setSysCtx(next);
     }
 

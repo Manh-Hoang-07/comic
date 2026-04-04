@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { HomepageService } from '../services/homepage.service';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
@@ -18,6 +19,7 @@ export class HomepageController {
    * 
    * Lưu ý: API /users/me cần gọi riêng nếu cần thông tin user
    */
+  @SkipThrottle()
   @Permission('public')
   @Get()
   async getHomepage() {

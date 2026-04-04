@@ -13,7 +13,8 @@ import {
   TransformInterceptor,
   LoggingInterceptor,
   TimeoutInterceptor,
-  GroupInterceptor
+  GroupInterceptor,
+  PublicHttpCacheInterceptor,
 } from '@/common/http/interceptors';
 import { FilePathInterceptor } from '@/common/file/interceptors';
 import { JwtAuthGuard, RbacGuard } from '@/common/auth/guards';
@@ -61,6 +62,7 @@ import { ComicsModule } from '@/modules/comics/comic.module';
     CustomLoggerService,
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_FILTER, useClass: QueryFailedFilter },
+    { provide: APP_INTERCEPTOR, useClass: PublicHttpCacheInterceptor },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_INTERCEPTOR, useClass: FilePathInterceptor },

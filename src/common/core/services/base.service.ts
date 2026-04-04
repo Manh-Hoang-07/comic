@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { IRepository, IPaginatedResult, IPaginationOptions } from '../repositories/repository.interface';
 import { createPaginationMeta, prepareQuery } from '../utils';
 import { getGroupFilter, assignGroupOwnership } from '@/common/shared/utils/group-ownership.util';
+import type { CacheService } from '@/common/cache/services/cache.service';
 
 /**
  * Base Service DB-agnostic.
@@ -13,6 +14,13 @@ export abstract class BaseService<T, R extends IRepository<T>> {
      * Service con có thể set = true trong constructor để bật tính năng này.
      */
     protected autoAddGroupId: boolean = false;
+
+    /**
+     * Cache getList — mặc định tắt (client null hoặc ttl ≤ 0).
+     * Service con chỉ cần gán `cacheForGetList` + `cacheForGetListTtlSec` (khai báo field / trong constructor).
+     */
+    protected cacheForGetList: CacheService | null = null;
+    protected cacheForGetListTtlSec = 0;
 
     constructor(protected readonly repository: R) { }
 
@@ -93,8 +101,21 @@ export abstract class BaseService<T, R extends IRepository<T>> {
         });
     }
 
-    /** Lấy danh sách phân trang. */
-    async getList(queryOrOptions: any = {}): Promise<IPaginatedResult<T>> {
+    /**
+     * Khóa cache cho getList (mặc định theo query đã sort key).
+     * Service con có thể override (vd. prefix Redis cố định).
+     */
+    protected buildGetListCacheKey(queryOrOptions: any): string {
+        const q = queryOrOptions && typeof queryOrOptions === 'object' ? { ...queryOrOptions } : {};
+        const sorted: Record<string, unknown> = {};
+        for (const k of Object.keys(q).sort()) {
+            sorted[k] = q[k];
+        }
+        return `${this.constructor.name}:${JSON.stringify(sorted)}`;
+    }
+
+    /** Thân getList: query DB + transform (không cache). */
+    protected async executeGetList(queryOrOptions: any = {}): Promise<IPaginatedResult<T>> {
         const { filter, options } = prepareQuery(queryOrOptions);
         const normalized = await this.prepareOptions(options);
         const preparedFilters = await this.prepareFilters(filter, normalized);
@@ -110,16 +131,26 @@ export abstract class BaseService<T, R extends IRepository<T>> {
             preparedFilters && typeof preparedFilters === 'object' ? preparedFilters : filter;
 
         const result = await this.repository.findAll(normalized);
-
-        // Transform each item (sync or async)
-        const transformedData = new Array(result.data.length);
-        for (let i = 0; i < result.data.length; i++) {
-            const t = this.transform(result.data[i]);
-            transformedData[i] = t instanceof Promise ? await t : t;
-        }
+        const transformedData = await Promise.all(
+            result.data.map((row) => {
+                const t = this.transform(row);
+                return t instanceof Promise ? t : Promise.resolve(t as T | null);
+            }),
+        );
         result.data = transformedData as T[];
 
         return this.afterGetList(result);
+    }
+
+    /** Lấy danh sách phân trang (có thể bọc cache khi gán cacheForGetList + cacheForGetListTtlSec). */
+    async getList(queryOrOptions: any = {}): Promise<IPaginatedResult<T>> {
+        const client = this.cacheForGetList;
+        const ttl = this.cacheForGetListTtlSec;
+        if (client && ttl > 0) {
+            const key = this.buildGetListCacheKey(queryOrOptions);
+            return client.getOrSet(key, () => this.executeGetList(queryOrOptions), ttl);
+        }
+        return this.executeGetList(queryOrOptions);
     }
 
     /** Lấy một bản ghi theo ID. */

@@ -7,6 +7,9 @@ import { serializeForCache, deserializeFromCache, isCacheMiss } from '../cache-s
 
 @Injectable()
 export class CacheService {
+  /** Một miss / một key → chỉ một callback chạy; các request khác chờ cùng Promise (giảm dồn DB). */
+  private readonly inFlight = new Map<string, Promise<unknown>>();
+
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly redis: RedisUtil,
@@ -96,8 +99,22 @@ export class CacheService {
     const cached = await this.get<T>(key);
     if (!isCacheMiss(cached)) return cached as T;
 
-    const value = await callback();
-    await this.set(key, value, ttl);
-    return value;
+    const pending = this.inFlight.get(key);
+    if (pending) {
+      return pending as Promise<T>;
+    }
+
+    const promise = (async () => {
+      try {
+        const value = await callback();
+        await this.set(key, value, ttl);
+        return value;
+      } finally {
+        this.inFlight.delete(key);
+      }
+    })();
+
+    this.inFlight.set(key, promise);
+    return promise as Promise<T>;
   }
 }

@@ -67,8 +67,13 @@ export function filterClientMenus(menus: any[], userId?: any): any[] {
 
 /**
  * Filters a list of menus based on RBAC permissions for Admin/Dashboard.
+ * `matches` mặc định chỉ so khớp mã tuyến tính; truyền matcher từ RbacService để áp dụng quy tắc quyền cha đủ cho quyền con.
  */
-export function filterAdminMenus(menus: any[], userPerms: Set<string>): any[] {
+export function filterAdminMenus(
+    menus: any[],
+    userPerms: Set<string>,
+    matches: (assigned: Set<string>, requiredCode: string) => boolean = (a, c) => a.has(c),
+): any[] {
     return menus.filter((menu) => {
         // Public menus are always shown
         if (menu.is_public) return true;
@@ -80,14 +85,14 @@ export function filterAdminMenus(menus: any[], userPerms: Set<string>): any[] {
         if (!hasRequiredPerm && !hasAssignedPerms) return true;
 
         // Check primary permission
-        if (menu.required_permission?.code && userPerms.has(menu.required_permission.code)) {
+        if (menu.required_permission?.code && matches(userPerms, menu.required_permission.code)) {
             return true;
         }
 
         // Check secondary permissions (many-to-many)
         if (menu.menu_permissions?.length) {
             return menu.menu_permissions.some(
-                (mp: any) => mp.permission?.code && userPerms.has(mp.permission.code),
+                (mp: any) => mp.permission?.code && matches(userPerms, mp.permission.code),
             );
         }
 

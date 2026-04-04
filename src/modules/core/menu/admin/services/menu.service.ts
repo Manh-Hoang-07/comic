@@ -88,8 +88,11 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     } else {
       if (!userId) return [];
       const groupId = RequestContext.get<any>('groupId');
+      await this.rbacService.preparePermissionCheck();
       const userPerms = await this.rbacService.getUserPermissions(userId, groupId ?? null);
-      filtered = filterAdminMenus(menus, userPerms);
+      filtered = filterAdminMenus(menus, userPerms, (assigned, code) =>
+        this.rbacService.matchesAssigned(assigned, code),
+      );
     }
 
     return buildMenuTree(filtered);

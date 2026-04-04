@@ -53,15 +53,8 @@ export class RbacCacheService implements OnModuleInit {
   }
 
   async hasPermission(userId: any, groupId: any | null, permission: string): Promise<boolean> {
-    if (!this.redis.isEnabled()) return false;
-    const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
-    const l1 = this.l1Cache.get(key);
-    if (l1 && l1.expiry > Date.now()) return l1.data.has(permission);
-    if (await this.redis.sismember(key, permission)) {
-      await this.getPermissions(userId, groupId); // Load all to L1
-      return true;
-    }
-    return false;
+    const perms = await this.getPermissions(userId, groupId);
+    return perms.has(permission);
   }
 
   /**
@@ -70,12 +63,14 @@ export class RbacCacheService implements OnModuleInit {
    */
   async getPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
-    
-    // 1. Check L1 Cache
+
     const l1 = this.l1Cache.get(key);
     if (l1 && l1.expiry > Date.now()) return l1.data;
 
-    // 2. Check Redis (L2)
+    if (!this.redis.isEnabled()) {
+      return new Set();
+    }
+
     const permissions = await this.redis.smembers(key);
     if (permissions.length > 0) {
       const data = new Set(permissions);
@@ -93,8 +88,15 @@ export class RbacCacheService implements OnModuleInit {
   }
 
   async setPermissions(userId: any, groupId: any | null, permissions: string[]) {
-    if (!this.redis.isEnabled()) return;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
+    const data = new Set(permissions);
+    const l1Expiry = Date.now() + (this.redis.isEnabled() ? this.l1TtlMs : this.ttlSeconds * 1000);
+    this.l1Cache.set(key, { data, expiry: l1Expiry });
+
+    if (!this.redis.isEnabled()) {
+      return;
+    }
+
     const trackKeysSet = `rbac:u:${userId}:keys`;
     await this.redis.withPipeline((p) => {
       p.del(key);
@@ -125,9 +127,11 @@ export class RbacCacheService implements OnModuleInit {
   }
 
   async isCached(userId: any, groupId: any | null): Promise<boolean> {
-    if (!this.redis.isEnabled()) return false;
     const key = groupId === null ? this.getSystemKey(userId) : this.getGroupKey(userId, groupId);
-    return this.l1Cache.has(key) || (await this.redis.exists(key));
+    const l1 = this.l1Cache.get(key);
+    if (l1 && l1.expiry > Date.now()) return true;
+    if (!this.redis.isEnabled()) return false;
+    return await this.redis.exists(key);
   }
 
   /**

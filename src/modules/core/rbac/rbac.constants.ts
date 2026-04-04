@@ -21,28 +21,33 @@ export const PERM = {
         MANAGE: 'system.manage',        // Quyền tối cao (Super Admin)
         CONFIG_VIEW: 'system.config.view',
         CONFIG_UPDATE: 'system.config.update',
-        BANNER_MANAGE: 'system.banner.manage',
+        BANNER_MANAGE: 'banner.manage',
+    },
+    CONFIG: {
+        MANAGE: 'config.manage',
     },
 
     // ─── TẦNG PHÂN QUYỀN (IAM & RBAC) ───────────────────────────────────
     ROLE: {
+        MANAGE: 'role.manage',
         VIEW: 'role.view',
         CREATE: 'role.create',
         UPDATE: 'role.update',
         DELETE: 'role.delete',
-        MANAGE: 'role.manage',
     },
     PERMISSION: {
+        MANAGE: 'permission.manage',
         VIEW: 'permission.view',
         SYNC: 'permission.sync',        // Đồng bộ quyền từ code vào DB
     },
     ASSIGNMENT: {
+        MANAGE: 'assignment.manage',
         VIEW: 'assignment.view',
-        MANAGE: 'assignment.manage',    // Gán role cho user (Phân quyền)
     },
 
     // ─── TẦNG QUẢN LÝ TÀI KHOẢN (USER & IDENTITY) ────────────────────────
     USER: {
+        MANAGE: 'user.manage',
         VIEW: 'user.view',
         CREATE: 'user.create',
         UPDATE: 'user.update',
@@ -56,6 +61,7 @@ export const PERM = {
 
     // ─── TẦNG QUẢN TRỊ NỘI DUNG (CONTENT - TRUYỆN & CHƯƠNG) ──────────────
     COMIC: {
+        MANAGE: 'comic.manage',
         VIEW: 'comic.view',
         CREATE: 'comic.create',
         UPDATE: 'comic.update',
@@ -79,6 +85,7 @@ export const PERM = {
         MANAGE: 'location.manage',      // Quản lý Quốc gia, Tỉnh thành
     },
     NOTIFICATION: {
+        MANAGE: 'notification.manage',
         VIEW: 'notification.view',
         SEND: 'notification.send',      // Gửi thông báo hệ thống
     }

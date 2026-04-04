@@ -6,9 +6,13 @@ import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { PERM } from '@/modules/core/rbac/rbac.constants';
 
 /**
  * Service quản lý RBAC (Role-Based Access Control)
+ *
+ * Cache Redis chỉ lưu các mã quyền được gán trực tiếp qua role.
+ * Khi check route: đủ nếu user có đúng mã đó hoặc có bất kỳ quyền cha nào trên cây parent_id.
  */
 @Injectable()
 export class RbacService {
@@ -21,34 +25,32 @@ export class RbacService {
     private readonly prisma: PrismaService,
   ) { }
 
-  private permissionMapCache: Map<string, any> = new Map();
-  private lastPermFetch: number = 0;
+  private permissionByIdCache = new Map<string, any>();
+  private permissionByCodeCache = new Map<string, any>();
+  private lastPermFetch = 0;
   private readonly PERM_CACHE_TTL = 300000; // 5 minutes
 
   async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
-    // 1. Fetch system & Group permissions in parallel (Global level)
+    await this.ensurePermissionIndexes();
+
     const [systemPerms, groupPerms] = await Promise.all([
       this.getUserPermissions(userId, null),
-      groupId !== null ? this.getUserPermissions(userId, groupId) : null
+      groupId !== null ? this.getUserPermissions(userId, groupId) : null,
     ]);
 
-    // A user has access if they have the required permission either at the Group level OR the System level
     for (const need of required) {
-      if (systemPerms.has(need) || (groupPerms && groupPerms.has(need))) return true;
+      if (this.grants(systemPerms, need)) return true;
+      if (groupPerms && this.grants(groupPerms, need)) return true;
     }
 
     return false;
   }
 
-
-
   async getUserPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
-    // 1. Check if the user's permissions are already in Redis (L2) or memory (L1)
     if (!(await this.rbacCache.isCached(userId, groupId))) {
       await this.refreshUserPermissions(userId, groupId);
     }
 
-    // 2. Fetch from cache (will handle L1-hit automatically)
     return this.rbacCache.getPermissions(userId, groupId);
   }
 
@@ -65,7 +67,7 @@ export class RbacService {
     });
     const roleIds = Array.from(new Set(assignments.map(a => a.role_id)));
 
-    const permissions = roleIds.length ? await this.getFlattenedPermissions(roleIds) : new Set<string>();
+    const permissions = roleIds.length ? await this.getDirectPermissionCodes(roleIds) : new Set<string>();
     await this.rbacCache.setPermissions(userId, groupId, Array.from(permissions));
   }
 
@@ -90,7 +92,6 @@ export class RbacService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      // 1. Ensure UserGroup membership if roles are being assigned
       if (roleIds.length > 0) {
         const userIdPk = toPrimaryKey(userId);
         const groupIdPk = toPrimaryKey(groupId);
@@ -106,11 +107,10 @@ export class RbacService {
             group_id: groupIdPk,
             joined_at: new Date(),
           },
-          update: {}, // No change if already exists
+          update: {},
         });
       }
 
-      // 2. Sync Role Assignments
       await tx.userRoleAssignment.deleteMany({
         where: { user_id: toPrimaryKey(userId), group_id: toPrimaryKey(groupId) }
       });
@@ -145,38 +145,56 @@ export class RbacService {
     }
   }
 
-  private async getFlattenedPermissions(roleIds: any[]): Promise<Set<string>> {
-    const result = new Set<string>();
-
-    // 1. Load active permissions to local cache if missing or expired (L1-lite)
-    if (Date.now() - this.lastPermFetch > this.PERM_CACHE_TTL || this.permissionMapCache.size === 0) {
+  private async ensurePermissionIndexes(): Promise<void> {
+    if (Date.now() - this.lastPermFetch > this.PERM_CACHE_TTL || this.permissionByIdCache.size === 0) {
       const all = await this.prisma.permission.findMany({ where: { status: 'active' as any } });
-      this.permissionMapCache = new Map(all.map(p => [String(p.id), p]));
+      this.permissionByIdCache = new Map(all.map((p) => [String(p.id), p]));
+      this.permissionByCodeCache = new Map(all.map((p) => [p.code, p]));
       this.lastPermFetch = Date.now();
     }
-    const map = this.permissionMapCache;
+  }
 
-    // 2. Fetch direct permissions for roles
+  /** Load cây quyền vào bộ nhớ (gọi trước `matchesAssigned` từ menu/UI nếu chỉ có Set mã đã gán). */
+  async preparePermissionCheck(): Promise<void> {
+    await this.ensurePermissionIndexes();
+  }
+
+  /**
+   * User có mã `need` hoặc có quyền cha của `need` trên cây parent_id.
+   * Phải gọi `preparePermissionCheck()` trước (hoặc đã qua `userHasPermissionsInGroup` / `refreshUserPermissions` trong cùng process).
+   */
+  matchesAssigned(assignedCodes: Set<string>, need: string): boolean {
+    return this.grants(assignedCodes, need);
+  }
+
+  /** User có mã `need` hoặc có quyền cha (theo parent_id) của `need`. */
+  private grants(assignedCodes: Set<string>, need: string): boolean {
+    if (assignedCodes.has(PERM.SYSTEM.MANAGE)) return true;
+
+    if (assignedCodes.has(need)) return true;
+
+    let cur = this.permissionByCodeCache.get(need) as any;
+    while (cur?.parent_id) {
+      const parent = this.permissionByIdCache.get(String(cur.parent_id)) as any;
+      if (!parent) break;
+      if (parent.code && assignedCodes.has(parent.code)) return true;
+      cur = parent;
+    }
+    return false;
+  }
+
+  /** Chỉ mã quyền gán trực tiếp trên role (không suy diễn lên/xuống cây). */
+  private async getDirectPermissionCodes(roleIds: any[]): Promise<Set<string>> {
     const links = await this.roleHasPermRepo.findMany({
       where: { role_id: { in: roleIds } },
-      include: { permission: true }
+      include: { permission: true },
     });
 
-    const directPerms = links
-      .map(l => (l as any).permission)
-      .filter(p => p && p.status === 'active');
-
-    // 3. Traverse parent hierarchy to collect all inherited permissions
-    for (const p of directPerms) {
-      let cur = p;
-      if (cur.code) result.add(cur.code);
-      while (cur.parent_id && map.has(String(cur.parent_id))) {
-        cur = map.get(String(cur.parent_id));
-        if (cur.code) result.add(cur.code);
-      }
+    const result = new Set<string>();
+    for (const l of links) {
+      const p = (l as any).permission;
+      if (p?.status === 'active' && p.code) result.add(p.code);
     }
     return result;
   }
 }
-
-

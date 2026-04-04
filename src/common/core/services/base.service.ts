@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { IRepository, IPaginatedResult, IPaginationOptions } from '../repositories/repository.interface';
-import { createPaginationMeta, prepareQuery } from '../utils';
-import { getGroupFilter, assignGroupOwnership } from '@/common/shared/utils/group-ownership.util';
+import { createPaginationMeta, prepareQuery, stableObjectJsonForCache } from '../utils';
+import { assignGroupOwnership } from '@/common/shared/utils/group-ownership.util';
 import type { CacheService } from '@/common/cache/services/cache.service';
 
 /**
@@ -23,10 +23,6 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     protected cacheForGetListTtlSec = 0;
 
     constructor(protected readonly repository: R) { }
-
-    protected getGroupFilter(): any {
-        return getGroupFilter();
-    }
 
     // ── Lifecycle hooks (override in subclasses) ───────────────────────────────
 
@@ -106,12 +102,7 @@ export abstract class BaseService<T, R extends IRepository<T>> {
      * Service con có thể override (vd. prefix Redis cố định).
      */
     protected buildGetListCacheKey(queryOrOptions: any): string {
-        const q = queryOrOptions && typeof queryOrOptions === 'object' ? { ...queryOrOptions } : {};
-        const sorted: Record<string, unknown> = {};
-        for (const k of Object.keys(q).sort()) {
-            sorted[k] = q[k];
-        }
-        return `${this.constructor.name}:${JSON.stringify(sorted)}`;
+        return `${this.constructor.name}:${stableObjectJsonForCache(queryOrOptions)}`;
     }
 
     /** Thân getList: query DB + transform (không cache). */

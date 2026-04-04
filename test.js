@@ -5,12 +5,23 @@ import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 
 /**
  * Đổi host/port: k6 run -e BASE_URL=http://127.0.0.1:8000 test.js
+ * Log lỗi mạng: mặc định mọi status=0; giảm spam: -e K6_NET_ERROR_SAMPLE=0.05
  * Nếu 100% status=0 và data_received=0 B → gần như chắc app không lắng nghe / sai URL.
  */
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8000';
 
 /** Timeout k6 (ms): nên >= app request timeout để status 0 không bị nhầm với reset kết nối */
 const HTTP_TIMEOUT_MS = '120s';
+
+/**
+ * Log lỗi transport (status=0): error_code / error từ k6.
+ * Mặc định 1 = log (gần như) mọi lần; load lớn → K6_NET_ERROR_SAMPLE=0.02
+ */
+const _sampleRaw = parseFloat(__ENV.K6_NET_ERROR_SAMPLE ?? '1');
+const K6_NET_ERROR_SAMPLE = Math.min(
+  1,
+  Math.max(0, Number.isFinite(_sampleRaw) ? _sampleRaw : 1),
+);
 
 const codes = [200, 408, 429, 500, 502, 503, 504];
 const endpoints = ['homepage', 'comics'];
@@ -46,9 +57,13 @@ function request(name, baseUrl, path) {
     [`${name}: status is 200`]: (r) => r.status === 200,
   });
 
-  if (res.status !== 200 && Math.random() < 0.02) {
+  if (res.status === 0 && Math.random() < K6_NET_ERROR_SAMPLE) {
     console.warn(
-      `[${name}] status=${res.status} error_code=${res.error_code || 'n/a'} error=${res.error || ''} url=${url}`,
+      `[${name}] transport status=0 error_code=${res.error_code ?? 'n/a'} error="${res.error ?? ''}" url=${url}`,
+    );
+  } else if (res.status !== 200 && res.status !== 0 && Math.random() < 0.02) {
+    console.warn(
+      `[${name}] status=${res.status} error_code=${res.error_code ?? 'n/a'} error="${res.error ?? ''}" url=${url}`,
     );
   }
 

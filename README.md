@@ -1,185 +1,58 @@
-# NestJS Backend API
+# Backend (NestJS + Prisma)
 
-This is a NestJS backend application converted from Laravel. It provides a RESTful API for an e-commerce platform.
+This is a modern, high-performance backend application built with **NestJS**, following **DDD (Domain-Driven Design)** and **Hexagonal Architecture** principles.
 
-## Features
+## 🚀 Key Features
 
-- User authentication and authorization
-- Product management
-- Order processing
-- Shopping cart
-- Content management (Posts, Categories, Tags)
-- Contact management
-- System configuration
-- File uploads
-- Role-based permissions
+- **DDD Architecture**: Structured into Domain, Infrastructure, and Application layers.
+- **Repository Pattern**: Database-agnostic data access using Prisma.
+- **Multi-Tenant RBAC**: Strict context-based authorization (System Admin vs. Group Admin).
+- **Core Modules**: Comics management, Content CMS (Posts, Categories), User Identity, and Storage.
+- **Automated Workflows**: Integrated with AI Agent instructions for consistent development.
 
-## Installation
+## 🛠️ Tech Stack
+
+- **Framework**: [NestJS](https://nestjs.com/)
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Database**: MySQL / MariaDB
+- **Caching**: Redis
+- **Auth**: Passport JWT
+- **Container**: Docker & Docker Compose
+
+## 📦 Installation
 
 ```bash
-# Install dependencies
+# 1. Clone & Install
 npm install
 
-# Copy environment file
+# 2. Environment Setup
 cp .env.example .env
 
-# Start development server
+# 3. Database Migration
+npx prisma migrate dev
+
+# 4. Seed Initial Data
+npm run seed
+
+# 5. Start Development
 npm run start:dev
 ```
 
-## Docker (thay XAMPP)
-
-### Chuẩn bị
-
-- Cài Docker Desktop
-- Tạo file môi trường cho Docker:
-
-```powershell
-Copy-Item .env.docker.example .env.docker
-```
-
-### Chạy bằng Docker Compose
+## 🐳 Docker Deployment
 
 ```powershell
 docker compose --env-file .env.docker up --build
 ```
 
-- API chạy tại `http://localhost:8000/api`
-- Swagger (dev) tại `http://localhost:8000/api/docs`
-- MySQL/MariaDB được map ra host port `3307`
-- Redis được map ra host port `6380`
+## 🤖 AI Agent Integration
 
-### Tạo bảng dữ liệu lần đầu (nếu cần)
+This project is optimized for AI-assisted development. We use the `.agent/` directory to store project-specific context, rules, and workflows.
 
-Mở terminal khác và chạy:
+- **Instructions**: [instructions.md](./.agent/instructions.md)
+- **Architecture Rules**: [architecture.md](./.agent/rules/architecture.md)
+- **CRUD Workflows**: [feature-crud-list.md](./.agent/workflows/feature-crud-list.md)
+- **New Module Workflow**: Run `/create-module` if using a compatible AI agent.
 
-```powershell
-docker compose exec api npx prisma db push
-```
+## 📑 Documentation
 
-## Environment Variables
-
-See `.env.example` for all available environment variables.
-
-## Database
-
-This application uses MySQL/MariaDB by default (configurable via environment variables).
-
-### Quick Start
-
-```bash
-# 1. Run migrations to create tables
-npm run migration:run
-
-# 2. Seed initial data
-npm run seed
-```
-
-### Database Commands
-
-```bash
-# Run all pending migrations
-npm run migration:run
-
-# Revert last migration
-npm run migration:revert
-
-# Show migration status
-npm run migration:show
-
-# Generate new migration from entity changes
-npm run migration:generate -- src/core/database/migrations/YourMigrationName
-
-# Create empty migration file
-npm run migration:create -- src/core/database/migrations/YourMigrationName
-
-# Seed database with sample data
-npm run seed
-```
-
-📖 **Xem tài liệu chi tiết**: [docs/DATABASE.md](./docs/DATABASE.md)
-
-## API Structure
-
-### Public Endpoints (No Authentication Required)
-
-- `POST /api/login` - User login
-- `POST /api/register` - User registration
-- `GET /api/products` - List products
-- `GET /api/products/:id` - Get product details
-- `GET /api/product-categories` - List product categories
-
-### User Endpoints (Authentication Required)
-
-- `GET /api/me` - Get current user
-- `POST /api/logout` - Logout
-- `GET /api/orders` - Get user orders
-
-### Admin Endpoints (Authentication + Admin Role Required)
-
-- `GET /api/admin/products` - List all products
-- `POST /api/admin/products` - Create product
-- `PUT /api/admin/products/:id` - Update product
-- `DELETE /api/admin/products/:id` - Delete product
-- `GET /api/admin/orders` - List all orders
-- `PATCH /api/admin/orders/:id/status` - Update order status
-
-## Project Structure
-
-```
-nestjs-backend/
-├── src/
-│   ├── common/           # Shared utilities, filters, interceptors
-│   ├── enums/            # TypeScript enums
-│   ├── modules/          # Feature modules
-│   │   ├── auth/        # Authentication
-│   │   ├── user/        # User management
-│   │   ├── product/     # Products
-│   │   ├── order/       # Orders
-│   │   ├── cart/        # Shopping cart
-│   │   ├── post/        # Blog posts
-│   │   ├── contact/     # Contact form
-│   │   ├── system-config/ # System configuration
-│   │   └── ...          # Other modules
-│   ├── app.module.ts    # Root module
-│   └── main.ts          # Application entry point
-├── database/             # Database migrations
-└── storage/              # File storage
-```
-
-## Technologies
-
-- **NestJS** - Progressive Node.js framework
-- **TypeORM** - ORM for TypeScript
-- **SQLite** - Database
-- **Passport** - Authentication
-- **JWT** - Token-based authentication
-- **class-validator** - Validation
-- **class-transformer** - Transformation
-
-## Development
-
-```bash
-# Development mode
-npm run start:dev
-
-# Build
-npm run build
-
-# Production
-npm run start:prod
-
-# Lint
-npm run lint
-
-# Format code
-npm run format
-
-# Test
-npm run test
-```
-
-## License
-
-MIT
-
+The legacy `docs/` directory has been replaced by the dynamic documentation in [.agent/](./.agent/). Please refer to the Agent instructions for the most up-to-date coding standards.

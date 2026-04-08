@@ -25,7 +25,6 @@ export class RequestContextMiddleware implements NestMiddleware {
       RequestContext.set('userAgent', userAgent);
       RequestContext.set('ip', ip);
       RequestContext.set('requestId', requestId);
-      RequestContext.set('perf.t0', Date.now());
 
       // Reflect request id back to response
       res.setHeader('X-Request-ID', requestId);

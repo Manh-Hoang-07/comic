@@ -20,17 +20,12 @@ export class GroupContextMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, _res: Response, next: NextFunction) {
-    const traceRoute = this.isAdminUsersRoute(req);
-    const traceStart = traceRoute ? Date.now() : 0;
     const headerGroupId = this.extractGroupId(req);
 
     if (!headerGroupId) {
       RequestContext.set('groupId', null);
       RequestContext.set('context', null);
       RequestContext.set('contextId', null);
-      if (traceStart) {
-        RequestContext.set('perf.groupMs', Date.now() - traceStart);
-      }
       return next();
     }
 
@@ -39,9 +34,6 @@ export class GroupContextMiddleware implements NestMiddleware {
       RequestContext.set('groupId', cached.groupId);
       RequestContext.set('context', cached.context);
       RequestContext.set('contextId', cached.contextId);
-      if (traceStart) {
-        RequestContext.set('perf.groupMs', Date.now() - traceStart);
-      }
       return next();
     }
 
@@ -69,9 +61,6 @@ export class GroupContextMiddleware implements NestMiddleware {
     RequestContext.set('groupId', cacheValue.groupId);
     RequestContext.set('context', cacheValue.context);
     RequestContext.set('contextId', cacheValue.contextId);
-    if (traceStart) {
-      RequestContext.set('perf.groupMs', Date.now() - traceStart);
-    }
 
     return next();
   }
@@ -89,10 +78,5 @@ export class GroupContextMiddleware implements NestMiddleware {
 
   private isActive(entity: any): boolean {
     return (entity?.status ?? 'active') === 'active';
-  }
-
-  private isAdminUsersRoute(req: Request): boolean {
-    const path = (req.originalUrl || req.url || '').split('?')[0];
-    return req.method === 'GET' && path.endsWith('/admin/users');
   }
 }

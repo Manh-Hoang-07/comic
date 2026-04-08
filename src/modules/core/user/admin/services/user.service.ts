@@ -4,7 +4,6 @@ import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { RequestContext } from '@/common/shared/utils';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { CustomLoggerService } from '@/core/logger/logger.service';
 import { UserRepository } from '@/modules/core/user/repositories/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { PasswordService } from './password.service';
@@ -78,16 +77,6 @@ export class UserService extends BaseService<any, UserRepository> {
     return { ...filter, groupId: ctxGroupId };
   }
 
-  protected override async executeGetList(queryOrOptions: any = {}) {
-    const traceStart = this.getTraceStartIfEnabled();
-    const result = await super.executeGetList(queryOrOptions);
-    if (traceStart) {
-      RequestContext.set('perf.serviceMs', Date.now() - traceStart);
-      this.writePerfTrace();
-    }
-    return result;
-  }
-
   override async getOne(id: any, options: any = {}) {
     await this.verifyUserContextOwnership(id);
     return super.getOne(id, options);
@@ -159,33 +148,6 @@ export class UserService extends BaseService<any, UserRepository> {
     if (!user) return user;
     const { password, ...u } = user;
     return u;
-  }
-
-  private getTraceStartIfEnabled(): number {
-    const path = (RequestContext.get<string>('url') || '').split('?')[0];
-    if (!path.endsWith('/admin/users')) return 0;
-    return Date.now();
-  }
-
-  private writePerfTrace(): void {
-    const t0 = RequestContext.get<number>('perf.t0') || Date.now();
-    const totalMs = Date.now() - t0;
-    const payload = {
-      message: 'admin-users perf',
-      requestId: RequestContext.get<string>('requestId') || null,
-      method: RequestContext.get<string>('method') || null,
-      url: RequestContext.get<string>('url') || null,
-      groupId: RequestContext.get<any>('groupId') ?? null,
-      contextType: RequestContext.get<any>('context')?.type ?? null,
-      totalMs,
-      breakdownMs: {
-        group: RequestContext.get<number>('perf.groupMs') ?? null,
-        guard: RequestContext.get<number>('perf.guardMs') ?? null,
-        service: RequestContext.get<number>('perf.serviceMs') ?? null,
-        repo: RequestContext.get<number>('perf.repoMs') ?? null,
-      },
-    };
-    CustomLoggerService.write(payload, './logs/admin-users-perf.log');
   }
 }
 

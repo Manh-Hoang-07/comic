@@ -13,12 +13,11 @@ import {
   TransformInterceptor,
   LoggingInterceptor,
   TimeoutInterceptor,
-  GroupInterceptor,
   PublicHttpCacheInterceptor,
 } from '@/common/http/interceptors';
 import { FilePathInterceptor } from '@/common/file/interceptors';
 import { JwtAuthGuard, RbacGuard } from '@/common/auth/guards';
-import { RequestContextMiddleware } from '@/common/http/middlewares';
+import { RequestContextMiddleware, GroupContextMiddleware } from '@/common/http/middlewares';
 import { RateLimitModule } from '@/core/security/throttler.module';
 
 // Business Logic Aggregate Modules
@@ -67,13 +66,12 @@ import { ComicsModule } from '@/modules/comics/comic.module';
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_INTERCEPTOR, useClass: FilePathInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TimeoutInterceptor },
-    { provide: APP_INTERCEPTOR, useClass: GroupInterceptor },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RbacGuard },
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestContextMiddleware).forRoutes('*');
+    consumer.apply(RequestContextMiddleware, GroupContextMiddleware).forRoutes('*');
   }
 }

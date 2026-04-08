@@ -12,7 +12,6 @@ export class RbacGuard implements CanActivate {
   constructor(private reflector: Reflector, private rbac: RbacService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
     const permissions = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [context.getHandler(), context.getClass()]) || [];
     if (!permissions.length) throw new HttpException(ResponseUtil.forbidden('Access denied.'), 403);
     if (permissions.includes(PUBLIC_PERMISSION)) return true;
@@ -22,12 +21,14 @@ export class RbacGuard implements CanActivate {
 
     if (permissions.some(p => [RbacPermission.USER, 'user'].includes(p as any))) return true;
 
-    const headerGroupId =
-      request?.headers?.['x-group-id'] ??
-      request?.headers?.['group-id'] ??
-      request?.headers?.['group_id'] ??
-      null;
-    const groupId = RequestContext.get<any>('groupId') ?? headerGroupId ?? null;
+    const requestContext = RequestContext.get<any>('context');
+    const requestContextId = RequestContext.get<any>('contextId');
+    if (!requestContext || !requestContextId) {
+      const res = ResponseUtil.forbidden('Access denied. Request context is not resolved.');
+      throw new HttpException(res, res.httpStatus || 403);
+    }
+
+    const groupId = RequestContext.get<any>('groupId') ?? null;
     if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) return true;
 
     const res = ResponseUtil.forbidden(`Access denied. Need: ${permissions.join(',')}`);

@@ -4,6 +4,7 @@ import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { RequestContext } from '@/common/shared/utils';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { CustomLoggerService } from '@/core/logger/logger.service';
 import { UserRepository } from '@/modules/core/user/repositories/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { PasswordService } from './password.service';
@@ -67,7 +68,45 @@ export class UserService extends BaseService<any, UserRepository> {
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
   protected override async prepareFilters(filter: any) {
-    return { ...filter, ...getGroupFilter(filter) };
+    const context = RequestContext.get<any>('context');
+    const ctxGroupId = RequestContext.get<any>('groupId');
+    // Debug cho route getList/getSimpleList: xem context/groupId và filter đầu vào.
+    // Ghi file riêng để bạn dễ mở và đối chiếu.
+    CustomLoggerService.write(
+      {
+        message: 'UserService.prepareFilters (admin/users)',
+        contextType: context?.type ?? null,
+        ctxGroupId: ctxGroupId ?? null,
+        incomingFilter: filter ?? null,
+      },
+      './logs/user-getlist-debug.log',
+    );
+
+    // System scope: giữ hành vi getGroupFilter ({}), super admin có thể lọc thêm ?groupId.
+    if (context?.type === 'system') {
+      const effective = { ...filter, ...getGroupFilter(filter) };
+      CustomLoggerService.write(
+        { message: 'UserService.prepareFilters effective (system)', effectiveFilter: effective },
+        './logs/user-getlist-debug.log',
+      );
+      return effective;
+    }
+
+    // Non-system: danh sách user PHẢI gắn với group hiện tại (X-Group-Id).
+    // Không dùng ?groupId từ client — tránh lệch phạm vi với context.
+    if (!ctxGroupId) {
+      throw new ForbiddenException(
+        'Thiếu phạm vi nhóm. Gửi header X-Group-Id để lọc user theo nhóm; không thể liệt kê toàn hệ thống.',
+      );
+    }
+
+    // Một key trên filter: groupId (DTO/query). Repository map sang cột `user_groups.group_id`.
+    const effective = { ...filter, groupId: ctxGroupId };
+    CustomLoggerService.write(
+      { message: 'UserService.prepareFilters effective (non-system)', effectiveFilter: effective },
+      './logs/user-getlist-debug.log',
+    );
+    return effective;
   }
 
   override async getOne(id: any, options: any = {}) {

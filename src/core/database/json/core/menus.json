@@ -16,7 +16,7 @@
     {
         "code": "account-management",
         "name": "Quản lý tài khoản",
-        "path": "/admin/core/user/users",
+        "path": "/admin/users",
         "api_path": "api/admin/users",
         "icon": "👥",
         "type": "group",
@@ -35,7 +35,7 @@
     {
         "code": "users",
         "name": "Tài khoản",
-        "path": "/admin/core/user/users",
+        "path": "/admin/users",
         "api_path": "api/admin/users",
         "icon": "👤",
         "type": "route",
@@ -49,7 +49,7 @@
     {
         "code": "roles",
         "name": "Vai trò",
-        "path": "/admin/core/iam/roles",
+        "path": "/admin/roles",
         "api_path": "api/admin/roles",
         "icon": "👔",
         "type": "route",
@@ -63,7 +63,7 @@
     {
         "code": "permissions",
         "name": "Quyền",
-        "path": "/admin/core/iam/permissions",
+        "path": "/admin/permissions",
         "api_path": "api/admin/permissions",
         "icon": "🔑",
         "type": "route",
@@ -77,7 +77,7 @@
     {
         "code": "group-management",
         "name": "Nhóm & Context",
-        "path": "/admin/core/groups",
+        "path": "/admin/groups",
         "api_path": "api/admin/groups",
         "icon": "👪",
         "type": "group",
@@ -94,7 +94,7 @@
     {
         "code": "groups",
         "name": "Nhóm",
-        "path": "/admin/core/groups",
+        "path": "/admin/groups",
         "api_path": "api/admin/groups",
         "icon": "👪",
         "type": "route",
@@ -108,7 +108,7 @@
     {
         "code": "contexts",
         "name": "Context",
-        "path": "/admin/core/contexts",
+        "path": "/admin/contexts",
         "api_path": "api/admin/contexts",
         "icon": "🌐",
         "type": "route",
@@ -122,7 +122,7 @@
     {
         "code": "config-management",
         "name": "Cấu hình hệ thống",
-        "path": "/admin/core/system-configs/general",
+        "path": "/admin/system-configs/general",
         "api_path": "api/admin/system-configs/general",
         "icon": "⚙️",
         "type": "group",
@@ -140,7 +140,7 @@
     {
         "code": "config-general",
         "name": "Cấu hình chung",
-        "path": "/admin/core/system-configs/general",
+        "path": "/admin/system-configs/general",
         "api_path": "api/admin/system-configs/general",
         "icon": "📋",
         "type": "route",
@@ -154,7 +154,7 @@
     {
         "code": "config-email",
         "name": "Cấu hình Email",
-        "path": "/admin/core/system-configs/email",
+        "path": "/admin/system-configs/email",
         "api_path": "api/admin/system-configs/email",
         "icon": "📧",
         "type": "route",
@@ -168,7 +168,7 @@
     {
         "code": "content-templates",
         "name": "Mẫu tài liệu",
-        "path": "/admin/core/content-templates",
+        "path": "/admin/content-templates",
         "api_path": "api/admin/content-templates",
         "icon": "📄",
         "type": "route",
@@ -182,7 +182,7 @@
     {
         "code": "menus",
         "name": "Menu",
-        "path": "/admin/core/menus",
+        "path": "/admin/menus",
         "api_path": "api/admin/menus",
         "icon": "📑",
         "type": "route",

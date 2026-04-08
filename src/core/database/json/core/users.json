@@ -5,5 +5,54 @@
         "status": "active",
         "group_code": "system",
         "role_code": "super_admin"
+    },
+    {
+        "username": "user1",
+        "email": "user1@example.com",
+        "status": "active",
+        "group_code": "",
+        "role_code": ""
+    },
+    {
+        "username": "user2",
+        "email": "user2@example.com",
+        "status": "active",
+        "group_code": "",
+        "role_code": ""
+    },
+    {
+        "username": "user3",
+        "email": "user3@example.com",
+        "status": "active",
+        "group_code": "",
+        "role_code": ""
+    },
+    {
+        "username": "user4",
+        "email": "user4@example.com",
+        "status": "active",
+        "group_code": "",
+        "role_code": ""
+    },
+    {
+      "username": "groupowner_demo1",
+      "email": "groupowner_demo1@example.com",
+      "status": "active",
+      "group_code": "group_demo",
+      "role_code": "group_owner"
+    },
+    {
+      "username": "groupeditor_demo1",
+      "email": "groupeditor_demo1@example.com",
+      "status": "active",
+      "group_code": "group_demo",
+      "role_code": "group_editor"
+    },
+    {
+      "username": "uploader_demo1",
+      "email": "uploader_demo1@example.com",
+      "status": "active",
+      "group_code": "group_demo",
+      "role_code": "group_uploader"
     }
 ]

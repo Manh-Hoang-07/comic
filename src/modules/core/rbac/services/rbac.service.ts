@@ -33,14 +33,18 @@ export class RbacService {
   async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
     await this.ensurePermissionIndexes();
 
-    const [systemPerms, groupPerms] = await Promise.all([
-      this.getUserPermissions(userId, null),
-      groupId !== null ? this.getUserPermissions(userId, groupId) : null,
-    ]);
+    // Fast path: in group scope, evaluate group permissions first.
+    // Only fallback to system scope when group scope does not satisfy required permissions.
+    if (groupId !== null) {
+      const groupPerms = await this.getUserPermissions(userId, groupId);
+      for (const need of required) {
+        if (this.grants(groupPerms, need)) return true;
+      }
+    }
 
+    const systemPerms = await this.getUserPermissions(userId, null);
     for (const need of required) {
       if (this.grants(systemPerms, need)) return true;
-      if (groupPerms && this.grants(groupPerms, need)) return true;
     }
 
     return false;

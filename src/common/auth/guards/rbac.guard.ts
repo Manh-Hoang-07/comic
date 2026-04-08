@@ -12,6 +12,10 @@ export class RbacGuard implements CanActivate {
   constructor(private reflector: Reflector, private rbac: RbacService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const tracePath = (request?.originalUrl || request?.url || '').split('?')[0];
+    const traceStart = request?.method === 'GET' && tracePath.endsWith('/admin/users') ? Date.now() : 0;
+
     const permissions = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [context.getHandler(), context.getClass()]) || [];
     if (!permissions.length) throw new HttpException(ResponseUtil.forbidden('Access denied.'), 403);
     if (permissions.includes(PUBLIC_PERMISSION)) return true;
@@ -29,7 +33,12 @@ export class RbacGuard implements CanActivate {
     }
 
     const groupId = RequestContext.get<any>('groupId') ?? null;
-    if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) return true;
+    if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) {
+      if (traceStart) {
+        RequestContext.set('perf.guardMs', Date.now() - traceStart);
+      }
+      return true;
+    }
 
     const res = ResponseUtil.forbidden(`Access denied. Need: ${permissions.join(',')}`);
     throw new HttpException(res, res.httpStatus || 403);

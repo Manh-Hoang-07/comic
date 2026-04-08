@@ -69,44 +69,23 @@ export class UserService extends BaseService<any, UserRepository> {
 
   protected override async prepareFilters(filter: any) {
     const context = RequestContext.get<any>('context');
-    const ctxGroupId = RequestContext.get<any>('groupId');
-    // Debug cho route getList/getSimpleList: xem context/groupId và filter đầu vào.
-    // Ghi file riêng để bạn dễ mở và đối chiếu.
-    CustomLoggerService.write(
-      {
-        message: 'UserService.prepareFilters (admin/users)',
-        contextType: context?.type ?? null,
-        ctxGroupId: ctxGroupId ?? null,
-        incomingFilter: filter ?? null,
-      },
-      './logs/user-getlist-debug.log',
-    );
-
-    // System scope: giữ hành vi getGroupFilter ({}), super admin có thể lọc thêm ?groupId.
+  
     if (context?.type === 'system') {
-      const effective = { ...filter, ...getGroupFilter(filter) };
-      CustomLoggerService.write(
-        { message: 'UserService.prepareFilters effective (system)', effectiveFilter: effective },
-        './logs/user-getlist-debug.log',
-      );
-      return effective;
+      return { ...filter, ...getGroupFilter(filter) };
     }
 
-    // Non-system: danh sách user PHẢI gắn với group hiện tại (X-Group-Id).
-    // Không dùng ?groupId từ client — tránh lệch phạm vi với context.
-    if (!ctxGroupId) {
-      throw new ForbiddenException(
-        'Thiếu phạm vi nhóm. Gửi header X-Group-Id để lọc user theo nhóm; không thể liệt kê toàn hệ thống.',
-      );
-    }
+    const ctxGroupId = RequestContext.get<any>('groupId');
+    return { ...filter, groupId: ctxGroupId };
+  }
 
-    // Một key trên filter: groupId (DTO/query). Repository map sang cột `user_groups.group_id`.
-    const effective = { ...filter, groupId: ctxGroupId };
-    CustomLoggerService.write(
-      { message: 'UserService.prepareFilters effective (non-system)', effectiveFilter: effective },
-      './logs/user-getlist-debug.log',
-    );
-    return effective;
+  protected override async executeGetList(queryOrOptions: any = {}) {
+    const traceStart = this.getTraceStartIfEnabled();
+    const result = await super.executeGetList(queryOrOptions);
+    if (traceStart) {
+      RequestContext.set('perf.serviceMs', Date.now() - traceStart);
+      this.writePerfTrace();
+    }
+    return result;
   }
 
   override async getOne(id: any, options: any = {}) {
@@ -180,6 +159,33 @@ export class UserService extends BaseService<any, UserRepository> {
     if (!user) return user;
     const { password, ...u } = user;
     return u;
+  }
+
+  private getTraceStartIfEnabled(): number {
+    const path = (RequestContext.get<string>('url') || '').split('?')[0];
+    if (!path.endsWith('/admin/users')) return 0;
+    return Date.now();
+  }
+
+  private writePerfTrace(): void {
+    const t0 = RequestContext.get<number>('perf.t0') || Date.now();
+    const totalMs = Date.now() - t0;
+    const payload = {
+      message: 'admin-users perf',
+      requestId: RequestContext.get<string>('requestId') || null,
+      method: RequestContext.get<string>('method') || null,
+      url: RequestContext.get<string>('url') || null,
+      groupId: RequestContext.get<any>('groupId') ?? null,
+      contextType: RequestContext.get<any>('context')?.type ?? null,
+      totalMs,
+      breakdownMs: {
+        group: RequestContext.get<number>('perf.groupMs') ?? null,
+        guard: RequestContext.get<number>('perf.guardMs') ?? null,
+        service: RequestContext.get<number>('perf.serviceMs') ?? null,
+        repo: RequestContext.get<number>('perf.repoMs') ?? null,
+      },
+    };
+    CustomLoggerService.write(payload, './logs/admin-users-perf.log');
   }
 }
 

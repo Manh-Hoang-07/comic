@@ -128,6 +128,7 @@ model UserGroup {
   @@id([user_id, group_id])
   @@index([user_id], map: "user_groups_idx_user_groups_user_id")
   @@index([group_id], map: "user_groups_idx_user_groups_group_id")
+  @@index([group_id, user_id], map: "user_groups_idx_group_user")
   @@map("user_groups")
 }
 

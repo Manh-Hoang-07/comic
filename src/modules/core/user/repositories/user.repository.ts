@@ -3,6 +3,7 @@ import { User, Prisma, Profile } from '@prisma/client';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { PrismaRepository } from '@/common/core/repositories';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { RequestContext } from '@/common/shared/utils';
 
 export const USER_REPOSITORY = 'IUserRepository';
 
@@ -122,6 +123,17 @@ export class UserRepository extends PrismaRepository<
     }
 
     return where;
+  }
+
+  override async findAll(options: any): Promise<any> {
+    const path = (RequestContext.get<string>('url') || '').split('?')[0];
+    const traceStart = path.endsWith('/admin/users') ? Date.now() : 0;
+
+    const result = await super.findAll(options);
+    if (traceStart) {
+      RequestContext.set('perf.repoMs', Date.now() - traceStart);
+    }
+    return result;
   }
 
   // ── Authentication & Lookups ───────────────────────────────────────────────

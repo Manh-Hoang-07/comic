@@ -8,6 +8,9 @@ export interface IRoleHasPermissionRepository {
         where?: any;
         include?: any;
     }): Promise<RoleHasPermission[]>;
+
+    /** Fetch active permission codes for the provided role IDs (lightweight, no full relation payload). */
+    findActivePermissionCodesByRoleIds(roleIds: any[]): Promise<string[]>;
 }
 
 

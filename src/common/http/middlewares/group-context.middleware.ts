@@ -37,7 +37,7 @@ export class GroupContextMiddleware implements NestMiddleware {
       return next();
     }
 
-    const group = await this.groupService.getOne(headerGroupId).catch(() => null);
+    const group = await this.groupService.getContextSnapshot(headerGroupId).catch(() => null);
     if (!group) throw new BadRequestException('Group not found');
     if (!this.isActive(group)) {
       throw new BadRequestException('Group is inactive');

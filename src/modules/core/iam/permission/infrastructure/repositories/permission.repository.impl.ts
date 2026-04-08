@@ -62,6 +62,13 @@ export class PermissionRepositoryImpl extends PrismaRepository<
     async findByCode(code: string): Promise<Permission | null> {
         return this.findOne({ code });
     }
+
+    async findActiveForRbacIndex(): Promise<Pick<Permission, 'id' | 'code' | 'parent_id'>[]> {
+        return this.prisma.permission.findMany({
+            where: { status: 'active' as any },
+            select: { id: true, code: true, parent_id: true },
+        });
+    }
 }
 
 

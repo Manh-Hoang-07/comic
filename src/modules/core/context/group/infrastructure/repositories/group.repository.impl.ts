@@ -62,6 +62,26 @@ export class GroupRepositoryImpl extends PrismaRepository<
     async findActiveByIds(ids: any[]): Promise<Group[]> {
         return this.findMany({ ids, status: 'active' });
     }
+
+    async findByIdForContext(id: any): Promise<any | null> {
+        return this.prisma.group.findUnique({
+            where: { id: this.toPrimaryKey(id) },
+            select: {
+                id: true,
+                status: true,
+                context_id: true,
+                context: {
+                    select: {
+                        id: true,
+                        status: true,
+                        type: true,
+                        code: true,
+                        name: true,
+                    },
+                },
+            },
+        });
+    }
 }
 
 

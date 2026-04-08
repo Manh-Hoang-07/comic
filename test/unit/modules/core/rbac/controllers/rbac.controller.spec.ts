@@ -37,9 +37,12 @@ describe('RbacController', () => {
         });
 
         it('should call syncRolesInGroup with correct params', async () => {
-            jest.spyOn(RequestContext, 'get').mockReturnValue(123); // Mock groupId
+            jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
+                if (key === 'groupId') return 123;
+                if (key === 'context') return { type: 'system' };
+                return null;
+            });
             jest.spyOn(Auth, 'id').mockReturnValue(1);
-            service.userHasPermissionsInGroup.mockResolvedValue(true); // isSystemAdmin
 
             await controller.syncRoles(5, { role_ids: [10, 20] });
 

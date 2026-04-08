@@ -14,6 +14,8 @@ export interface PermissionFilter {
 
 export interface IPermissionRepository extends IRepository<Permission> {
     findByCode(code: string): Promise<Permission | null>;
+    /** Lightweight fetch for RBAC indexing (no relations). */
+    findActiveForRbacIndex(): Promise<Pick<Permission, 'id' | 'code' | 'parent_id'>[]>;
 }
 
 

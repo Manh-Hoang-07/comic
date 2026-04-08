@@ -17,6 +17,7 @@ export interface GroupFilter {
 export interface IGroupRepository extends IRepository<Group> {
     findByCode(code: string): Promise<Group | null>;
     findActiveByIds(ids: any[]): Promise<Group[]>;
+    findByIdForContext(id: any): Promise<any | null>;
 }
 
 

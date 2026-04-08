@@ -1,12 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
 import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
-import { IRoleHasPermissionRepository, ROLE_HAS_PERMISSION_REPOSITORY } from '@/modules/core/rbac/role-has-permission/domain/role-has-permission.repository';
 import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { PERM } from '@/modules/core/rbac/rbac.constants';
+import { IPermissionRepository, PERMISSION_REPOSITORY } from '@/modules/core/iam/permission/domain/permission.repository';
 
 /**
  * Service quản lý RBAC (Role-Based Access Control)
@@ -15,20 +14,37 @@ import { PERM } from '@/modules/core/rbac/rbac.constants';
  * Khi check route: đủ nếu user có đúng mã đó hoặc có bất kỳ quyền cha nào trên cây parent_id.
  */
 @Injectable()
-export class RbacService {
+export class RbacService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(USER_ROLE_ASSIGNMENT_REPOSITORY) private readonly assignmentRepo: IUserRoleAssignmentRepository,
-    @Inject(ROLE_HAS_PERMISSION_REPOSITORY) private readonly roleHasPermRepo: IRoleHasPermissionRepository,
     @Inject(ROLE_CONTEXT_REPOSITORY) private readonly roleContextRepo: IRoleContextRepository,
     @Inject(GROUP_REPOSITORY) private readonly groupRepo: IGroupRepository,
+    @Inject(PERMISSION_REPOSITORY) private readonly permissionRepo: IPermissionRepository,
     private readonly rbacCache: RbacCacheService,
-    private readonly prisma: PrismaService,
   ) { }
 
-  private permissionByIdCache = new Map<string, any>();
-  private permissionByCodeCache = new Map<string, any>();
-  private lastPermFetch = 0;
-  private readonly PERM_CACHE_TTL = 300000; // 5 minutes
+  private permissionById = new Map<string, { id: any; code: string; parent_id: any | null }>();
+  private permissionByCode = new Map<string, { id: any; code: string; parent_id: any | null }>();
+  private lastPermFetchMs = 0;
+  private readonly permIndexTtlMs = 5 * 60 * 1000;
+  private readonly prewarmIntervalMs = 4 * 60 * 1000;
+  private permissionIndexRefreshInFlight: Promise<void> | null = null;
+  private readonly refreshInFlight = new Map<string, Promise<Set<string>>>();
+  private prewarmTimer: NodeJS.Timeout | null = null;
+
+  async onModuleInit(): Promise<void> {
+    await this.ensurePermissionIndexes().catch(() => undefined);
+    this.prewarmTimer = setInterval(() => {
+      void this.ensurePermissionIndexes().catch(() => undefined);
+    }, this.prewarmIntervalMs);
+  }
+
+  onModuleDestroy(): void {
+    if (this.prewarmTimer) {
+      clearInterval(this.prewarmTimer);
+      this.prewarmTimer = null;
+    }
+  }
 
   async userHasPermissionsInGroup(userId: any, groupId: any | null, required: string[]): Promise<boolean> {
     await this.ensurePermissionIndexes();
@@ -51,28 +67,34 @@ export class RbacService {
   }
 
   async getUserPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
-    if (!(await this.rbacCache.isCached(userId, groupId))) {
-      await this.refreshUserPermissions(userId, groupId);
+    const read = await this.rbacCache.getPermissions(userId, groupId);
+    if (read.cached) {
+      return read.permissions;
     }
-
-    return this.rbacCache.getPermissions(userId, groupId);
+    return this.refreshUserPermissions(userId, groupId);
   }
 
-  async refreshUserPermissions(userId: any, groupId: any | null): Promise<void> {
-    const assignments = await this.prisma.userRoleAssignment.findMany({
-      where: {
-        user_id: toPrimaryKey(userId),
-        role: { status: 'active' },
-        ...(groupId === null
-          ? { group: { code: 'system' } }
-          : { group_id: toPrimaryKey(groupId) }),
-      },
-      select: { role_id: true }
-    });
-    const roleIds = Array.from(new Set(assignments.map(a => a.role_id)));
+  async refreshUserPermissions(userId: any, groupId: any | null): Promise<Set<string>> {
+    const key = `${toPrimaryKey(userId)}:${groupId === null ? 'system' : toPrimaryKey(groupId)}`;
+    const pending = this.refreshInFlight.get(key);
+    if (pending) {
+      await pending;
+      return (await this.rbacCache.getPermissions(userId, groupId)).permissions;
+    }
 
-    const permissions = roleIds.length ? await this.getDirectPermissionCodes(roleIds) : new Set<string>();
-    await this.rbacCache.setPermissions(userId, groupId, Array.from(permissions));
+    const refreshPromise = (async () => {
+      const codes = await this.assignmentRepo.findActivePermissionCodes(userId, groupId);
+      const set = new Set(codes);
+      await this.rbacCache.setPermissions(userId, groupId, [...set]);
+      return set;
+    })();
+
+    this.refreshInFlight.set(key, refreshPromise);
+    try {
+      return await refreshPromise;
+    } finally {
+      this.refreshInFlight.delete(key);
+    }
   }
 
   async assignRoleToUser(userId: any, roleId: any, groupId: any): Promise<void> {
@@ -95,40 +117,7 @@ export class RbacService {
       await this.validateRolesForContext(roleIds, (group as any).context_id);
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      if (roleIds.length > 0) {
-        const userIdPk = toPrimaryKey(userId);
-        const groupIdPk = toPrimaryKey(groupId);
-        await tx.userGroup.upsert({
-          where: {
-            user_id_group_id: {
-              user_id: userIdPk,
-              group_id: groupIdPk,
-            },
-          },
-          create: {
-            user_id: userIdPk,
-            group_id: groupIdPk,
-            joined_at: new Date(),
-          },
-          update: {},
-        });
-      }
-
-      await tx.userRoleAssignment.deleteMany({
-        where: { user_id: toPrimaryKey(userId), group_id: toPrimaryKey(groupId) }
-      });
-
-      if (roleIds.length) {
-        await tx.userRoleAssignment.createMany({
-          data: roleIds.map(id => ({
-            user_id: toPrimaryKey(userId),
-            role_id: toPrimaryKey(id),
-            group_id: toPrimaryKey(groupId)
-          }))
-        });
-      }
-    });
+    await this.assignmentRepo.syncRolesInGroup(userId, groupId, roleIds);
 
     await this.refreshUserPermissions(userId, groupId);
   }
@@ -150,11 +139,30 @@ export class RbacService {
   }
 
   private async ensurePermissionIndexes(): Promise<void> {
-    if (Date.now() - this.lastPermFetch > this.PERM_CACHE_TTL || this.permissionByIdCache.size === 0) {
-      const all = await this.prisma.permission.findMany({ where: { status: 'active' as any } });
-      this.permissionByIdCache = new Map(all.map((p) => [String(p.id), p]));
-      this.permissionByCodeCache = new Map(all.map((p) => [p.code, p]));
-      this.lastPermFetch = Date.now();
+    if (this.permissionById.size > 0 && Date.now() - this.lastPermFetchMs <= this.permIndexTtlMs) return;
+
+    if (this.permissionIndexRefreshInFlight) {
+      await this.permissionIndexRefreshInFlight;
+      return;
+    }
+
+    this.permissionIndexRefreshInFlight = (async () => {
+      const all = await this.permissionRepo.findActiveForRbacIndex();
+      const byId = new Map<string, any>();
+      const byCode = new Map<string, any>();
+      for (const p of all as any[]) {
+        byId.set(String(p.id), p);
+        if (p.code) byCode.set(p.code, p);
+      }
+      this.permissionById = byId;
+      this.permissionByCode = byCode;
+      this.lastPermFetchMs = Date.now();
+    })();
+
+    try {
+      await this.permissionIndexRefreshInFlight;
+    } finally {
+      this.permissionIndexRefreshInFlight = null;
     }
   }
 
@@ -174,31 +182,14 @@ export class RbacService {
   /** User có mã `need` hoặc có quyền cha (theo parent_id) của `need`. */
   private grants(assignedCodes: Set<string>, need: string): boolean {
     if (assignedCodes.has(PERM.SYSTEM.MANAGE)) return true;
-
     if (assignedCodes.has(need)) return true;
 
-    let cur = this.permissionByCodeCache.get(need) as any;
-    while (cur?.parent_id) {
-      const parent = this.permissionByIdCache.get(String(cur.parent_id)) as any;
+    for (let cur = this.permissionByCode.get(need) as any; cur?.parent_id;) {
+      const parent = this.permissionById.get(String(cur.parent_id)) as any;
       if (!parent) break;
       if (parent.code && assignedCodes.has(parent.code)) return true;
       cur = parent;
     }
     return false;
-  }
-
-  /** Chỉ mã quyền gán trực tiếp trên role (không suy diễn lên/xuống cây). */
-  private async getDirectPermissionCodes(roleIds: any[]): Promise<Set<string>> {
-    const links = await this.roleHasPermRepo.findMany({
-      where: { role_id: { in: roleIds } },
-      include: { permission: true },
-    });
-
-    const result = new Set<string>();
-    for (const l of links) {
-      const p = (l as any).permission;
-      if (p?.status === 'active' && p.code) result.add(p.code);
-    }
-    return result;
   }
 }

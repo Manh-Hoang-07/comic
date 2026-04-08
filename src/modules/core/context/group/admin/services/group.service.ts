@@ -8,6 +8,7 @@ import { GroupActionService } from './group-action.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 import { RedisUtil } from '@/core/utils/redis.util';
+import { IPaginationOptions } from '@/common/core/repositories/repository.interface';
 
 @Injectable()
 export class AdminGroupService extends BaseService<any, IGroupRepository> {
@@ -26,27 +27,46 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
   protected defaultSort = 'id:desc';
 
   // ── Operations ─────────────────────────────────────────────────────────────
+  /**
+   * Lightweight snapshot cho middleware (group + context tối thiểu).
+   * Tách riêng để middleware không phụ thuộc overload của `getOne`.
+   */
+  async getContextSnapshot(id: any): Promise<any> {
+    return this.getOne(id, 'context');
+  }
 
-  async getOne(id: any): Promise<any> {
-    const cacheKey = `ctx:group:${id}`;
-    
-    // 1. Check Redis cache
-    const cached = await this.redis.get(cacheKey);
-    if (cached) {
-      try {
-        return JSON.parse(cached);
-      } catch (e) {}
+  /**
+   * Override để vẫn tương thích signature `BaseService.getOne(id, _options?: IPaginationOptions)`
+   * nhưng bổ sung mode `'context' | 'full'` cho use-cases nội bộ.
+   */
+  async getOne(id: any, optionsOrMode: IPaginationOptions | 'full' | 'context' = {}): Promise<any> {
+    const mode: 'full' | 'context' =
+      optionsOrMode === 'context' || optionsOrMode === 'full' ? optionsOrMode : 'full';
+
+    if (mode === 'context') {
+      const cacheKey = `ctx:group:snapshot:${id}`;
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        try { return JSON.parse(cached); } catch { }
+      }
+
+      const group = await this.groupRepo.findByIdForContext(id);
+      if (!group) throw new NotFoundException(`Group with ID ${id} not found`);
+      await this.redis.set(cacheKey, JSON.stringify(group), 300);
+      return group;
     }
 
-    // 2. Load from DB
+    const cacheKey = `ctx:group:${id}`;
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) { }
+    }
+
     const entity = await this.groupRepo.findById(id);
     if (!entity) throw new NotFoundException(`Group with ID ${id} not found`);
 
     const transformed = this.transform(entity);
-    
-    // 3. Cache for 5 minutes (300s)
     await this.redis.set(cacheKey, JSON.stringify(transformed), 300);
-    
     return transformed;
   }
 

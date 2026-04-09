@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, HttpException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, HttpException, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
@@ -9,9 +9,12 @@ import { RbacPermission } from '@/modules/core/rbac/rbac.constants';
 
 @Injectable()
 export class RbacGuard implements CanActivate {
+  private readonly logger = new Logger(RbacGuard.name);
+
   constructor(private reflector: Reflector, private rbac: RbacService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const startedAt = Date.now();
     const permissions = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [context.getHandler(), context.getClass()]) || [];
     if (!permissions.length) throw new HttpException(ResponseUtil.forbidden('Access denied.'), 403);
     if (permissions.includes(PUBLIC_PERMISSION)) return true;
@@ -29,9 +32,13 @@ export class RbacGuard implements CanActivate {
     }
 
     const groupId = RequestContext.get<any>('groupId') ?? null;
-    if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) return true;
+    if (await this.rbac.userHasPermissionsInGroup(userId, groupId, permissions)) {
+      this.logger.log(`[RBAC_PROFILE] guard user=${userId} group=${groupId ?? 'system'} required=${permissions.length} total=${Date.now() - startedAt}ms allowed=true`);
+      return true;
+    }
 
     const res = ResponseUtil.forbidden(`Access denied. Need: ${permissions.join(',')}`);
+    this.logger.log(`[RBAC_PROFILE] guard user=${userId} group=${groupId ?? 'system'} required=${permissions.length} total=${Date.now() - startedAt}ms allowed=false`);
     throw new HttpException(res, res.httpStatus || 403);
   }
 }

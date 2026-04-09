@@ -20,6 +20,8 @@ export class GroupContextMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, _res: Response, next: NextFunction) {
+    const requiresStrictGroupContext = this.isAdminPath(req);
+
     const headerGroupId = this.extractGroupId(req);
 
     if (!headerGroupId) {
@@ -38,16 +40,34 @@ export class GroupContextMiddleware implements NestMiddleware {
     }
 
     const group = await this.groupService.getContextSnapshot(headerGroupId).catch(() => null);
-    if (!group) throw new BadRequestException('Group not found');
+    if (!group) {
+      if (requiresStrictGroupContext) throw new BadRequestException('Group not found');
+      RequestContext.set('groupId', null);
+      RequestContext.set('context', null);
+      RequestContext.set('contextId', null);
+      return next();
+    }
     if (!this.isActive(group)) {
-      throw new BadRequestException('Group is inactive');
+      if (requiresStrictGroupContext) throw new BadRequestException('Group is inactive');
+      RequestContext.set('groupId', null);
+      RequestContext.set('context', null);
+      RequestContext.set('contextId', null);
+      return next();
     }
     if (!group.context || !this.isActive(group.context)) {
-      throw new BadRequestException('Context is missing or inactive');
+      if (requiresStrictGroupContext) throw new BadRequestException('Context is missing or inactive');
+      RequestContext.set('groupId', null);
+      RequestContext.set('context', null);
+      RequestContext.set('contextId', null);
+      return next();
     }
     const contextId = group.context?.id ?? group.context_id ?? null;
     if (!contextId) {
-      throw new BadRequestException('Context is invalid');
+      if (requiresStrictGroupContext) throw new BadRequestException('Context is invalid');
+      RequestContext.set('groupId', null);
+      RequestContext.set('context', null);
+      RequestContext.set('contextId', null);
+      return next();
     }
 
     const cacheValue: CachedGroupContext = {
@@ -78,5 +98,12 @@ export class GroupContextMiddleware implements NestMiddleware {
 
   private isActive(entity: any): boolean {
     return (entity?.status ?? 'active') === 'active';
+  }
+
+  private isAdminPath(req: Request): boolean {
+    const rawPath = (req.path || req.originalUrl || '').split('?')[0] || '';
+    if (!rawPath) return false;
+    const normalizedPath = rawPath.startsWith('/api') ? rawPath.slice(4) || '/' : rawPath;
+    return normalizedPath === '/admin' || normalizedPath.startsWith('/admin/');
   }
 }

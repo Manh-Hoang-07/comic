@@ -11,15 +11,17 @@ describe('RbacCacheService', () => {
     beforeEach(async () => {
         redisUtil = {
             isEnabled: jest.fn().mockReturnValue(true),
-            sismember: jest.fn(),
-            smembers: jest.fn(),
+            get: jest.fn(),
+            set: jest.fn(),
             del: jest.fn(),
-            sadd: jest.fn(),
             publish: jest.fn(),
             trackKey: jest.fn(),
             getTrackedKeys: jest.fn(),
             clearTrackedKeys: jest.fn(),
             subscribe: jest.fn(),
+            hgetall: jest.fn().mockResolvedValue({ version: '1' }),
+            exists: jest.fn(),
+            hincrby: jest.fn(),
         };
 
         configService = {
@@ -45,41 +47,38 @@ describe('RbacCacheService', () => {
 
     describe('hasPermission', () => {
         it('should check L1 cache first', async () => {
-            const key = 'rbac:u:1:g:10';
+            const key = 'rbac:v1:u:1:g:10';
             // @ts-ignore: populate L1
-            service.l1Cache.set(key, { data: new Set(['perm1']), expiry: Date.now() + 10000 });
+            service.l1Cache.set(key, { data: new Uint8Array([255]), expiry: Date.now() + 10000 });
 
             const result = await service.hasPermission(1, 10, 'perm1');
-            expect(result).toBe(true);
-            expect(redisUtil.sismember).not.toHaveBeenCalled();
+            // Legacy API is conservative in v2 (no DenseIndex mapping here).
+            expect(result).toBe(false);
+            expect(redisUtil.get).not.toHaveBeenCalled();
         });
 
         it('should fallback to L2 (Redis) and load to L1', async () => {
-            redisUtil.sismember.mockResolvedValue(1);
-            redisUtil.smembers.mockResolvedValue(['perm1', 'perm2']);
+            redisUtil.get.mockResolvedValue('b64:v1:');
 
             const result = await service.hasPermission(1, 10, 'perm1');
-            expect(result).toBe(true);
-            expect(redisUtil.sismember).toHaveBeenCalled();
-            expect(redisUtil.smembers).toHaveBeenCalled();
+            expect(result).toBe(false);
+            expect(redisUtil.get).toHaveBeenCalled();
 
             // Check if loaded to L1
             // @ts-ignore
-            expect(service.l1Cache.has('rbac:u:1:g:10')).toBe(true);
+            expect(service.l1Cache.has('rbac:v1:u:1:g:10')).toBe(true);
         });
     });
 
     describe('setPermissions', () => {
         it('should update Redis and publish invalidation', async () => {
-            redisUtil.client = { expire: jest.fn() };
-            await service.setPermissions(1, 10, ['p1', 'p2']);
+            await service.setPermissions(1, 10, new Uint8Array([1, 2, 3]));
 
-            expect(redisUtil.del).toHaveBeenCalledWith('rbac:u:1:g:10');
-            expect(redisUtil.sadd).toHaveBeenCalledWith('rbac:u:1:g:10', 'p1', 'p2');
-            expect(redisUtil.trackKey).toHaveBeenCalledWith(1, 'rbac:u:1:g:10');
+            expect(redisUtil.set).toHaveBeenCalledWith('rbac:v1:u:1:g:10', expect.stringContaining('b64:v1:'), 3600);
+            expect(redisUtil.trackKey).toHaveBeenCalledWith(1, 'rbac:v1:u:1:g:10');
             expect(redisUtil.publish).toHaveBeenCalled();
             // @ts-ignore: check L1 cleared
-            expect(service.l1Cache.has('rbac:u:1:g:10')).toBe(false);
+            expect(service.l1Cache.has('rbac:v1:u:1:g:10')).toBe(false);
         });
     });
 

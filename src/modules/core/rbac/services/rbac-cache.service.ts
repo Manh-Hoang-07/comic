@@ -6,15 +6,16 @@ import { RedisUtil } from '@/core/utils/redis.util';
 export class RbacCacheService implements OnModuleInit {
   private readonly ttlSeconds: number;
   private readonly invalidationChannel = 'rbac:invalidation';
-  private readonly emptyPermissionSentinel = '__rbac_empty__';
+  private readonly permIndexRefreshChannel = 'rbac:perm_index_refresh';
   private readonly versionKey = 'rbac:meta';
   private readonly versionField = 'version';
   private version = 1;
   private versionLastFetch = 0;
   private readonly versionTtlMs = 30000;
   // L1 Cache (In-Memory)
-  private l1Cache = new Map<string, { data: Set<string>; expiry: number }>();
+  private l1Cache = new Map<string, { data: Uint8Array; expiry: number }>();
   private readonly l1TtlMs = 30000;
+  private readonly blobPrefix = 'b64:v1:';
 
   constructor(
     private readonly redis: RedisUtil,
@@ -54,7 +55,7 @@ export class RbacCacheService implements OnModuleInit {
 
   private async buildCacheKey(userId: any, groupId: any | null): Promise<string> {
     const v = await this.ensureVersion();
-    return groupId === null ? `rbac:v${v}:u:${userId}:system` : `rbac:v${v}:u:${userId}:g:${groupId}`;
+    return groupId === null ? `rbac:v${v}:u:${userId}:g:system` : `rbac:v${v}:u:${userId}:g:${groupId}`;
   }
 
   private clearL1ByUser(userId: any) {
@@ -64,75 +65,56 @@ export class RbacCacheService implements OnModuleInit {
 
   /**
    * Backward-compatible API for unit tests / older callers.
-   * Checks L1 first; on L2 hit, warms L1 via `smembers` (single fetch for later checks).
+   * Prefer using `RbacService` for permission checks.
    */
   async hasPermission(userId: any, groupId: any | null, permission: string): Promise<boolean> {
-    const key = await this.buildCacheKey(userId, groupId);
-
-    const l1 = this.l1Cache.get(key);
-    if (l1 && l1.expiry > Date.now()) return l1.data.has(permission);
-
-    if (!this.redis.isEnabled()) return false;
-
-    const isMember = await this.redis.sismember(key, permission);
-    if (!isMember) return false;
-
-    const permissions = await this.redis.smembers(key);
-    const data = new Set(permissions.filter((p) => p !== this.emptyPermissionSentinel));
-    this.l1Cache.set(key, { data, expiry: Date.now() + this.l1TtlMs });
-    return data.has(permission);
+    const read = await this.getPermissions(userId, groupId);
+    if (!read.cached) return false;
+    return this.hasCodeBit(read.bitmap, permission);
   }
 
   /**
-   * Đọc permissions từ cache theo single-read.
+   * Đọc AssignedPermissionsBitmap từ cache theo single-read.
    *
-   * - `cached=true`: key tồn tại (kể cả empty sentinel)
+   * - `cached=true`: key tồn tại (kể cả empty bitmap)
    * - `cached=false`: key chưa tồn tại, caller có thể refresh từ DB
    */
   async getPermissions(
     userId: any,
     groupId: any | null,
-  ): Promise<{ permissions: Set<string>; cached: boolean }> {
+  ): Promise<{ bitmap: Uint8Array; cached: boolean }> {
     const key = await this.buildCacheKey(userId, groupId);
 
     const l1 = this.l1Cache.get(key);
     if (l1 && l1.expiry > Date.now()) {
-      return { permissions: l1.data, cached: true };
+      return { bitmap: l1.data, cached: true };
     }
 
     if (!this.redis.isEnabled()) {
-      return { permissions: new Set(), cached: false };
+      return { bitmap: new Uint8Array(), cached: false };
     }
 
-    const permissions = await this.redis.smembers(key);
-    if (permissions.length > 0) {
-      const data = new Set(permissions.filter((p) => p !== this.emptyPermissionSentinel));
+    const raw = await this.redis.get(key);
+    if (raw) {
+      const data = this.decodeBlob(raw);
       this.l1Cache.set(key, { data, expiry: Date.now() + this.l1TtlMs });
-      return { permissions: data, cached: true };
+      return { bitmap: data, cached: true };
     }
 
-    return { permissions: new Set(), cached: false };
+    return { bitmap: new Uint8Array(), cached: false };
   }
 
-  async setPermissions(userId: any, groupId: any | null, permissions: string[]) {
+  async setPermissions(userId: any, groupId: any | null, bitmap: Uint8Array) {
     const key = await this.buildCacheKey(userId, groupId);
 
-    // Backward-compat with existing tests: after set we clear L1,
-    // so next read reflects L2 and follows invalidation flow.
     this.l1Cache.delete(key);
 
     if (!this.redis.isEnabled()) {
       return;
     }
 
-    await this.redis.del(key);
-    if (permissions.length > 0) {
-      await this.redis.sadd(key, ...permissions);
-    } else {
-      // Persist empty permission sets to avoid repeated DB refresh on every request.
-      await this.redis.sadd(key, this.emptyPermissionSentinel);
-    }
-    await this.redis.expire(key, this.ttlSeconds);
+    const value = this.encodeBlob(bitmap);
+    await this.redis.set(key, value, this.ttlSeconds);
     await this.redis.trackKey(Number(userId), key);
 
     await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'specific_key', key, version: this.version }));
@@ -174,7 +156,38 @@ export class RbacCacheService implements OnModuleInit {
       this.version = Number(next) > 0 ? Number(next) : (this.version + 1);
       this.versionLastFetch = Date.now();
       await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'clear_all', version: this.version }));
+      // PermissionIndex should refresh across instances on global RBAC changes.
+      await this.redis.publish(this.permIndexRefreshChannel, JSON.stringify({ type: 'perm_index_refresh', version: this.version }));
     }
+  }
+
+  private encodeBlob(bitmap: Uint8Array): string {
+    if (!bitmap || bitmap.length === 0) return this.blobPrefix;
+    const b64 = Buffer.from(bitmap).toString('base64');
+    return `${this.blobPrefix}${b64}`;
+  }
+
+  private decodeBlob(raw: string): Uint8Array {
+    if (!raw) return new Uint8Array();
+    if (!raw.startsWith(this.blobPrefix)) {
+      // Backward-compat: unknown format => treat as empty.
+      return new Uint8Array();
+    }
+    const b64 = raw.slice(this.blobPrefix.length);
+    if (!b64) return new Uint8Array();
+    try {
+      return new Uint8Array(Buffer.from(b64, 'base64'));
+    } catch {
+      return new Uint8Array();
+    }
+  }
+
+  // Legacy helper: exact bit check for `hasPermission`.
+  // Note: this is NOT used by RbacService's inheritance logic.
+  private hasCodeBit(_bitmap: Uint8Array, _code: string): boolean {
+    // Without DenseIndex we can't map code->bit here.
+    // Keep legacy API conservative.
+    return false;
   }
 }
 

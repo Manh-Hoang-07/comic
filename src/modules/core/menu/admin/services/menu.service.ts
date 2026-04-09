@@ -91,7 +91,7 @@ export class MenuService extends BaseService<any, IMenuRepository> {
       await this.rbacService.preparePermissionCheck();
       const userPerms = await this.rbacService.getUserPermissions(userId, groupId ?? null);
       filtered = filterAdminMenus(menus, userPerms, (assigned, code) =>
-        this.rbacService.matchesAssigned(assigned, code),
+        this.rbacService.matchesAssignedBitmap(assigned, code),
       );
     }
 

@@ -71,8 +71,8 @@ export function filterClientMenus(menus: any[], userId?: any): any[] {
  */
 export function filterAdminMenus(
     menus: any[],
-    userPerms: Set<string>,
-    matches: (assigned: Set<string>, requiredCode: string) => boolean = (a, c) => a.has(c),
+    userPerms: Uint8Array,
+    matches: (assigned: Uint8Array, requiredCode: string) => boolean = () => false,
 ): any[] {
     return menus.filter((menu) => {
         // Public menus are always shown

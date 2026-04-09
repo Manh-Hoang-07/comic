@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
@@ -7,8 +7,6 @@ import { RbacId } from '@/modules/core/rbac/rbac.types';
 
 @Injectable()
 export class RbacRoleAssignmentService {
-  private readonly logger = new Logger(RbacRoleAssignmentService.name);
-
   constructor(
     @Inject(USER_ROLE_ASSIGNMENT_REPOSITORY) private readonly assignmentRepo: IUserRoleAssignmentRepository,
     @Inject(ROLE_CONTEXT_REPOSITORY) private readonly roleContextRepo: IRoleContextRepository,
@@ -44,12 +42,7 @@ export class RbacRoleAssignmentService {
   }
 
   async getActivePermissionCodes(userId: RbacId, groupId: RbacId | null): Promise<string[]> {
-    const startedAt = Date.now();
-    const codes = await this.assignmentRepo.findActivePermissionCodes(userId, groupId);
-    this.logger.log(
-      `[RBAC_PROFILE] assignmentRepo.findActivePermissionCodes user=${toPrimaryKey(userId)} group=${groupId === null ? 'system' : toPrimaryKey(groupId)} size=${codes.length} total=${Date.now() - startedAt}ms`,
-    );
-    return codes;
+    return await this.assignmentRepo.findActivePermissionCodes(userId, groupId);
   }
 
   private async validateRolesForContext(roleIds: RbacId[], contextId: RbacId): Promise<void> {

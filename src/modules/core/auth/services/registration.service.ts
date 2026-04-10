@@ -3,7 +3,7 @@ import * as bcrypt from 'bcryptjs';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { ConfigService } from '@nestjs/config';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import { RegisterDto } from '../dto/register.dto';
 import { AuthOtpService } from './auth-otp.service';

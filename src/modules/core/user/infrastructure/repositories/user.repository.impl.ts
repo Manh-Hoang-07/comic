@@ -1,34 +1,30 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { User, Prisma, Profile } from '@prisma/client';
+import { User, Prisma } from '@prisma/client';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { PrismaRepository } from '@/common/core/repositories';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-
-export const USER_REPOSITORY = 'IUserRepository';
-
-export type IUserRepository = UserRepository;
-
-export interface UserFilter {
-  search?: string;
-  email?: string;
-  phone?: string;
-  username?: string;
-  status?: string;
-  groupId?: any;
-  NOT?: any;
-}
+import { IUserRepository, UserFilter } from '../../domain/user.repository';
 
 @Injectable()
-export class UserRepository extends PrismaRepository<
+export class UserRepositoryImpl extends PrismaRepository<
   User,
   Prisma.UserWhereInput,
   Prisma.UserCreateInput,
   Prisma.UserUpdateInput,
   Prisma.UserOrderByWithRelationInput
-> {
+> implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {
     super(prisma.user as any);
     this.defaultSelect = {
+      id: true,
+      email: true,
+      phone: true,
+      username: true,
+      name: true,
+      image: true,
+      status: true,
+    };
+    this.defaultDetailSelect = {
       id: true,
       email: true,
       phone: true,
@@ -43,29 +39,6 @@ export class UserRepository extends PrismaRepository<
     };
   }
 
-  // ── Query Operations ───────────────────────────────────────────────────────
-
-  /**
-   * Performance override: List view (findAll) and detail view (findById) 
-   * only fetch basic info + profile by default.
-   */
-  override async findById(id: any): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { id: toPrimaryKey(id) },
-      select: {
-        ...this.defaultSelect,
-      } as any,
-    }) as any;
-  }
-
-  async findByIdWithBasicInfo(id: any): Promise<User | null> {
-    return this.findById(id);
-  }
-
-  /**
-   * Fetch explicit role and group assignments for a user.
-   * This is separated for performance optimization.
-   */
   async findAssignments(userId: any, groupIds?: any[]) {
     const where: Prisma.UserRoleAssignmentWhereInput = {
       user_id: toPrimaryKey(userId),
@@ -86,16 +59,10 @@ export class UserRepository extends PrismaRepository<
     });
   }
 
-  // ── Query Building ─────────────────────────────────────────────────────────
-
   protected buildWhere(filter: UserFilter): Prisma.UserWhereInput {
     const where: Prisma.UserWhereInput = {};
 
     if (filter.search) {
-      /**
-       * Performance note: 'startsWith' thường tận dụng được index (index-friendly) 
-       * tốt hơn 'contains' trên các cột có index như email, username, phone.
-       */
       where.OR = [
         { email: { startsWith: filter.search } },
         { username: { startsWith: filter.search } },
@@ -123,8 +90,6 @@ export class UserRepository extends PrismaRepository<
 
     return where;
   }
-
-  // ── Authentication & Lookups ───────────────────────────────────────────────
 
   async findByEmail(email: string): Promise<User | null> {
     return this.findOne({ email });
@@ -154,19 +119,6 @@ export class UserRepository extends PrismaRepository<
     await this.update(userId, { last_login_at: new Date() });
   }
 
-  // ── Validation Helpers ─────────────────────────────────────────────────────
-
-  async checkUnique(field: 'email' | 'phone' | 'username', value: string, excludeUserId?: any): Promise<boolean> {
-    const filter: Record<string, any> = { [field]: value };
-    if (excludeUserId) {
-      filter.NOT = { id: toPrimaryKey(excludeUserId) };
-    }
-    return !(await this.exists(filter));
-  }
-
-  /**
-   * Performance: Kiểm tra đồng thời nhiều trường duy nhất trong một query.
-   */
   async checkMultipleUniques(payload: { email?: string; phone?: string; username?: string }, excludeId?: any): Promise<void> {
     const orConditions = [];
     if (payload.email) orConditions.push({ email: payload.email });
@@ -190,42 +142,4 @@ export class UserRepository extends PrismaRepository<
     }
   }
 
-  // ── Profile Operations ─────────────────────────────────────────────────────
-
-  /**
-   * Chuẩn hóa dữ liệu hồ sơ để phù hợp với kiểu dữ liệu của Prisma (Date, BigInt).
-   */
-  prepareProfileData(data: any) {
-    const validFields = [
-      'birthday', 'gender', 'address', 'about',
-      'country_id', 'province_id', 'ward_id',
-      'created_user_id', 'updated_user_id',
-    ];
-    
-    const result: any = {};
-    for (const field of validFields) {
-      if (data[field] !== undefined) {
-        let value = data[field];
-        if (field === 'birthday' && value) {
-          const date = new Date(value);
-          value = isNaN(date.getTime()) ? null : date;
-        } else if (['country_id', 'province_id', 'ward_id'].includes(field)) {
-          value = value ? toPrimaryKey(value) : null;
-        }
-        result[field] = value;
-      }
-    }
-    return result;
-  }
-
-  async upsertProfile(userId: any, data: any): Promise<Profile> {
-    const pk = toPrimaryKey(userId);
-    const profileData = this.prepareProfileData(data);
-
-    return this.prisma.profile.upsert({
-      where: { user_id: pk },
-      create: { ...profileData, user_id: pk },
-      update: profileData,
-    });
-  }
 }

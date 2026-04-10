@@ -1,5 +1,5 @@
 import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import { TokenService } from './token.service';
 import { RedisUtil } from '@/core/utils/redis.util';

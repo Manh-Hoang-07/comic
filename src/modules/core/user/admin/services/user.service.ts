@@ -1,18 +1,19 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, Inject } from '@nestjs/common';
 import { BaseService } from '@/common/core/services';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { RequestContext } from '@/common/shared/utils';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { UserRepository } from '@/modules/core/user/repositories/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { PasswordService } from './password.service';
 import { RelationService } from './relation.service';
 
 @Injectable()
-export class UserService extends BaseService<any, UserRepository> {
+export class UserService extends BaseService<any, IUserRepository> {
   constructor(
-    private readonly userRepo: UserRepository,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepo: IUserRepository,
     private readonly passwordService: PasswordService,
     private readonly actionService: RelationService,
   ) {
@@ -54,14 +55,31 @@ export class UserService extends BaseService<any, UserRepository> {
       : (Array.isArray(groupIds) ? groupIds : undefined);
 
     const assignments = await this.userRepo.findAssignments(id, ids);
-    return assignments.map((assignment: any) => ({
-      group_id: assignment.group_id,
-      role_id: assignment.role_id,
-      group_code: assignment.group?.code,
-      group_name: assignment.group?.name,
-      role_code: assignment.role?.code,
-      role_name: assignment.role?.name,
-    }));
+    const grouped = new Map<any, any>();
+
+    for (const assignment of assignments) {
+      const groupId = assignment.group_id;
+      if (!grouped.has(groupId)) {
+        grouped.set(groupId, {
+          group_id: groupId,
+          group_code: assignment.group?.code,
+          group_name: assignment.group?.name,
+          roles: [],
+        });
+      }
+
+      const groupEntry = grouped.get(groupId);
+      const isExistedRole = groupEntry.roles.some((role: any) => role.role_id === assignment.role_id);
+      if (!isExistedRole) {
+        groupEntry.roles.push({
+          role_id: assignment.role_id,
+          role_code: assignment.role?.code,
+          role_name: assignment.role?.name,
+        });
+      }
+    }
+
+    return Array.from(grouped.values());
   }
 
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
@@ -79,11 +97,20 @@ export class UserService extends BaseService<any, UserRepository> {
 
   override async getOne(id: any, options: any = {}) {
     await this.verifyUserContextOwnership(id);
-    return super.getOne(id, options);
-  }
-
-  override async getList(queryOrOptions: any = {}) {
-    return super.getList(queryOrOptions);
+    const select = {
+      id: true,
+      email: true,
+      phone: true,
+      username: true,
+      name: true,
+      image: true,
+      created_at: true,
+      updated_at: true,
+      last_login_at: true,
+      status: true,
+      profile: true,
+    };
+    return super.getOne(id, { ...options, select });
   }
 
   protected override async beforeCreate(data: any) {

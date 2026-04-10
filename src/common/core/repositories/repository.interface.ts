@@ -26,7 +26,7 @@ export interface IPaginatedResult<T> {
 
 export interface IRepository<T> {
     findAll(options?: IPaginationOptions): Promise<IPaginatedResult<T>>;
-    findById(id: string | any): Promise<T | null>;
+    findById(id: string | any, options?: IPaginationOptions): Promise<T | null>;
     findManyByIds(ids: (string | any)[]): Promise<T[]>;
     findOne(filter: Record<string, any>): Promise<T | null>;
     findMany(filter?: Record<string, any>, options?: IPaginationOptions): Promise<T[]>;

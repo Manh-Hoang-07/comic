@@ -2,14 +2,19 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UserRepository } from '@/modules/core/user/repositories/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly userRepo: UserRepository) { }
+  constructor(
+    @Inject(USER_REPOSITORY)
+    private readonly userRepo: IUserRepository,
+  ) { }
 
   // ── Profile Operations ─────────────────────────────────────────────────────
 
@@ -48,7 +53,7 @@ export class ProfileService {
     });
 
     if (Object.keys(profileRawData).length > 0) {
-      const profileData = this.userRepo.prepareProfileData(profileRawData);
+      const profileData = this.normalizeProfileData(profileRawData);
       userPayload.profile = {
         upsert: {
           create: profileData,
@@ -74,6 +79,29 @@ export class ProfileService {
     const hashed = await bcrypt.hash(newPassword, 10);
     await this.userRepo.update(userId, { password: hashed });
     return { success: true, message: 'Đổi mật khẩu thành công' };
+  }
+
+  private normalizeProfileData(data: any) {
+    const validFields = [
+      'birthday', 'gender', 'address', 'about',
+      'country_id', 'province_id', 'ward_id',
+      'created_user_id', 'updated_user_id',
+    ];
+
+    const result: any = {};
+    for (const field of validFields) {
+      if (data[field] !== undefined) {
+        let value = data[field];
+        if (field === 'birthday' && value) {
+          const date = new Date(value);
+          value = isNaN(date.getTime()) ? null : date;
+        } else if (['country_id', 'province_id', 'ward_id', 'created_user_id', 'updated_user_id'].includes(field)) {
+          value = value ? toPrimaryKey(value) : null;
+        }
+        result[field] = value;
+      }
+    }
+    return result;
   }
 }
 

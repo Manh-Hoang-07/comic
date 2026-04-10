@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UserRepository } from '@/modules/core/user/repositories/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 
 @Injectable()
 export class PasswordService {
-  constructor(private readonly userRepo: UserRepository) { }
+  constructor(
+    @Inject(USER_REPOSITORY)
+    private readonly userRepo: IUserRepository,
+  ) { }
 
   // ── Password Operations ────────────────────────────────────────────────────
 

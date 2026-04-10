@@ -145,8 +145,8 @@ export abstract class BaseService<T, R extends IRepository<T>> {
     }
 
     /** Lấy một bản ghi theo ID. */
-    async getOne(id: any, _options: IPaginationOptions = {}): Promise<T> {
-        const entity = await this.repository.findById(id);
+    async getOne(id: any, options: IPaginationOptions = {}): Promise<T> {
+        const entity = await this.repository.findById(id, options);
         if (!entity) throw new NotFoundException(`Resource with ID ${id} not found`);
 
         const transformed = this.transform(entity) as T;

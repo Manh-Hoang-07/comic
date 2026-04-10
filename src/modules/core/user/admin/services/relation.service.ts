@@ -1,18 +1,43 @@
-import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@/modules/core/user/repositories/user.repository';
+import { Injectable, Inject } from '@nestjs/common';
+import { IProfileRepository, PROFILE_REPOSITORY } from '@/modules/core/user/domain/profile.repository';
+import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class RelationService {
   constructor(
-    private readonly userRepo: UserRepository,
+    @Inject(PROFILE_REPOSITORY)
+    private readonly profileRepo: IProfileRepository,
   ) { }
 
   // ── Relation Synchronization ───────────────────────────────────────────────
 
   async sync(userId: any, data: { profile?: any }): Promise<void> {
     if (data.profile) {
-      await this.userRepo.upsertProfile(userId, data.profile);
+      await this.profileRepo.upsertByUserId(userId, this.normalizeProfileData(data.profile));
     }
+  }
+
+  private normalizeProfileData(data: any) {
+    const validFields = [
+      'birthday', 'gender', 'address', 'about',
+      'country_id', 'province_id', 'ward_id',
+      'created_user_id', 'updated_user_id',
+    ];
+
+    const result: any = {};
+    for (const field of validFields) {
+      if (data[field] !== undefined) {
+        let value = data[field];
+        if (field === 'birthday' && value) {
+          const date = new Date(value);
+          value = isNaN(date.getTime()) ? null : date;
+        } else if (['country_id', 'province_id', 'ward_id', 'created_user_id', 'updated_user_id'].includes(field)) {
+          value = value ? toPrimaryKey(value) : null;
+        }
+        result[field] = value;
+      }
+    }
+    return result;
   }
 }
 

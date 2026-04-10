@@ -29,6 +29,12 @@ export abstract class PrismaRepository<
     protected isSoftDelete = false;
     protected defaultSelect: any = undefined;
     protected defaultInclude: any = undefined;
+    /**
+     * Dùng cho `findById` / `findManyByIds` / `findOne` khi không truyền `select/include` trong options.
+     * Fallback về `defaultSelect` / `defaultInclude`.
+     */
+    protected defaultDetailSelect: any = undefined;
+    protected defaultDetailInclude: any = undefined;
 
     constructor(
         protected readonly delegate: PrismaDelegate,
@@ -74,11 +80,8 @@ export abstract class PrismaRepository<
         };
     }
 
-    async findById(id: string | any): Promise<Model | null> {
-        const selection = resolveQuerySelection(
-            {},
-            { select: this.defaultSelect, include: this.defaultInclude },
-        );
+    async findById(id: string | any, options: IPaginationOptions = {}): Promise<Model | null> {
+        const selection = resolveQuerySelection(options, this.getDetailSelectionDefaults());
 
         // Some models don't have findUnique (usually many-to-many or specific schemas)
         const finder = this.delegate.findUnique || this.delegate.findFirst;
@@ -91,10 +94,7 @@ export abstract class PrismaRepository<
 
     async findManyByIds(ids: (string | any)[]): Promise<Model[]> {
         if (!ids?.length) return [];
-        const selection = resolveQuerySelection(
-            {},
-            { select: this.defaultSelect, include: this.defaultInclude },
-        );
+        const selection = resolveQuerySelection({}, this.getDetailSelectionDefaults());
 
         return this.delegate.findMany({
             where: { id: { in: ids.map(toPrimaryKey) } } as any,
@@ -103,10 +103,7 @@ export abstract class PrismaRepository<
     }
 
     async findOne(filter: Record<string, any>): Promise<Model | null> {
-        const selection = resolveQuerySelection(
-            {},
-            { select: this.defaultSelect, include: this.defaultInclude },
-        );
+        const selection = resolveQuerySelection({}, this.getDetailSelectionDefaults());
 
         return this.delegate.findFirst({
             where: this.buildWhere(filter),
@@ -201,6 +198,13 @@ export abstract class PrismaRepository<
     }
 
     // ── Internal Helpers (Backward Compatibility Delegates) ────────────────────
+
+    protected getDetailSelectionDefaults(): { select?: any; include?: any } {
+        return {
+            select: this.defaultDetailSelect ?? this.defaultSelect,
+            include: this.defaultDetailInclude ?? this.defaultInclude,
+        };
+    }
 
     protected toPrimaryKey(id: any): any {
         return toPrimaryKey(id);

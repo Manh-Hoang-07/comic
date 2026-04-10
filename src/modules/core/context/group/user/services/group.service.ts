@@ -6,7 +6,7 @@ import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.servic
 import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
 import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RequestContext } from '@/common/shared/utils';

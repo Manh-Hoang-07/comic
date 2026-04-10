@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
+import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 
 /** Chuẩn hóa Prisma (bigint/date) để JSON.stringify/cache + gắn req.user */
 function userEntityToJwtPayload(user: Record<string, unknown>): Record<string, unknown> {
@@ -47,7 +47,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
     }
 
-    const user = await this.userRepo.findByIdWithBasicInfo(userId);
+    const user = await this.userRepo.findById(userId);
 
     if (!user) {
       return null;

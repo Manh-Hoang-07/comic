@@ -13,7 +13,19 @@ export class ProfileService {
 
   // ── Profile Operations ─────────────────────────────────────────────────────
 
-  async getProfile(userId: any) {
+  /**
+   * @param jwtUser `req.user` sau JWT validate — nếu đã có đủ `profile` (cache/DB trong JwtStrategy) thì không query lại.
+   */
+  async getProfile(userId: any, jwtUser?: any) {
+    if (
+      jwtUser &&
+      typeof jwtUser === 'object' &&
+      'profile' in jwtUser &&
+      String((jwtUser as any).id) === String(userId)
+    ) {
+      return jwtUser;
+    }
+
     const user = await this.userRepo.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     return user;

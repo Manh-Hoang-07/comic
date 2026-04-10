@@ -3,6 +3,8 @@ import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { RedisUtil } from '@/core/utils/redis.util';
+import { invalidateUserGroupsListCache } from '@/modules/core/context/group/user/user-groups-list.cache';
 
 @Injectable()
 export class GroupActionService {
@@ -12,6 +14,7 @@ export class GroupActionService {
         @Inject(ROLE_REPOSITORY)
         private readonly roleRepo: IRoleRepository,
         private readonly rbacService: RbacService,
+        private readonly redis: RedisUtil,
     ) { }
 
     /**
@@ -37,6 +40,7 @@ export class GroupActionService {
                 groupId
             );
         }
+        await invalidateUserGroupsListCache(this.redis, ownerId);
     }
 }
 

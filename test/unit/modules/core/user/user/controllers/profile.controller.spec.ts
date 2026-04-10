@@ -3,7 +3,6 @@ import { ProfileController } from '@/modules/core/user/user/controllers/profile.
 import { ProfileService } from '@/modules/core/user/user/services/profile.service';
 import { Auth } from '@/common/auth/utils';
 import { UnauthorizedException } from '@nestjs/common';
-import { JwtAuthGuard } from '@/common/auth/guards';
 
 jest.mock('@/common/auth/utils', () => ({
   Auth: {
@@ -27,9 +26,7 @@ describe('ProfileController', () => {
       providers: [
         { provide: ProfileService, useValue: service },
       ],
-    })
-      .overrideGuard(JwtAuthGuard).useValue({ canActivate: () => true })
-      .compile();
+    }).compile();
 
     controller = module.get<ProfileController>(ProfileController);
   });
@@ -48,6 +45,7 @@ describe('ProfileController', () => {
       (Auth.id as jest.Mock).mockReturnValue(1);
       service.getProfile.mockResolvedValue({ id: 1, name: 'Me' });
       const result = await controller.getMe();
+      expect(service.getProfile).toHaveBeenCalledWith(1, undefined);
       expect(result.name).toBe('Me');
     });
   });

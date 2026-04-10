@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MenuService } from '@/modules/core/menu/admin/services/menu.service';
 import { MENU_REPOSITORY } from '@/modules/core/menu/domain/menu.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
+import { RedisUtil } from '@/core/utils/redis.util';
 import { RequestContext } from '@/common/shared/utils';
 import { BadRequestException } from '@nestjs/common';
 import * as menuHelper from '@/modules/core/menu/utils/menu.helper';
@@ -27,6 +28,17 @@ describe('MenuService', () => {
 
         rbacService = {
             userHasPermissionsInGroup: jest.fn(),
+            preparePermissionCheck: jest.fn().mockResolvedValue(undefined),
+            getUserPermissions: jest.fn(),
+            matchesAssignedBitmap: jest.fn(),
+        };
+
+        const redisUtil = {
+            isEnabled: jest.fn().mockReturnValue(false),
+            get: jest.fn(),
+            set: jest.fn(),
+            scan: jest.fn(),
+            unlinkMany: jest.fn(),
         };
 
         const module: TestingModule = await Test.createTestingModule({
@@ -40,6 +52,7 @@ describe('MenuService', () => {
                     provide: RbacService,
                     useValue: rbacService,
                 },
+                { provide: RedisUtil, useValue: redisUtil },
             ],
         }).compile();
 
@@ -69,7 +82,7 @@ describe('MenuService', () => {
             const mockMenus = [{ id: 1, code: 'm1', show_in_menu: true }];
             menuRepo.findAllWithChildren.mockResolvedValue(mockMenus);
 
-            rbacService.getUserPermissions = jest.fn().mockResolvedValue(new Set());
+            rbacService.getUserPermissions.mockResolvedValue(new Uint8Array());
             (menuHelper.filterAdminMenus as jest.Mock).mockReturnValue(mockMenus);
             (menuHelper.buildMenuTree as jest.Mock).mockReturnValue([{ id: 1, children: [] }]);
 

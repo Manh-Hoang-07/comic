@@ -141,6 +141,30 @@ function writeEntryToFiles(
   appendLine(path.join(dailyDir, 'app.log'), line);
 }
 
+/** Nest `LoggerService` passes `context` as a string (class name), not LogContext. */
+function normalizeNestLogContext(optionalParams: any[]): {
+  context?: LogContext;
+  options?: LogWriteOptions;
+} {
+  const filtered = optionalParams.filter((x) => x !== undefined);
+  if (!filtered.length) return {};
+  const last = filtered[filtered.length - 1];
+  let options: LogWriteOptions | undefined;
+  let rest = filtered;
+  if (last && typeof last === 'object' && ('filePath' in last || 'fileBaseName' in last)) {
+    options = last as LogWriteOptions;
+    rest = filtered.slice(0, -1);
+  }
+  const first = rest[0];
+  if (typeof first === 'string') {
+    return { context: { context: first }, options };
+  }
+  if (first && typeof first === 'object') {
+    return { context: first as LogContext, options };
+  }
+  return { options };
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -159,21 +183,35 @@ export class CustomLoggerService implements LoggerService {
     CustomLoggerService._instance = this;
   }
 
-  // ── Public API ─────────────────────────────────────────────────────────────
+  // ── Public API (Nest LoggerService: variadic optional params) ──────────────
 
-  log(message: any, context?: LogContext, options?: LogWriteOptions): void {
+  log(message: any, ...optionalParams: any[]): void {
     if (shouldSkipMessage(message)) return;
-    const entry = buildLogEntry('log', message, this.buildContext(context));
+    const { context: nestCtx, options } = normalizeNestLogContext(optionalParams);
+    const entry = buildLogEntry('log', message, this.buildContext(nestCtx));
     writeEntryToFiles(this.logDirectory, 'log', entry, options);
   }
 
-  error(
-    message: any,
-    trace?: string,
-    context?: LogContext,
-    options?: LogWriteOptions,
-  ): void {
-    const ctx = { ...this.buildContext(context), trace };
+  error(message: any, ...optionalParams: any[]): void {
+    const params = optionalParams.filter((x) => x !== undefined);
+    let trace: string | undefined;
+    let contextParams: any[] = params;
+
+    if (params.length >= 2) {
+      trace = typeof params[0] === 'string' ? params[0] : undefined;
+      contextParams = params.slice(1);
+    } else if (params.length === 1) {
+      const p = params[0];
+      if (typeof p === 'string' && (p.includes('\n') || p.includes('at '))) {
+        trace = p;
+        contextParams = [];
+      } else {
+        contextParams = [p];
+      }
+    }
+
+    const { context: nestCtx, options } = normalizeNestLogContext(contextParams);
+    const ctx = { ...this.buildContext(nestCtx), trace };
     const entry = buildLogEntry('error', message, ctx);
     const errInfo = extractErrorInfo(message, trace);
     if (errInfo) {
@@ -182,9 +220,22 @@ export class CustomLoggerService implements LoggerService {
     writeEntryToFiles(this.logDirectory, 'error', entry, options);
   }
 
-  warn(message: any, context?: LogContext, options?: LogWriteOptions): void {
-    const entry = buildLogEntry('warn', message, this.buildContext(context));
+  warn(message: any, ...optionalParams: any[]): void {
+    const { context: nestCtx, options } = normalizeNestLogContext(optionalParams);
+    const entry = buildLogEntry('warn', message, this.buildContext(nestCtx));
     writeEntryToFiles(this.logDirectory, 'warn', entry, options);
+  }
+
+  debug?(message: any, ...optionalParams: any[]): void {
+    this.log(message, ...optionalParams);
+  }
+
+  verbose?(message: any, ...optionalParams: any[]): void {
+    this.log(message, ...optionalParams);
+  }
+
+  fatal?(message: any, ...optionalParams: any[]): void {
+    this.error(message, ...optionalParams);
   }
 
   /**

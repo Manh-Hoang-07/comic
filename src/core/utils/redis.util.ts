@@ -133,6 +133,28 @@ export class RedisUtil implements OnModuleInit, OnModuleDestroy {
     await this.client.hdel(key, ...fields);
   }
 
+  async hget(key: string, field: string): Promise<string | null> {
+    if (!this.client) return null;
+    return this.client.hget(key, field);
+  }
+
+  async hset(key: string, field: string, value: string): Promise<void> {
+    if (!this.client) return;
+    await this.client.hset(key, field, value);
+  }
+
+  /** Bulk HSET for a hash key (single RTT via pipeline). */
+  async hmset(key: string, entries: Record<string, string>): Promise<void> {
+    if (!this.client) return;
+    const fields = Object.entries(entries);
+    if (fields.length === 0) return;
+    const p = this.client.pipeline();
+    for (const [field, value] of fields) {
+      p.hset(key, field, value);
+    }
+    await p.exec();
+  }
+
   async hincrby(key: string, field: string, increment: number): Promise<number> {
     if (!this.client) return 0;
     return this.client.hincrby(key, field, increment);

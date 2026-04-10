@@ -28,12 +28,13 @@ describe('JwtStrategy', () => {
     });
 
     it('should return cached user if available', async () => {
-        const cachedUser = JSON.stringify({ id: '1', username: 'test' });
+        const cachedUser = JSON.stringify({ id: '1', username: 'test', profile: null });
         redis.get.mockResolvedValue(cachedUser);
 
         const result = await strategy.validate({ sub: 1 });
 
-        expect(result.id).toBe('1');
+        expect(result).not.toBeNull();
+        expect((result as { id: string }).id).toBe('1');
         expect(userRepo.findByIdWithBasicInfo).not.toHaveBeenCalled();
     });
 
@@ -42,11 +43,13 @@ describe('JwtStrategy', () => {
         userRepo.findByIdWithBasicInfo.mockResolvedValue({
             id: BigInt(1),
             username: 'db_user',
+            profile: null,
         });
 
         const result = await strategy.validate({ sub: 1 });
 
-        expect(result.username).toBe('db_user');
+        expect(result).not.toBeNull();
+        expect((result as { username: string }).username).toBe('db_user');
         expect(redis.set).toHaveBeenCalled();
     });
 

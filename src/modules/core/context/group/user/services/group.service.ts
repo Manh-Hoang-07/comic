@@ -10,6 +10,12 @@ import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/repositori
 import { RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RequestContext } from '@/common/shared/utils';
+import { RedisUtil } from '@/core/utils/redis.util';
+import {
+  invalidateUserGroupsListCache,
+  userGroupsListCacheKey,
+  USER_GROUPS_LIST_TTL_SEC,
+} from '@/modules/core/context/group/user/user-groups-list.cache';
 
 @Injectable()
 export class UserGroupService {
@@ -28,6 +34,7 @@ export class UserGroupService {
     private readonly userRepo: IUserRepository,
     private readonly rbacService: RbacService,
     private readonly rbacCache: RbacCacheService,
+    private readonly redis: RedisUtil,
   ) { }
 
   async isOwner(groupId: any, userId: any): Promise<boolean> {
@@ -83,6 +90,7 @@ export class UserGroupService {
 
     // Sync roles inside group
     await this.rbacService.syncRolesInGroup(memberUserId, groupId, roleIds);
+    await invalidateUserGroupsListCache(this.redis, memberUserId);
   }
 
   /**
@@ -105,6 +113,7 @@ export class UserGroupService {
     }
 
     await this.rbacService.syncRolesInGroup(memberUserId, groupId, roleIds);
+    await invalidateUserGroupsListCache(this.redis, memberUserId);
   }
 
   async removeMember(
@@ -135,6 +144,7 @@ export class UserGroupService {
     });
 
     await this.rbacCache.clearUserCache(memberUserId, groupId);
+    await invalidateUserGroupsListCache(this.redis, memberUserId);
   }
 
   /**
@@ -183,26 +193,83 @@ export class UserGroupService {
    * [🚀 Tối ưu - Fix N+1] Lấy danh sách nhóm của User
    */
   async getUserGroups(userId: any) {
-    // 1. Fetch UserGroup kèm Group và assignments trong duy nhất 1 query prisma
+    if (this.redis.isEnabled()) {
+      const hit = await this.redis.get(userGroupsListCacheKey(userId));
+      if (hit) {
+        try {
+          const parsed = JSON.parse(hit) as any[];
+          return parsed;
+        } catch {
+          /* load DB */
+        }
+      }
+    }
     const userGroups = await this.userGroupRepo.findManyRaw({
       where: { user_id: toPrimaryKey(userId) },
-      include: {
+      select: {
+        joined_at: true,
         group: {
-          include: {
-            context: true,
-            user_role_assignments: {
-              where: { user_id: toPrimaryKey(userId) },
-              include: { role: true }
-            }
-          }
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            type: true,
+            description: true,
+            status: true,
+            context: {
+              select: {
+                id: true,
+                type: true,
+                ref_id: true,
+                name: true,
+              },
+            },
+          },
         },
       },
       orderBy: { joined_at: 'desc' } as any,
     });
 
-    return userGroups.map((ug: any) => {
+    const groupIds = (userGroups as any[])
+      .map((ug) => ug?.group?.id)
+      .filter((id) => id !== null && id !== undefined);
+
+    const assignments = groupIds.length
+      ? await this.assignmentRepo.findManyRaw({
+        where: {
+          user_id: toPrimaryKey(userId),
+          group_id: { in: groupIds.map((id: any) => toPrimaryKey(id)) },
+        },
+        select: {
+          group_id: true,
+          role: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+        },
+      })
+      : [];
+    const rolesByGroup = new Map<string, any[]>();
+    for (const a of assignments as any[]) {
+      const gid = a.group_id;
+      const k = String(gid);
+      if (!rolesByGroup.has(k)) rolesByGroup.set(k, []);
+      if (a.role) {
+        rolesByGroup.get(k)!.push({
+          id: toPrimaryKey(a.role.id),
+          code: a.role.code,
+          name: a.role.name,
+        });
+      }
+    }
+
+    const result = userGroups.map((ug: any) => {
       const group = ug.group;
       if (!group || group.status !== 'active') return null;
+      const gidKey = String(group.id);
 
       return {
         id: toPrimaryKey(group.id),
@@ -218,16 +285,14 @@ export class UserGroupService {
             name: group.context.name,
           }
           : null,
-        roles: (group.user_role_assignments || [])
-          .filter((ra: any) => ra.role)
-          .map((ra: any) => ({
-            id: toPrimaryKey(ra.role.id),
-            code: ra.role.code,
-            name: ra.role.name,
-          })),
+        roles: rolesByGroup.get(gidKey) || [],
         joined_at: ug.joined_at,
       };
     }).filter(item => item !== null);
+    if (this.redis.isEnabled()) {
+      await this.redis.set(userGroupsListCacheKey(userId), JSON.stringify(result), USER_GROUPS_LIST_TTL_SEC);
+    }
+    return result;
   }
 }
 

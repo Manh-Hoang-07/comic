@@ -1,13 +1,12 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PERM } from '@/modules/core/rbac/rbac.constants';
-import { IPermissionRepository, PERMISSION_REPOSITORY } from '@/modules/core/iam/permission/domain/permission.repository';
 import { RedisUtil } from '@/core/utils/redis.util';
+import { PermissionCatalogService } from '@/modules/core/rbac/catalog/permission-catalog.service';
 
-type PermissionNode = { id: any; code: string; parent_id: any | null };
+type PermissionNode = { code: string; parentCode: string | null };
 
 @Injectable()
 export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy {
-  private permissionById = new Map<string, PermissionNode>();
   private permissionByCode = new Map<string, PermissionNode>();
   private denseIndexByCode = new Map<string, number>();
   private denseCodes: string[] = [];
@@ -20,7 +19,7 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
   private prewarmTimer: NodeJS.Timeout | null = null;
 
   constructor(
-    @Inject(PERMISSION_REPOSITORY) private readonly permissionRepo: IPermissionRepository,
+    private readonly permissionCatalog: PermissionCatalogService,
     private readonly redis: RedisUtil,
   ) { }
 
@@ -56,17 +55,15 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
   }
 
   matchesAssigned(assignedCodes: Set<string>, need: string): boolean {
-    // Backward-compatible API for legacy callers/tests.
-    return this.grantsFromCodes(assignedCodes, need);
+    return this.grants(need, (code) => assignedCodes.has(code));
   }
 
   matchesAssignedBitmap(bitmap: Uint8Array, need: string): boolean {
-    return this.grantsFromBitmap(bitmap, need);
+    return this.grants(need, (code) => this.hasCodeBit(bitmap, code));
   }
 
   hasAnyRequiredFromAssigned(assignedCodes: Set<string>, required: string[]): boolean {
-    // Backward-compatible API for legacy callers/tests.
-    return required.some((need) => this.grantsFromCodes(assignedCodes, need));
+    return required.some((need) => this.matchesAssigned(assignedCodes, need));
   }
 
   buildAssignedBitmap(assignedCodes: Iterable<string>): Uint8Array {
@@ -81,11 +78,11 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
   }
 
   hasAnyRequiredFromAssignedBitmap(bitmap: Uint8Array, required: string[]): boolean {
-    return required.some((need) => this.grantsFromBitmap(bitmap, need));
+    return required.some((need) => this.matchesAssignedBitmap(bitmap, need));
   }
 
   private async ensurePermissionIndexes(force = false): Promise<void> {
-    if (!force && this.permissionById.size > 0 && Date.now() - this.lastPermFetchMs <= this.permIndexTtlMs) return;
+    if (!force && this.permissionByCode.size > 0 && Date.now() - this.lastPermFetchMs <= this.permIndexTtlMs) return;
 
     if (this.permissionIndexRefreshInFlight) {
       await this.permissionIndexRefreshInFlight;
@@ -93,14 +90,11 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
     }
 
     this.permissionIndexRefreshInFlight = (async () => {
-      const all = await this.permissionRepo.findActiveForRbacIndex();
-      const byId = new Map<string, PermissionNode>();
       const byCode = new Map<string, PermissionNode>();
+      const all = await this.permissionCatalog.getAllActivePermissions();
       for (const p of all as PermissionNode[]) {
-        byId.set(String(p.id), p);
         if (p.code) byCode.set(p.code, p);
       }
-      this.permissionById = byId;
       this.permissionByCode = byCode;
       this.rebuildDenseIndex(byCode);
       this.lastPermFetchMs = Date.now();
@@ -129,27 +123,14 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
     return (byte & (1 << (idx & 7))) !== 0;
   }
 
-  private grantsFromBitmap(bitmap: Uint8Array, need: string): boolean {
-    if (this.hasCodeBit(bitmap, PERM.SYSTEM.MANAGE)) return true;
-    if (this.hasCodeBit(bitmap, need)) return true;
-
-    for (let cur = this.permissionByCode.get(need); cur?.parent_id;) {
-      const parent = this.permissionById.get(String(cur.parent_id));
+  /** Single inheritance walk: `has(code)` is bitmap lookup or Set membership. */
+  private grants(need: string, has: (code: string) => boolean): boolean {
+    if (has(PERM.SYSTEM.MANAGE)) return true;
+    if (has(need)) return true;
+    for (let cur = this.permissionByCode.get(need); cur?.parentCode;) {
+      const parent = this.permissionByCode.get(cur.parentCode);
       if (!parent) break;
-      if (parent.code && this.hasCodeBit(bitmap, parent.code)) return true;
-      cur = parent;
-    }
-    return false;
-  }
-
-  private grantsFromCodes(assignedCodes: Set<string>, need: string): boolean {
-    if (assignedCodes.has(PERM.SYSTEM.MANAGE)) return true;
-    if (assignedCodes.has(need)) return true;
-
-    for (let cur = this.permissionByCode.get(need); cur?.parent_id;) {
-      const parent = this.permissionById.get(String(cur.parent_id));
-      if (!parent) break;
-      if (parent.code && assignedCodes.has(parent.code)) return true;
+      if (parent.code && has(parent.code)) return true;
       cur = parent;
     }
     return false;

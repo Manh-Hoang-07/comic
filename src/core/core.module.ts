@@ -75,7 +75,8 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         THROTTLE_DISABLED: Joi.string().valid('true', 'false').optional(),
 
         // RBAC cache
-        RBAC_CACHE_TTL: Joi.number().min(30).max(1800).default(300),
+        // TTL for assigned-permissions bitmap keys (seconds). Catalog keys use fixed 1-day TTL.
+        RBAC_CACHE_TTL: Joi.number().min(30).max(86400).default(86400),
 
         // Attempt limiter (generalized)
         SECURITY_ATTEMPT_MAX: Joi.number().min(1).max(20).default(5),

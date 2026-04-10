@@ -5,6 +5,7 @@ import { RbacPermissionIndexService } from '@/modules/core/rbac/services/rbac-pe
 import { RbacRoleAssignmentService } from '@/modules/core/rbac/services/rbac-role-assignment.service';
 import { NullableRbacId, RbacId } from '@/modules/core/rbac/rbac.types';
 import { RequestContext } from '@/common/shared/utils';
+import { PermissionCatalogService } from '@/modules/core/rbac/catalog/permission-catalog.service';
 
 @Injectable()
 export class RbacService {
@@ -12,19 +13,19 @@ export class RbacService {
     private readonly rbacCache: RbacCacheService,
     private readonly permissionIndexService: RbacPermissionIndexService,
     private readonly roleAssignmentService: RbacRoleAssignmentService,
+    private readonly permissionCatalog: PermissionCatalogService,
   ) { }
 
   private readonly refreshInFlight = new Map<string, Promise<Uint8Array>>();
 
   async userHasPermissionsInGroup(userId: RbacId, groupId: NullableRbacId, required: string[]): Promise<boolean> {
     await this.preparePermissionCheck();
-    const scopes = this.buildScopeCandidates(groupId);
-    const allowed = await this.hasAnyRequiredPermission(userId, required, scopes);
-    return allowed;
+    const bitmap = await this.getUserPermissions(userId, groupId);
+    return this.permissionIndexService.hasAnyRequiredFromAssignedBitmap(bitmap, required);
   }
 
   async getUserPermissions(userId: RbacId, groupId: NullableRbacId): Promise<Uint8Array> {
-    const requestCacheKey = this.buildRequestPermissionKey(userId, groupId);
+    const requestCacheKey = `rbac:perm:${this.scopeKey(userId, groupId)}`;
     const reqCached = RequestContext.get<Uint8Array>(requestCacheKey);
     if (reqCached) {
       return reqCached;
@@ -41,7 +42,7 @@ export class RbacService {
   }
 
   async refreshUserPermissions(userId: RbacId, groupId: NullableRbacId): Promise<Uint8Array> {
-    const key = this.buildRefreshKey(userId, groupId);
+    const key = this.scopeKey(userId, groupId);
     const pending = this.refreshInFlight.get(key);
     if (pending) {
       await pending;
@@ -51,7 +52,8 @@ export class RbacService {
 
     const refreshPromise = (async () => {
       await this.preparePermissionCheck();
-      const codes = await this.roleAssignmentService.getActivePermissionCodes(userId, groupId);
+      const roleIds = await this.roleAssignmentService.getActiveRoleIds(userId, groupId);
+      const codes = await this.permissionCatalog.getPermissionCodesForRoleIds(roleIds);
       const bitmap = this.permissionIndexService.buildAssignedBitmap(codes);
       await this.rbacCache.setPermissions(userId, groupId, bitmap);
       return bitmap;
@@ -76,11 +78,8 @@ export class RbacService {
     await this.refreshUserPermissions(userId, groupId);
   }
 
-  private buildScopeCandidates(groupId: NullableRbacId): NullableRbacId[] {
-    return groupId !== null ? [groupId] : [null];
-  }
-
-  private buildRefreshKey(userId: RbacId, groupId: NullableRbacId): string {
+  /** Stable segment for in-flight dedup + request-scope cache keys. */
+  private scopeKey(userId: RbacId, groupId: NullableRbacId): string {
     return `${toPrimaryKey(userId)}:${groupId === null ? 'system' : toPrimaryKey(groupId)}`;
   }
 
@@ -93,27 +92,7 @@ export class RbacService {
     RequestContext.set(requestMarkerKey, true);
   }
 
-  matchesAssigned(assignedCodes: Set<string>, need: string): boolean {
-    return this.permissionIndexService.matchesAssigned(assignedCodes, need);
-  }
-
   matchesAssignedBitmap(bitmap: Uint8Array, need: string): boolean {
     return this.permissionIndexService.matchesAssignedBitmap(bitmap, need);
-  }
-
-  private async hasAnyRequiredPermission(
-    userId: RbacId,
-    required: string[],
-    scopes: NullableRbacId[],
-  ): Promise<boolean> {
-    for (const scope of scopes) {
-      const permissions = await this.getUserPermissions(userId, scope);
-      if (this.permissionIndexService.hasAnyRequiredFromAssignedBitmap(permissions, required)) return true;
-    }
-    return false;
-  }
-
-  private buildRequestPermissionKey(userId: RbacId, groupId: NullableRbacId): string {
-    return `rbac:perm:${toPrimaryKey(userId)}:${groupId === null ? 'system' : toPrimaryKey(groupId)}`;
   }
 }

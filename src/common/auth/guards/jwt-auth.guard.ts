@@ -3,6 +3,7 @@ import {
   Injectable,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -16,6 +17,8 @@ import { extractBearerToken, isJwtExpired } from './jwt-token.helper';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+
   constructor(
     private readonly reflector: Reflector,
     private readonly tokenBlacklist: TokenBlacklistService,
@@ -30,7 +33,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const token = extractBearerToken(request.headers.authorization);
     const isPublic = this.isPublicRoute(context);
 
-    // Reject blacklisted tokens regardless of route visibility
     if (token && this.tokenBlacklist) {
       const blocked = await this.tokenBlacklist.has(token);
       if (blocked) {

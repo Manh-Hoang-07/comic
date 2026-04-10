@@ -82,6 +82,10 @@ export class UserService extends BaseService<any, UserRepository> {
     return super.getOne(id, options);
   }
 
+  override async getList(queryOrOptions: any = {}) {
+    return super.getList(queryOrOptions);
+  }
+
   protected override async beforeCreate(data: any) {
     const payload = { ...data };
     payload.created_user_id = getCurrentUserId();

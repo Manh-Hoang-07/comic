@@ -1,16 +1,16 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
 import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
 import { RbacId } from '@/modules/core/rbac/rbac.types';
+import { RoleContextCatalogService } from '@/modules/core/rbac/catalog/role-context-catalog.service';
+import { GroupCatalogService } from '@/modules/core/rbac/catalog/group-catalog.service';
 
 @Injectable()
 export class RbacRoleAssignmentService {
   constructor(
     @Inject(USER_ROLE_ASSIGNMENT_REPOSITORY) private readonly assignmentRepo: IUserRoleAssignmentRepository,
-    @Inject(ROLE_CONTEXT_REPOSITORY) private readonly roleContextRepo: IRoleContextRepository,
-    @Inject(GROUP_REPOSITORY) private readonly groupRepo: IGroupRepository,
+    private readonly roleContextCatalog: RoleContextCatalogService,
+    private readonly groupCatalog: GroupCatalogService,
   ) { }
 
   async assignRoleToUser(userId: RbacId, roleId: RbacId, groupId: RbacId): Promise<void> {
@@ -30,12 +30,12 @@ export class RbacRoleAssignmentService {
     roleIds: RbacId[] | null | undefined,
     skipValidation = false,
   ): Promise<void> {
-    const group = await this.groupRepo.findById(groupId);
+    const group = await this.groupCatalog.getGroupById(groupId);
     if (!group) throw new NotFoundException('Group not found');
     const normalizedRoleIds = this.normalizeRoleIds(roleIds);
 
     if (normalizedRoleIds.length && !skipValidation) {
-      await this.validateRolesForContext(normalizedRoleIds, (group as any).context_id);
+      await this.validateRolesForContext(normalizedRoleIds, group.contextId);
     }
 
     await this.assignmentRepo.syncRolesInGroup(userId, groupId, normalizedRoleIds);
@@ -45,13 +45,13 @@ export class RbacRoleAssignmentService {
     return await this.assignmentRepo.findActivePermissionCodes(userId, groupId);
   }
 
-  private async validateRolesForContext(roleIds: RbacId[], contextId: RbacId): Promise<void> {
-    const rolePrimaryIds = roleIds.map((id) => toPrimaryKey(id));
-    const validLinks = await this.roleContextRepo.findMany({
-      where: { role_id: { in: rolePrimaryIds }, context_id: toPrimaryKey(contextId) },
-    });
+  async getActiveRoleIds(userId: RbacId, groupId: RbacId | null): Promise<any[]> {
+    return await this.assignmentRepo.findActiveRoleIds(userId, groupId);
+  }
 
-    const validIds = new Set(validLinks.map((rc) => rc.role_id.toString()));
+  private async validateRolesForContext(roleIds: RbacId[], contextId: any): Promise<void> {
+    const allowed = await this.roleContextCatalog.getRoleIdsAllowedInContext(contextId);
+    const validIds = new Set(allowed.map(String));
     for (const id of roleIds) {
       if (!validIds.has(toPrimaryKey(id).toString())) {
         throw new BadRequestException(`Role ID ${id} is not allowed in this context`);

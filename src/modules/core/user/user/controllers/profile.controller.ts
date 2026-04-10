@@ -1,17 +1,16 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Optional, Patch, Req, UnauthorizedException } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { ProfileService } from '../services/profile.service';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
 import { UserChangePasswordDto } from '../dtos/user-change-password.dto';
 import { Auth } from '@/common/auth/utils';
-import { JwtAuthGuard } from '@/common/auth/guards';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 
 @ApiTags('User / Profile')
 @ApiBearerAuth('access-token')
 @Controller('user/profile')
-@UseGuards(JwtAuthGuard)
 export class ProfileController {
   constructor(private readonly service: ProfileService) { }
 
@@ -20,9 +19,12 @@ export class ProfileController {
   @ApiOperation({ summary: 'Lấy thông tin cá nhân' })
   @Permission('user')
   @Get()
-  async getMe() {
+  async getMe(@Optional() @Req() req?: Request) {
     const userId = Auth.id();
-    return this.service.getProfile(userId);
+    if (!userId) {
+      throw new UnauthorizedException('Auth required');
+    }
+    return this.service.getProfile(userId, req?.user);
   }
 
   @ApiOperation({ summary: 'Cập nhật thông tin cá nhân' })

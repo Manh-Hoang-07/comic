@@ -6,6 +6,7 @@ import { BaseService } from '@/common/core/services';
 import { ContextType, SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RequestContext } from '@/common/shared/utils';
+import { ContextCatalogService } from '@/modules/core/rbac/catalog/context-catalog.service';
 
 @Injectable()
 export class AdminContextService extends BaseService<any, IContextRepository> {
@@ -18,6 +19,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     private readonly rbacService: RbacService,
     @Inject(GROUP_REPOSITORY)
     private readonly groupRepo: IGroupRepository,
+    private readonly contextCatalog: ContextCatalogService,
   ) {
     super(contextRepo);
   }
@@ -87,6 +89,11 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return payload;
   }
 
+  protected async afterCreate(): Promise<void> {
+    this.systemContextCache = null;
+    await this.contextCatalog.refreshAll().catch(() => undefined);
+  }
+
   async updateContext(id: any, data: any, requesterUserId: any) {
     const context = RequestContext.get<any>('context');
     if (context?.type !== 'system') {
@@ -117,6 +124,11 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return data;
   }
 
+  protected async afterUpdate(): Promise<void> {
+    this.systemContextCache = null;
+    await this.contextCatalog.refreshAll().catch(() => undefined);
+  }
+
   async deleteContext(id: any) {
     return this.delete(id);
   }
@@ -137,6 +149,11 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
       throw new BadRequestException(`Không thể xóa context: ${groups.length} group đang sử dụng context này`);
     }
     return true;
+  }
+
+  protected async afterDelete(): Promise<void> {
+    this.systemContextCache = null;
+    await this.contextCatalog.refreshAll().catch(() => undefined);
   }
 }
 

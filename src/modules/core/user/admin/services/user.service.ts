@@ -97,20 +97,7 @@ export class UserService extends BaseService<any, IUserRepository> {
 
   override async getOne(id: any, options: any = {}) {
     await this.verifyUserContextOwnership(id);
-    const select = {
-      id: true,
-      email: true,
-      phone: true,
-      username: true,
-      name: true,
-      image: true,
-      created_at: true,
-      updated_at: true,
-      last_login_at: true,
-      status: true,
-      profile: true,
-    };
-    return super.getOne(id, { ...options, select });
+    return super.getOne(id);
   }
 
   protected override async beforeCreate(data: any) {

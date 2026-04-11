@@ -1,27 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from '@/modules/core/user/admin/controllers/user.controller';
 import { UserService } from '@/modules/core/user/admin/services/user.service';
+import { UserRolesService } from '@/modules/core/user/admin/services/user-roles.service';
 
 describe('UserController', () => {
   let controller: UserController;
   let service: any;
+  let userRoles: any;
 
   beforeEach(async () => {
     service = {
       getList: jest.fn(),
       getSimpleList: jest.fn(),
       getOne: jest.fn(),
-      getUserRoles: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       changePassword: jest.fn(),
       delete: jest.fn(),
+    };
+    userRoles = {
+      getUserRoles: jest.fn(),
+      getUserRolesTree: jest.fn(),
+      batchSyncUserRoles: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
       providers: [
         { provide: UserService, useValue: service },
+        { provide: UserRolesService, useValue: userRoles },
       ],
     }).compile();
 
@@ -56,9 +63,9 @@ describe('UserController', () => {
   });
 
   describe('getRoles', () => {
-    it('should call service.getUserRoles with groupIds query', async () => {
+    it('should call userRoles.getUserRoles with groupIds query', async () => {
       await controller.getRoles(2, '1,2');
-      expect(service.getUserRoles).toHaveBeenCalledWith(2, '1,2');
+      expect(userRoles.getUserRoles).toHaveBeenCalledWith(2, '1,2');
     });
   });
 

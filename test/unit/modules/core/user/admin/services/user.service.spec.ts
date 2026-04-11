@@ -160,49 +160,6 @@ describe('UserService (admin)', () => {
     });
   });
 
-  describe('getUserRoles', () => {
-    it('returns [] when policy scope is none', async () => {
-      policy.roleScope.mockReturnValue({ kind: 'none' });
-
-      const result = await service.getUserRoles(1, 'other-group');
-
-      expect(result).toEqual([]);
-      expect(userRepo.findAssignments).not.toHaveBeenCalled();
-    });
-
-    it('loads assignments and groups by group', async () => {
-      policy.roleScope.mockReturnValue({ kind: 'scoped', groupIds: [1] });
-      userRepo.findAssignments.mockResolvedValue([
-        {
-          group_id: 1n,
-          role_id: 10n,
-          role: { code: 'r1', name: 'Role 1' },
-          group: { code: 'g1', name: 'G1' },
-        },
-        {
-          group_id: 1n,
-          role_id: 10n,
-          role: { code: 'r1', name: 'Role 1' },
-          group: { code: 'g1', name: 'G1' },
-        },
-        {
-          group_id: 1n,
-          role_id: 11n,
-          role: { code: 'r2', name: 'Role 2' },
-          group: { code: 'g1', name: 'G1' },
-        },
-      ]);
-
-      const result = await service.getUserRoles(5, '1');
-
-      expect(policy.assertAccess).toHaveBeenCalledWith(5);
-      expect(userRepo.findAssignments).toHaveBeenCalledWith(5, [1]);
-      expect(result).toHaveLength(1);
-      expect(result[0].roles).toHaveLength(2);
-      expect(result[0].roles.map((r: any) => r.role_code)).toEqual(['r1', 'r2']);
-    });
-  });
-
   describe('getOne', () => {
     it('asserts access then loads user via repository', async () => {
       userRepo.findById.mockResolvedValue({ id: 1, email: 'a@b.com', password: 'x' });

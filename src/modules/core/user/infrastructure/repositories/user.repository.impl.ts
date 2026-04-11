@@ -39,6 +39,18 @@ export class UserRepositoryImpl extends PrismaRepository<
     };
   }
 
+  async findMemberGroupIds(userId: any): Promise<any[]> {
+    const rows = await this.prisma.userGroup.findMany({
+      where: {
+        user_id: toPrimaryKey(userId),
+        group: { status: 'active' },
+      },
+      select: { group_id: true },
+      orderBy: { joined_at: 'desc' },
+    });
+    return rows.map((r) => r.group_id);
+  }
+
   async findAssignments(userId: any, groupIds?: any[]) {
     const where: Prisma.UserRoleAssignmentWhereInput = {
       user_id: toPrimaryKey(userId),
@@ -106,6 +118,7 @@ export class UserRepositoryImpl extends PrismaRepository<
         id: true,
         email: true,
         status: true,
+        password: true,
       },
     });
     return row as User | null;

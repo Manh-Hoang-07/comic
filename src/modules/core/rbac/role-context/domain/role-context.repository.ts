@@ -11,6 +11,7 @@ export interface IRoleContextRepository {
     // [C2] Thêm findMany để support batch validation thay vì N+1 queries
     findMany(options: {
         where?: any;
+        select?: any;
     }): Promise<RoleContext[]>;
 }
 

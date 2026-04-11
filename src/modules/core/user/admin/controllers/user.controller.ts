@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, Put, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../services/user.service';
+import { UserRolesService } from '../services/user-roles.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
+import { UserRolesBatchItemDto } from '../dtos/user-roles-batch.dto';
 import { UserQueryDto } from '../dtos/user-query.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
@@ -13,7 +15,10 @@ import { PERM } from '@/modules/core/rbac/rbac.constants';
 @ApiBearerAuth('access-token')
 @Controller('admin/users')
 export class UserController {
-  constructor(private readonly service: UserService) { }
+  constructor(
+    private readonly service: UserService,
+    private readonly userRoles: UserRolesService,
+  ) {}
 
   // ── User Management ────────────────────────────────────────────────────────
 
@@ -38,11 +43,27 @@ export class UserController {
     return this.service.getOne(id);
   }
 
+  @ApiOperation({ summary: 'Cây group → role (catalog + trạng thái đã gán)' })
+  @Permission(PERM.USER.VIEW)
+  @Get(':id/roles/tree')
+  getRolesTree(@Param('id') id: any, @Query('groupIds') groupIds?: string) {
+    return this.userRoles.getUserRolesTree(id, groupIds);
+  }
+
+  @ApiOperation({ summary: 'Đồng bộ vai trò theo nhiều group (body: mảng { group_id, role_ids })' })
+  @ApiBody({ type: [UserRolesBatchItemDto] })
+  @Permission(PERM.ASSIGNMENT.MANAGE)
+  @LogRequest({ fileBaseName: 'user_roles_batch' })
+  @Put(':id/roles/batch')
+  putRolesBatch(@Param('id') id: any, @Body() body: UserRolesBatchItemDto[]) {
+    return this.userRoles.batchSyncUserRoles(id, body);
+  }
+
   @ApiOperation({ summary: 'Lấy danh sách vai trò của người dùng' })
   @Permission(PERM.USER.VIEW)
   @Get(':id/roles')
   getRoles(@Param('id') id: any, @Query('groupIds') groupIds?: string) {
-    return this.service.getUserRoles(id, groupIds);
+    return this.userRoles.getUserRoles(id, groupIds);
   }
 
   @ApiOperation({ summary: 'Tạo người dùng mới' })

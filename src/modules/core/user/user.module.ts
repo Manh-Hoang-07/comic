@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { UserService } from './admin/services/user.service';
+import { UserRolesService } from './admin/services/user-roles.service';
 import { PolicyService } from './admin/services/policy.service';
 import { PasswordService } from './admin/services/password.service';
 import { RelationService } from './admin/services/relation.service';
@@ -18,6 +19,7 @@ import { ProfileController } from './user/controllers/profile.controller';
   providers: [
     PolicyService,
     UserService,
+    UserRolesService,
     PasswordService,
     RelationService,
     ProfileService, 

@@ -60,21 +60,25 @@ export class RoleService extends BaseService<any, IRoleRepository> {
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
   protected override async beforeCreate(data: any) {
-    const payload = { ...data };
+    const { context_ids, ...payload } = data;
     payload.created_user_id = getCurrentUserId();
 
     if (payload.code && (await this.roleRepo.findByCode(payload.code))) {
       throw new BadRequestException('Role code already exists');
     }
 
-    // parent_id should be formatted for PK
-    if (payload.parent_id) payload.parent_id = toPrimaryKey(payload.parent_id);
+    // Transform parent_id to Prisma relation
+    if (payload.parent_id !== undefined && payload.parent_id !== null && payload.parent_id !== '') {
+      payload.parent = { connect: { id: toPrimaryKey(payload.parent_id) } };
+      delete payload.parent_id;
+    }
 
     return payload;
   }
 
   async create(data: any) {
-    const contextIds = normalizeIdArray(data.context_ids);
+    const { context_ids } = data;
+    const contextIds = normalizeIdArray(context_ids);
     const role = await super.create(data);
 
     if (contextIds?.length) {
@@ -87,7 +91,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
 
   protected override async beforeUpdate(id: any, data: any) {
     const current = await this.verifyRoleExistence(id);
-    const payload = { ...data };
+    const { context_ids, ...payload } = data;
     payload.updated_user_id = getCurrentUserId();
 
     if (payload.code && payload.code !== current.code) {
@@ -96,13 +100,22 @@ export class RoleService extends BaseService<any, IRoleRepository> {
       }
     }
 
-    if (payload.parent_id) payload.parent_id = toPrimaryKey(payload.parent_id);
+    // Transform parent_id to Prisma relation
+    if (payload.parent_id !== undefined) {
+      if (payload.parent_id === null || payload.parent_id === '') {
+        payload.parent = { disconnect: true };
+      } else {
+        payload.parent = { connect: { id: toPrimaryKey(payload.parent_id) } };
+      }
+      delete payload.parent_id;
+    }
 
     return payload;
   }
 
   async update(id: any, data: any) {
-    const contextIds = normalizeIdArray(data.context_ids);
+    const { context_ids } = data;
+    const contextIds = normalizeIdArray(context_ids);
     const role = await super.update(id, data);
 
     if (contextIds !== null) {

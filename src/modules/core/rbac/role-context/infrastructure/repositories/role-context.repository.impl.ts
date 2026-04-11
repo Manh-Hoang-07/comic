@@ -17,6 +17,7 @@ export class RoleContextRepositoryImpl implements IRoleContextRepository {
     // [C2] Batch query thay vì N+1 loop trong sync roles validation
     async findMany(options: {
         where?: any;
+        select?: any;
     }): Promise<RoleContext[]> {
         return this.prisma.roleContext.findMany(options);
     }

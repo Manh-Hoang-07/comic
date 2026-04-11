@@ -15,7 +15,7 @@ export class UserService extends BaseService<any, IUserRepository> {
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
     private readonly passwordService: PasswordService,
-    private readonly actionService: RelationService,
+    private readonly relationService: RelationService,
     private readonly policy: PolicyService,
   ) {
     super(userRepo);
@@ -28,50 +28,11 @@ export class UserService extends BaseService<any, IUserRepository> {
     return this.passwordService.changePassword(id, dto);
   }
 
-  async getUserRoles(id: any, groupIds?: any) {
-    await this.policy.assertAccess(id);
-
-    const scope = this.policy.roleScope(groupIds);
-    if (scope.kind === 'none') {
-      return [];
-    }
-
-    const assignmentGroupIds =
-      scope.kind === 'all' ? undefined : scope.groupIds;
-
-    const assignments = await this.userRepo.findAssignments(id, assignmentGroupIds);
-    const grouped = new Map<any, any>();
-
-    for (const assignment of assignments) {
-      const groupId = assignment.group_id;
-      if (!grouped.has(groupId)) {
-        grouped.set(groupId, {
-          group_id: groupId,
-          group_code: assignment.group?.code,
-          group_name: assignment.group?.name,
-          roles: [],
-        });
-      }
-
-      const groupEntry = grouped.get(groupId);
-      const isExistedRole = groupEntry.roles.some((role: any) => role.role_id === assignment.role_id);
-      if (!isExistedRole) {
-        groupEntry.roles.push({
-          role_id: assignment.role_id,
-          role_code: assignment.role?.code,
-          role_name: assignment.role?.name,
-        });
-      }
-    }
-
-    return Array.from(grouped.values());
-  }
-
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
   protected override async prepareFilters(filter: any) {
     const context = RequestContext.get<any>('context');
-  
+
     if (context?.type === 'system') {
       return { ...filter, ...getGroupFilter(filter) };
     }
@@ -102,7 +63,7 @@ export class UserService extends BaseService<any, IUserRepository> {
   }
 
   protected override async afterCreate(user: any, data: any): Promise<void> {
-    await this.actionService.sync(user.id, data);
+    await this.relationService.sync(user.id, data);
   }
 
   protected override async beforeUpdate(id: any, data: any) {
@@ -124,7 +85,7 @@ export class UserService extends BaseService<any, IUserRepository> {
   }
 
   protected override async afterUpdate(user: any, data: any): Promise<void> {
-    await this.actionService.sync(user.id, data);
+    await this.relationService.sync(user.id, data);
   }
 
   protected override async beforeDelete(id: any): Promise<boolean> {
@@ -140,4 +101,3 @@ export class UserService extends BaseService<any, IUserRepository> {
     return u;
   }
 }
-

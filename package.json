@@ -11,7 +11,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/src/main",
+    "start:prod": "node dist/main",
     "k6:smoke": "k6 run ./loadtest/k6/smoke.js",
     "k6:browse": "k6 run ./loadtest/k6/public-browse.js",
     "k6:user": "k6 run ./loadtest/k6/user-journey.js",

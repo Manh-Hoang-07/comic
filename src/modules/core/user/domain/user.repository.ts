@@ -5,6 +5,8 @@ export const USER_REPOSITORY = 'IUserRepository';
 
 export interface IUserRepository extends IRepository<User> {
   findById(id: any, options?: IPaginationOptions): Promise<User | null>;
+  /** group_id các nhóm active mà user là thành viên (user_groups), thường sort joined_at desc */
+  findMemberGroupIds(userId: any): Promise<any[]>;
   findAssignments(userId: any, groupIds?: any[]): Promise<any[]>;
   findByEmail(email: string): Promise<User | null>;
   findByEmailForAuth(email: string): Promise<User | null>;

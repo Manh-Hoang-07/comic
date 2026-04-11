@@ -1,4 +1,5 @@
 import {
+  HttpException,
   Injectable,
   NestInterceptor,
   ExecutionContext,
@@ -44,12 +45,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
 
     const { message, code, status, errors } = mapExceptionToResponse(err);
     const apiError = ResponseUtil.error(message, code, status, errors);
+    const httpStatus = apiError.httpStatus ?? status;
 
-    return throwError(() => ({
-      ...err,
-      response: apiError,
-      status: apiError.httpStatus,
-    }));
+    // Phải là HttpException để HttpExceptionFilter format body; object thường → Nest trả 500 generic.
+    return throwError(() => new HttpException(apiError, httpStatus));
   }
 }
 

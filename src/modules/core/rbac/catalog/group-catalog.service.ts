@@ -60,6 +60,27 @@ export class GroupCatalogService {
     return found;
   }
 
+  /**
+   * Nhiều group theo id: một lần {@link getAllActiveGroups} (đã cache) rồi lọc theo thứ tự `groupIds`.
+   * Tránh N lần {@link getGroupById} tuần tự (và tránh N lần fallback load toàn bộ catalog).
+   */
+  async getGroupsByIds(groupIds: readonly any[]): Promise<GroupCatalogItem[]> {
+    if (groupIds.length === 0) {
+      return [];
+    }
+    const all = await this.getAllActiveGroups();
+    const byId = new Map(all.map((g) => [g.id, g]));
+    const out: GroupCatalogItem[] = [];
+    for (const rawId of groupIds) {
+      const id = String(toPrimaryKey(rawId));
+      const g = byId.get(id);
+      if (g) {
+        out.push(g);
+      }
+    }
+    return out;
+  }
+
   async getAllActiveGroups(): Promise<GroupCatalogItem[]> {
     const reqKey = 'rbac:catalog:grp:all';
     const reqCached = RequestContext.get<GroupCatalogItem[]>(reqKey);

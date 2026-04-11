@@ -31,7 +31,7 @@ export class UserRolesService {
     private readonly roleCatalog: RoleCatalogService,
     private readonly roleContextCatalog: RoleContextCatalogService,
     private readonly rbacService: RbacService,
-  ) {}
+  ) { }
 
   async getUserRoles(id: any, _groupIds?: any) {
     await this.policy.assertAccess(id);
@@ -148,7 +148,7 @@ export class UserRolesService {
       const fromContext = [...new Set([...fromByContextId.map(String), ...fromByTypeCode.map(String)])];
       const assigned = assignedByGroup.get(g.id) ?? new Set();
 
-      const idSet = new Set<string>([...fromContext.map(String), ...assigned]);
+      const idSet = new Set<string>(fromContext.map(String));
       const sorted = [...idSet].sort((a, b) => {
         const na = Number(a);
         const nb = Number(b);

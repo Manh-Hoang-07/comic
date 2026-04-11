@@ -93,6 +93,10 @@ export class SeedRoles {
     for (const map of mappings) {
       const role = createdRoles.get(map.roleCode);
       if (role && map.context) {
+        await this.prisma.roleContext.deleteMany({
+          where: { role_id: role.id },
+        });
+
         await this.prisma.roleContext.upsert({
           where: {
             role_id_context_id: {

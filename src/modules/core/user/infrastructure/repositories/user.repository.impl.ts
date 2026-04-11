@@ -92,27 +92,50 @@ export class UserRepositoryImpl extends PrismaRepository<
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.findOne({ email });
+    const row = await this.prisma.user.findUnique({
+      where: { email },
+      select: this.defaultSelect,
+    });
+    return row as User | null;
   }
 
   async findByEmailForAuth(email: string): Promise<User | null> {
-    return this.prisma.user.findFirst({
+    const row = await this.prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        status: true,
+      },
     });
+    return row as User | null;
   }
 
   async findByPhone(phone: string): Promise<User | null> {
-    return this.findOne({ phone });
+    const row = await this.prisma.user.findUnique({
+      where: { phone },
+      select: this.defaultSelect,
+    });
+    return row as User | null;
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    return this.findOne({ username });
+    const row = await this.prisma.user.findUnique({
+      where: { username },
+      select: this.defaultSelect,
+    });
+    return row as User | null;
   }
 
   async findByIdForAuth(id: any): Promise<User | null> {
-    return this.prisma.user.findFirst({
+    const row = await this.prisma.user.findUnique({
       where: { id: toPrimaryKey(id) },
+      select: {
+        id: true,
+        password: true,
+      },
     });
+    return row as User | null;
   }
 
   async updateLastLogin(userId: any): Promise<void> {

@@ -1,0 +1,217 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserService } from '@/modules/core/user/admin/services/user.service';
+import { PolicyService } from '@/modules/core/user/admin/services/policy.service';
+import { PasswordService } from '@/modules/core/user/admin/services/password.service';
+import { RelationService } from '@/modules/core/user/admin/services/relation.service';
+import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import { RequestContext } from '@/common/shared/utils';
+import * as groupOwnership from '@/common/shared/utils/group-ownership.util';
+
+jest.mock('@/common/auth/utils/auth-context.helper', () => ({
+  getCurrentUserId: jest.fn().mockReturnValue(42),
+}));
+
+describe('UserService (admin)', () => {
+  let service: UserService;
+  let userRepo: {
+    findById: jest.Mock;
+    findAssignments: jest.Mock;
+    delete: jest.Mock;
+    update: jest.Mock;
+    create: jest.Mock;
+  };
+  let policy: {
+    assertAccess: jest.Mock;
+    roleScope: jest.Mock;
+    assertUnique: jest.Mock;
+  };
+  let passwordService: { changePassword: jest.Mock; hash: jest.Mock };
+  let relationService: { sync: jest.Mock };
+
+  beforeEach(async () => {
+    userRepo = {
+      findById: jest.fn(),
+      findAssignments: jest.fn(),
+      delete: jest.fn(),
+      update: jest.fn(),
+      create: jest.fn(),
+    };
+    policy = {
+      assertAccess: jest.fn().mockResolvedValue(undefined),
+      roleScope: jest.fn(),
+      assertUnique: jest.fn().mockResolvedValue(undefined),
+    };
+    passwordService = {
+      changePassword: jest.fn().mockResolvedValue({ ok: true }),
+      hash: jest.fn().mockResolvedValue('hashed'),
+    };
+    relationService = { sync: jest.fn().mockResolvedValue(undefined) };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        { provide: USER_REPOSITORY, useValue: userRepo },
+        { provide: PolicyService, useValue: policy },
+        { provide: PasswordService, useValue: passwordService },
+        { provide: RelationService, useValue: relationService },
+      ],
+    }).compile();
+
+    service = module.get(UserService);
+  });
+
+  describe('prepareFilters', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('merges group filter for system context', async () => {
+      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) =>
+        key === 'context' ? { type: 'system' } : undefined,
+      );
+      jest.spyOn(groupOwnership, 'getGroupFilter').mockReturnValue({ group_id: 9 });
+
+      const out = await (service as any).prepareFilters({ search: 'a' });
+
+      expect(out).toEqual(expect.objectContaining({ search: 'a', group_id: 9 }));
+    });
+
+    it('adds groupId from context for non-system', async () => {
+      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
+        if (key === 'context') return { type: 'tenant' };
+        if (key === 'groupId') return 200;
+        return undefined;
+      });
+
+      const out = await (service as any).prepareFilters({ status: 'active' });
+
+      expect(out).toEqual({ status: 'active', groupId: 200 });
+    });
+  });
+
+  describe('transform', () => {
+    it('removes password from entity', () => {
+      const row = (service as any).transform({ id: 1, email: 'a@b.com', password: 'x' });
+      expect(row).toEqual({ id: 1, email: 'a@b.com' });
+    });
+  });
+
+  describe('create', () => {
+    it('hashes password, asserts unique, strips profile, syncs relations', async () => {
+      userRepo.create.mockResolvedValue({ id: 7, email: 'n@test.com' });
+
+      await service.create({
+        email: 'n@test.com',
+        password: 'plain',
+        profile: { upsert: { create: { about: 'hi' }, update: {} } },
+      } as any);
+
+      expect(policy.assertUnique).toHaveBeenCalled();
+      expect(passwordService.hash).toHaveBeenCalledWith('plain');
+      expect(userRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'n@test.com',
+          password: 'hashed',
+          created_user_id: 42,
+        }),
+      );
+      const createArg = userRepo.create.mock.calls[0][0];
+      expect(createArg.profile).toBeUndefined();
+      expect(relationService.sync).toHaveBeenCalledWith(
+        7,
+        expect.objectContaining({ profile: expect.anything() }),
+      );
+    });
+  });
+
+  describe('update', () => {
+    it('asserts access, omits password when absent, syncs relations', async () => {
+      userRepo.update.mockResolvedValue({ id: 3, name: 'U' });
+
+      await service.update(3, { name: 'U' } as any);
+
+      expect(policy.assertAccess).toHaveBeenCalledWith(3);
+      expect(userRepo.update).toHaveBeenCalledWith(
+        3,
+        expect.not.objectContaining({ password: expect.anything() }),
+      );
+      expect(relationService.sync).toHaveBeenCalledWith(3, { name: 'U' });
+    });
+  });
+
+  describe('delete', () => {
+    it('asserts access then deletes', async () => {
+      userRepo.delete.mockResolvedValue(true);
+
+      await service.delete(8);
+
+      expect(policy.assertAccess).toHaveBeenCalledWith(8);
+      expect(userRepo.delete).toHaveBeenCalledWith(8);
+    });
+  });
+
+  describe('changePassword', () => {
+    it('asserts access then delegates to PasswordService', async () => {
+      const dto = { password: 'x' } as any;
+      await service.changePassword(7, dto);
+
+      expect(policy.assertAccess).toHaveBeenCalledWith(7);
+      expect(passwordService.changePassword).toHaveBeenCalledWith(7, dto);
+    });
+  });
+
+  describe('getUserRoles', () => {
+    it('returns [] when policy scope is none', async () => {
+      policy.roleScope.mockReturnValue({ kind: 'none' });
+
+      const result = await service.getUserRoles(1, 'other-group');
+
+      expect(result).toEqual([]);
+      expect(userRepo.findAssignments).not.toHaveBeenCalled();
+    });
+
+    it('loads assignments and groups by group', async () => {
+      policy.roleScope.mockReturnValue({ kind: 'scoped', groupIds: [1] });
+      userRepo.findAssignments.mockResolvedValue([
+        {
+          group_id: 1n,
+          role_id: 10n,
+          role: { code: 'r1', name: 'Role 1' },
+          group: { code: 'g1', name: 'G1' },
+        },
+        {
+          group_id: 1n,
+          role_id: 10n,
+          role: { code: 'r1', name: 'Role 1' },
+          group: { code: 'g1', name: 'G1' },
+        },
+        {
+          group_id: 1n,
+          role_id: 11n,
+          role: { code: 'r2', name: 'Role 2' },
+          group: { code: 'g1', name: 'G1' },
+        },
+      ]);
+
+      const result = await service.getUserRoles(5, '1');
+
+      expect(policy.assertAccess).toHaveBeenCalledWith(5);
+      expect(userRepo.findAssignments).toHaveBeenCalledWith(5, [1]);
+      expect(result).toHaveLength(1);
+      expect(result[0].roles).toHaveLength(2);
+      expect(result[0].roles.map((r: any) => r.role_code)).toEqual(['r1', 'r2']);
+    });
+  });
+
+  describe('getOne', () => {
+    it('asserts access then loads user via repository', async () => {
+      userRepo.findById.mockResolvedValue({ id: 1, email: 'a@b.com', password: 'x' });
+
+      const row = await service.getOne(1);
+
+      expect(policy.assertAccess).toHaveBeenCalledWith(1);
+      expect(userRepo.findById).toHaveBeenCalledWith(1, {});
+      expect(row).toEqual({ id: 1, email: 'a@b.com' });
+    });
+  });
+});

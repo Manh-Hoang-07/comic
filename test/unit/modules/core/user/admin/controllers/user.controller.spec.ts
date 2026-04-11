@@ -11,6 +11,7 @@ describe('UserController', () => {
       getList: jest.fn(),
       getSimpleList: jest.fn(),
       getOne: jest.fn(),
+      getUserRoles: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       changePassword: jest.fn(),
@@ -51,6 +52,34 @@ describe('UserController', () => {
       const dto = { password: 'new' };
       await controller.changePassword(1, dto as any);
       expect(service.changePassword).toHaveBeenCalledWith(1, dto);
+    });
+  });
+
+  describe('getRoles', () => {
+    it('should call service.getUserRoles with groupIds query', async () => {
+      await controller.getRoles(2, '1,2');
+      expect(service.getUserRoles).toHaveBeenCalledWith(2, '1,2');
+    });
+  });
+
+  describe('getSimpleList', () => {
+    it('should call service.getSimpleList', async () => {
+      await controller.getSimpleList({ limit: 50 } as any);
+      expect(service.getSimpleList).toHaveBeenCalledWith({ limit: 50 });
+    });
+  });
+
+  describe('delete', () => {
+    it('should call service.delete', async () => {
+      await controller.delete(9);
+      expect(service.delete).toHaveBeenCalledWith(9);
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('should call service.update with status', async () => {
+      await controller.updateStatus(3, { status: 'inactive' });
+      expect(service.update).toHaveBeenCalledWith(3, { status: 'inactive' });
     });
   });
 });

@@ -19,9 +19,7 @@ export class RelationService {
 
   private normalizeProfileData(data: any) {
     const validFields = [
-      'birthday', 'gender', 'address', 'about',
-      'country_id', 'province_id', 'ward_id',
-      'created_user_id', 'updated_user_id',
+      'birthday', 'gender', 'address', 'about', 'country_id', 'province_id', 'ward_id', 'created_user_id', 'updated_user_id',
     ];
 
     const result: any = {};

@@ -5,7 +5,7 @@ import { CONTEXT_REPOSITORY } from '@/modules/core/context/context/domain/contex
 import { USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
 import { USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
 import { ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
-import { USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
+import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
 import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtStrategy } from '@/modules/core/auth/strategies/jwt.strategy';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { USER_REPOSITORY } from '@/modules/core/user/repositories/user.repository';
+import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 
 describe('JwtStrategy', () => {
     let strategy: JwtStrategy;
@@ -11,7 +11,7 @@ describe('JwtStrategy', () => {
     let config: any;
 
     beforeEach(async () => {
-        userRepo = { findByIdWithBasicInfo: jest.fn() };
+        userRepo = { findById: jest.fn() };
         redis = { get: jest.fn(), set: jest.fn() };
         config = { get: jest.fn().mockReturnValue('secret') };
 
@@ -35,12 +35,12 @@ describe('JwtStrategy', () => {
 
         expect(result).not.toBeNull();
         expect((result as { id: string }).id).toBe('1');
-        expect(userRepo.findByIdWithBasicInfo).not.toHaveBeenCalled();
+        expect(userRepo.findById).not.toHaveBeenCalled();
     });
 
     it('should load from DB if cache miss', async () => {
         redis.get.mockResolvedValue(null);
-        userRepo.findByIdWithBasicInfo.mockResolvedValue({
+        userRepo.findById.mockResolvedValue({
             id: BigInt(1),
             username: 'db_user',
             profile: null,
@@ -55,7 +55,7 @@ describe('JwtStrategy', () => {
 
     it('should return null if user not found', async () => {
         redis.get.mockResolvedValue(null);
-        userRepo.findByIdWithBasicInfo.mockResolvedValue(null);
+        userRepo.findById.mockResolvedValue(null);
 
         const result = await strategy.validate({ sub: 1 });
         expect(result).toBeNull();

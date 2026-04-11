@@ -82,7 +82,6 @@ export class UserController {
   @LogRequest({ fileBaseName: 'user_status' })
   @Patch(':id/status')
   updateStatus(@Param('id') id: any, @Body() body: { status: string }) {
-    // Chúng ta dùng BaseService.update trực tiếp cho trạng thái
     return this.service.update(id, { status: body.status });
   }
 }

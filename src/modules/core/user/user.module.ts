@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { UserService } from './admin/services/user.service';
+import { PolicyService } from './admin/services/policy.service';
 import { PasswordService } from './admin/services/password.service';
 import { RelationService } from './admin/services/relation.service';
 import { ProfileService } from './user/services/profile.service';
@@ -15,7 +16,8 @@ import { ProfileController } from './user/controllers/profile.controller';
 @Module({
   imports: [RbacModule],
   providers: [
-    UserService, 
+    PolicyService,
+    UserService,
     PasswordService,
     RelationService,
     ProfileService, 
@@ -35,7 +37,8 @@ import { ProfileController } from './user/controllers/profile.controller';
     ProfileController
   ],
   exports: [
-    UserService, 
+    PolicyService,
+    UserService,
     PasswordService,
     RelationService,
     ProfileService, 

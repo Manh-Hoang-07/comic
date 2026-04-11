@@ -75,113 +75,110 @@ export class UserRolesService {
    * - Context **khác**: chỉ **group hiện tại** (RequestContext.groupId).
    */
   async getUserRolesTree(id: any, _groupIds?: string) {
-    const user = await this.userRepo.findById(id);
-    if (!user) throw new NotFoundException('User not found');
+    const { groups, assignmentGroupPks } = await this.resolveRoleUiScope(id);
+    if (groups.length === 0) return [];
 
     await this.policy.assertAccess(id);
 
-    const { groups, assignmentGroupPks } = await this.resolveRoleUiScope(id);
-    if (groups.length === 0) {
-      return [];
-    }
+    // 1. Phách dữ liệu cơ sở (Groups từ DB, Assignments, Meta Roles)
+    const [groupDetailRows, assignments, allRoles] = await this.fetchBaseData(id, groups, assignmentGroupPks);
 
-    /** context_id + context (type/code) từ DB — bắt cặp với role_contexts theo id hoặc theo mã context. */
-    const dbContextByGroupId = new Map<string, string>();
-    const groupRowById = new Map<string, { context?: { type?: string; code?: string } }>();
-    const contextTypeCodePairs: { type: string; code: string }[] = [];
-    if (groups.length > 0) {
-      const rows = await this.groupRepo.findActiveByIds(groups.map((g) => toPrimaryKey(g.id)));
-      for (const row of rows as {
-        id: unknown;
-        context_id: unknown;
-        context?: { type?: string; code?: string };
-      }[]) {
-        const gid = String(toPrimaryKey(row.id));
-        groupRowById.set(gid, row);
-        if (row.context_id != null && row.context_id !== '') {
-          dbContextByGroupId.set(gid, String(toPrimaryKey(row.context_id)));
-        }
-        const c = row.context;
-        if (c?.type != null && c?.code != null && String(c.type) !== '' && String(c.code) !== '') {
-          contextTypeCodePairs.push({ type: String(c.type), code: String(c.code) });
-        }
-      }
-    }
+    const groupRowMap = new Map(groupDetailRows.map((r: any) => [String(toPrimaryKey(r.id)), r]));
+    const roleMap = new Map(allRoles.map(r => [r.id, r]));
 
-    const contextIds = groups.map((g) => dbContextByGroupId.get(g.id) ?? g.contextId);
-    const [assignments, allRoles, roleIdsByContext, roleIdsByTypeCode] = await Promise.all([
+    // 2. Lấy Role Catalog cho tất cả các context liên quan
+    const { rolesByContextMap, rolesByTypeCodeMap } = await this.fetchRoleContextMappings(groups, groupRowMap);
+
+    // 3. Gom nhóm assignments
+    const assignedByGroupMap = this.groupAssignments(assignments);
+
+    // 4. Lắp ghép cây kết quả
+    return groups.map((g) => {
+      const detail = groupRowMap.get(g.id);
+      const ctxId = detail?.context_id ? String(toPrimaryKey(detail.context_id)) : g.contextId;
+      const tcKey = (detail?.context?.type && detail?.context?.code) 
+        ? `${detail.context.type}\0${detail.context.code}` 
+        : null;
+
+      const roleIdsFromCatalog = new Set([
+        ...(ctxId ? (rolesByContextMap.get(ctxId) ?? []) : []),
+        ...(tcKey ? (rolesByTypeCodeMap.get(tcKey) ?? []) : []),
+      ]);
+
+      const assignedRoleIds = assignedByGroupMap.get(g.id) ?? new Set<string>();
+
+      return this.buildGroupNode(g, roleIdsFromCatalog, assignedRoleIds, roleMap);
+    });
+  }
+
+  /** Lấy dữ liệu cơ bản song song */
+  private async fetchBaseData(id: any, groups: any[], assignmentGroupPks: any[]) {
+    return Promise.all([
+      this.groupRepo.findActiveByIds(groups.map(g => toPrimaryKey(g.id))),
       this.userRepo.findAssignments(id, assignmentGroupPks),
       this.roleCatalog.getAllActiveRoles(),
-      this.roleContextCatalog.getRoleIdsMapForContextsFromDb(contextIds),
-      this.roleContextCatalog.getRoleIdsMapForContextTypeCodesFromDb(contextTypeCodePairs),
     ]);
+  }
 
-    const assignedByGroup = new Map<string, Set<string>>();
-    for (const a of assignments) {
-      const gid = String(toPrimaryKey(a.group_id));
-      if (!assignedByGroup.has(gid)) assignedByGroup.set(gid, new Set());
-      assignedByGroup.get(gid)!.add(String(toPrimaryKey(a.role_id)));
-    }
-
-    const roleById = new Map(allRoles.map((r) => [r.id, r]));
-
-    const tree: Array<{
-      group_id: number;
-      group_name: string;
-      checked: boolean;
-      indeterminate: boolean;
-      roles: Array<{ role_id: number; role_name: string | null; checked: boolean }>;
-    }> = [];
+  /** Tra cứu Catalog tập trung cho tất cả context IDs và Type/Code pairs */
+  private async fetchRoleContextMappings(groups: any[], groupRowMap: Map<string, any>) {
+    const contextIds = new Set<string>();
+    const typeCodePairs: { type: string; code: string }[] = [];
 
     for (const g of groups) {
-      const effectiveCtx = dbContextByGroupId.get(g.id) ?? g.contextId;
-      const ctxKey =
-        effectiveCtx != null && effectiveCtx !== '' ? String(toPrimaryKey(effectiveCtx)) : '';
-      const row = groupRowById.get(g.id);
-      const c = row?.context;
-      const tcKey =
-        c?.type != null && c?.code != null && String(c.type) !== '' && String(c.code) !== ''
-          ? `${String(c.type)}\0${String(c.code)}`
-          : '';
-      const fromByContextId = ctxKey ? (roleIdsByContext.get(ctxKey) ?? []) : [];
-      const fromByTypeCode = tcKey ? (roleIdsByTypeCode.get(tcKey) ?? []) : [];
-      const fromContext = [...new Set([...fromByContextId.map(String), ...fromByTypeCode.map(String)])];
-      const assigned = assignedByGroup.get(g.id) ?? new Set();
+      const detail = groupRowMap.get(g.id);
+      const ctxId = detail?.context_id ? String(toPrimaryKey(detail.context_id)) : g.contextId;
+      if (ctxId) contextIds.add(ctxId);
 
-      const idSet = new Set<string>(fromContext.map(String));
-      const sorted = [...idSet].sort((a, b) => {
-        const na = Number(a);
-        const nb = Number(b);
-        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
-        return a.localeCompare(b);
-      });
-
-      let checkedCount = 0;
-      const roles = sorted.map((rid) => {
-        const meta = roleById.get(rid);
-        const checked = assigned.has(rid);
-        if (checked) checkedCount += 1;
-        return {
-          role_id: Number(rid),
-          role_name: meta?.name ?? null,
-          checked,
-        };
-      });
-
-      const n = roles.length;
-      const checked = n > 0 && checkedCount === n;
-      const indeterminate = checkedCount > 0 && checkedCount < n;
-
-      tree.push({
-        group_id: Number(g.id),
-        group_name: g.name,
-        checked,
-        indeterminate,
-        roles,
-      });
+      const c = detail?.context;
+      if (c?.type && c?.code) typeCodePairs.push({ type: c.type, code: c.code });
     }
 
-    return tree;
+    const [rolesByContextMap, rolesByTypeCodeMap] = await Promise.all([
+      this.roleContextCatalog.getRoleIdsMapForContextsFromDb([...contextIds]),
+      this.roleContextCatalog.getRoleIdsMapForContextTypeCodesFromDb(typeCodePairs),
+    ]);
+
+    return { rolesByContextMap, rolesByTypeCodeMap };
+  }
+
+  /** Phân loại assignments theo group_id */
+  private groupAssignments(assignments: any[]): Map<string, Set<string>> {
+    const map = new Map<string, Set<string>>();
+    for (const a of assignments) {
+      const gid = String(toPrimaryKey(a.group_id));
+      if (!map.has(gid)) map.set(gid, new Set());
+      map.get(gid)!.add(String(toPrimaryKey(a.role_id)));
+    }
+    return map;
+  }
+
+  /** Xây dựng cấu trúc của một Group Node trong cây */
+  private buildGroupNode(g: any, roleIdsFromCatalog: Set<string>, assignedRoleIds: Set<string>, roleMap: Map<string, any>) {
+    // Sắp xếp ID Role (Catalog-driven)
+    const sortedIds = [...roleIdsFromCatalog].sort((a, b) => {
+      const na = Number(a), nb = Number(b);
+      return (Number.isFinite(na) && Number.isFinite(nb)) ? na - nb : a.localeCompare(b);
+    });
+
+    let checkedCount = 0;
+    const roles = sortedIds.map((rid) => {
+      const isChecked = assignedRoleIds.has(rid);
+      if (isChecked) checkedCount++;
+      return {
+        role_id: Number(rid),
+        role_name: roleMap.get(rid)?.name ?? null,
+        checked: isChecked,
+      };
+    });
+
+    return {
+      group_id: Number(g.id),
+      group_name: g.name,
+      checked: roles.length > 0 && checkedCount === roles.length,
+      indeterminate: checkedCount > 0 && checkedCount < roles.length,
+      roles,
+    };
   }
 
   /**

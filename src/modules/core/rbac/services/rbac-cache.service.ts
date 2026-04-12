@@ -1,12 +1,15 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
-import {
-  decodeAssignedBitmapBlob,
-  encodeAssignedBitmapBlob,
-} from '@/modules/core/rbac/services/rbac-assigned-bitmap-blob.codec';
-import { RbacBitmapL1Cache } from '@/modules/core/rbac/services/rbac-bitmap-l1-cache';
+import { decodeAssignedCodes, encodeAssignedCodes } from '@/modules/core/rbac/services/rbac-assigned-codes.codec';
 
+/** Giá trị Redis cũ (bitmap) — gặp thì xóa key và refresh dạng danh sách mã. */
+const LEGACY_ASSIGNED_BITMAP_PREFIX = 'b64:v1:' as const;
+
+/**
+ * Cache quyền đã gán (user × group): chỉ Redis (một lớp).
+ * Redis tắt → luôn coi như miss, caller đọc DB và build lại.
+ */
 @Injectable()
 export class RbacCacheService implements OnModuleInit {
   private readonly ttlSeconds: number;
@@ -17,7 +20,6 @@ export class RbacCacheService implements OnModuleInit {
   private version = 1;
   private versionLastFetch = 0;
   private readonly versionTtlMs = 30000;
-  private readonly l1 = new RbacBitmapL1Cache(30000);
 
   constructor(
     private readonly redis: RedisUtil,
@@ -31,10 +33,7 @@ export class RbacCacheService implements OnModuleInit {
       await this.ensureVersion().catch(() => undefined);
       await this.redis.subscribe(this.invalidationChannel, (message) => {
         try {
-          const { type, userId, key, version } = JSON.parse(message);
-          if (type === 'user_all') this.l1.deleteByUserId(userId);
-          else if (type === 'specific_key') this.l1.delete(key);
-          else if (type === 'clear_all') this.l1.clear();
+          const { version } = JSON.parse(message);
           if (typeof version === 'number' && Number.isFinite(version) && version > 0) {
             this.version = version;
             this.versionLastFetch = Date.now();
@@ -61,51 +60,39 @@ export class RbacCacheService implements OnModuleInit {
   }
 
   /**
-   * Legacy: không có DenseIndex trong cache layer — luôn false. Dùng RbacService để check đầy đủ.
+   * `cached=true`: key tồn tại trên Redis (kể cả mảng rỗng). `cached=false`: miss.
    */
-  async hasPermission(userId: any, groupId: any | null, _permission: string): Promise<boolean> {
-    await this.getPermissions(userId, groupId);
-    return false;
-  }
-
-  /**
-   * `cached=true`: key tồn tại (kể cả empty bitmap). `cached=false`: miss, caller refresh từ DB.
-   */
-  async getPermissions(
-    userId: any,
-    groupId: any | null,
-  ): Promise<{ bitmap: Uint8Array; cached: boolean }> {
+  async getPermissions(userId: any, groupId: any | null): Promise<{ codes: string[]; cached: boolean }> {
     const key = await this.buildCacheKey(userId, groupId);
 
-    const l1Hit = this.l1.getValid(key);
-    if (l1Hit !== undefined) {
-      return { bitmap: l1Hit, cached: true };
-    }
-
     if (!this.redis.isEnabled()) {
-      return { bitmap: new Uint8Array(), cached: false };
+      return { codes: [], cached: false };
     }
 
     const raw = await this.redis.get(key);
     if (raw) {
-      const data = decodeAssignedBitmapBlob(raw);
-      this.l1.set(key, data);
-      return { bitmap: data, cached: true };
+      if (typeof raw === 'string' && raw.startsWith(LEGACY_ASSIGNED_BITMAP_PREFIX)) {
+        await this.redis.del(key);
+        return { codes: [], cached: false };
+      }
+      const decoded = decodeAssignedCodes(raw);
+      if (decoded) {
+        return { codes: decoded, cached: true };
+      }
+      await this.redis.del(key);
     }
 
-    return { bitmap: new Uint8Array(), cached: false };
+    return { codes: [], cached: false };
   }
 
-  async setPermissions(userId: any, groupId: any | null, bitmap: Uint8Array) {
+  async setPermissions(userId: any, groupId: any | null, codes: string[]) {
     const key = await this.buildCacheKey(userId, groupId);
-
-    this.l1.delete(key);
 
     if (!this.redis.isEnabled()) {
       return;
     }
 
-    const value = encodeAssignedBitmapBlob(bitmap);
+    const value = encodeAssignedCodes(codes);
     await this.redis.set(key, value, this.ttlSeconds);
     await this.redis.trackKey(Number(userId), key);
 
@@ -115,7 +102,6 @@ export class RbacCacheService implements OnModuleInit {
   async clearUserCache(userId: any, groupId: any | null) {
     const key = await this.buildCacheKey(userId, groupId);
     await this.redis.del(key);
-    this.l1.delete(key);
   }
 
   async clearAllUserCaches(userId: any) {
@@ -125,19 +111,16 @@ export class RbacCacheService implements OnModuleInit {
       await this.redis.del(k);
     }
     await this.redis.clearTrackedKeys(Number(userId));
-    this.l1.deleteByUserId(userId);
     await this.redis.publish(this.invalidationChannel, JSON.stringify({ type: 'user_all', userId }));
   }
 
   async isCached(userId: any, groupId: any | null): Promise<boolean> {
-    const key = await this.buildCacheKey(userId, groupId);
-    if (this.l1.hasValid(key)) return true;
     if (!this.redis.isEnabled()) return false;
+    const key = await this.buildCacheKey(userId, groupId);
     return await this.redis.exists(key);
   }
 
   async bumpVersion(): Promise<void> {
-    this.l1.clear();
     if (this.redis.isEnabled()) {
       const next = await this.redis.hincrby(this.versionKey, this.versionField, 1);
       this.version = Number(next) > 0 ? Number(next) : (this.version + 1);

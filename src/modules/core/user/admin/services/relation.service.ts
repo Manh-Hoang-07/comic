@@ -1,4 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IProfileRepository, PROFILE_REPOSITORY } from '@/modules/core/user/domain/profile.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
@@ -11,7 +12,7 @@ export class RelationService {
 
   // ── Relation Synchronization ───────────────────────────────────────────────
 
-  async sync(userId: any, data: { profile?: any }): Promise<void> {
+  async sync(userId: PrimaryKey, data: { profile?: any }): Promise<void> {
     if (data.profile) {
       await this.profileRepo.upsertByUserId(userId, this.normalizeProfileData(data.profile));
     }

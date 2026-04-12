@@ -1,13 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { BaseService } from '@/common/core/services';
-import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
-import { RequestContext } from '@/common/shared/utils';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { PasswordService } from './password.service';
 import { RelationService } from './relation.service';
 import { PolicyService } from './policy.service';
+import { UserRoleScopeService } from './user-role-scope.service';
 
 @Injectable()
 export class UserService extends BaseService<any, IUserRepository> {
@@ -17,13 +17,14 @@ export class UserService extends BaseService<any, IUserRepository> {
     private readonly passwordService: PasswordService,
     private readonly relationService: RelationService,
     private readonly policy: PolicyService,
+    private readonly roleScope: UserRoleScopeService,
   ) {
     super(userRepo);
   }
 
   // ── Password & Action Delegates ────────────────────────────────────────────
 
-  async changePassword(id: any, dto: ChangePasswordDto) {
+  async changePassword(id: PrimaryKey, dto: ChangePasswordDto) {
     await this.policy.assertAccess(id);
     return this.passwordService.changePassword(id, dto);
   }
@@ -31,17 +32,10 @@ export class UserService extends BaseService<any, IUserRepository> {
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
   protected override async prepareFilters(filter: any) {
-    const context = RequestContext.get<any>('context');
-
-    if (context?.type === 'system') {
-      return { ...filter, ...getGroupFilter(filter) };
-    }
-
-    const ctxGroupId = RequestContext.get<any>('groupId');
-    return { ...filter, groupId: ctxGroupId };
+    return this.roleScope.mergeListFilter(filter);
   }
 
-  override async getOne(id: any, options: any = {}) {
+  override async getOne(id: PrimaryKey, options: any = {}) {
     await this.policy.assertAccess(id);
     return super.getOne(id, options);
   }
@@ -66,7 +60,7 @@ export class UserService extends BaseService<any, IUserRepository> {
     await this.relationService.sync(user.id, data);
   }
 
-  protected override async beforeUpdate(id: any, data: any) {
+  protected override async beforeUpdate(id: PrimaryKey, data: any) {
     await this.policy.assertAccess(id);
     const payload = { ...data };
     payload.updated_user_id = getCurrentUserId();
@@ -88,7 +82,7 @@ export class UserService extends BaseService<any, IUserRepository> {
     await this.relationService.sync(user.id, data);
   }
 
-  protected override async beforeDelete(id: any): Promise<boolean> {
+  protected override async beforeDelete(id: PrimaryKey): Promise<boolean> {
     await this.policy.assertAccess(id);
     return true;
   }

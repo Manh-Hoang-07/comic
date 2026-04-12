@@ -20,6 +20,7 @@ export class RoleHasPermissionRepositoryImpl implements IRoleHasPermissionReposi
         const rows = await this.prisma.roleHasPermission.findMany({
             where: {
                 role_id: { in: roleIds as any },
+                role: { status: 'active' as any },
                 permission: { status: 'active' as any },
             },
             select: {

@@ -34,7 +34,7 @@ describe('AdminGroupService', () => {
 
         rbacService = {
             isSystemAdmin: jest.fn(),
-            userHasPermissionsInGroup: jest.fn(),
+            hasPermissions: jest.fn(),
         };
 
         const module: TestingModule = await Test.createTestingModule({

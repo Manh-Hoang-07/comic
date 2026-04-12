@@ -1,27 +1,25 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserRolesService } from '@/modules/core/user/admin/services/user-roles.service';
+import { UserRoleScopeService } from '@/modules/core/user/admin/services/user-role-scope.service';
 import { PolicyService } from '@/modules/core/user/admin/services/policy.service';
 import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
-import { GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { RequestContext } from '@/common/shared/utils';
-import { GroupCatalogService } from '@/modules/core/rbac/catalog/group-catalog.service';
-import { RoleCatalogService } from '@/modules/core/rbac/catalog/role-catalog.service';
-import { RoleContextCatalogService } from '@/modules/core/rbac/catalog/role-context-catalog.service';
+import { ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
+import { ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
+import { RequestContext } from '@/common/shared/utils';
 
 describe('UserRolesService', () => {
   let service: UserRolesService;
   let userRepo: { findById: jest.Mock; findAssignments: jest.Mock; findMemberGroupIds: jest.Mock };
   let policy: { assertAccess: jest.Mock; roleScope: jest.Mock };
-  let groupCatalog: { getAllActiveGroups: jest.Mock; getGroupById: jest.Mock; getGroupsByIds: jest.Mock };
-  let roleCatalog: { getAllActiveRoles: jest.Mock };
-  let roleContextCatalog: {
-    getRoleIdsMapForContextsFromDb: jest.Mock;
-    getRoleIdsMapForContextTypeCodesFromDb: jest.Mock;
-  };
+  let roleRepo: { findMany: jest.Mock };
+  let roleContextRepo: { findMany: jest.Mock };
   let rbacService: { syncRolesInGroup: jest.Mock };
-  let groupRepo: { findActiveByIds: jest.Mock };
+  let roleScope: {
+    resolveRoleUi: jest.Mock;
+    guardBatchGroups: jest.Mock;
+  };
 
   beforeEach(async () => {
     userRepo = {
@@ -33,31 +31,23 @@ describe('UserRolesService', () => {
       assertAccess: jest.fn().mockResolvedValue(undefined),
       roleScope: jest.fn(),
     };
-    groupCatalog = {
-      getAllActiveGroups: jest.fn().mockResolvedValue([]),
-      getGroupById: jest.fn().mockResolvedValue(null),
-      getGroupsByIds: jest.fn().mockResolvedValue([]),
-    };
-    roleCatalog = {
-      getAllActiveRoles: jest.fn().mockResolvedValue([]),
-    };
-    roleContextCatalog = {
-      getRoleIdsMapForContextsFromDb: jest.fn().mockResolvedValue(new Map()),
-      getRoleIdsMapForContextTypeCodesFromDb: jest.fn().mockResolvedValue(new Map()),
-    };
+    roleRepo = { findMany: jest.fn().mockResolvedValue([]) };
+    roleContextRepo = { findMany: jest.fn().mockResolvedValue([]) };
     rbacService = { syncRolesInGroup: jest.fn().mockResolvedValue(undefined) };
-    groupRepo = { findActiveByIds: jest.fn().mockResolvedValue([]) };
+    roleScope = {
+      resolveRoleUi: jest.fn(),
+      guardBatchGroups: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserRolesService,
         { provide: USER_REPOSITORY, useValue: userRepo },
-        { provide: GROUP_REPOSITORY, useValue: groupRepo },
+        { provide: ROLE_REPOSITORY, useValue: roleRepo },
+        { provide: ROLE_CONTEXT_REPOSITORY, useValue: roleContextRepo },
         { provide: PolicyService, useValue: policy },
-        { provide: GroupCatalogService, useValue: groupCatalog },
-        { provide: RoleCatalogService, useValue: roleCatalog },
-        { provide: RoleContextCatalogService, useValue: roleContextCatalog },
         { provide: RbacService, useValue: rbacService },
+        { provide: UserRoleScopeService, useValue: roleScope },
       ],
     }).compile();
 
@@ -69,12 +59,12 @@ describe('UserRolesService', () => {
   });
 
   describe('getUserRoles', () => {
-    it('returns [] in system context when user has no member groups', async () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'system' };
-        return undefined;
+    it('returns [] when scope has no assignment groups', async () => {
+      roleScope.resolveRoleUi.mockResolvedValue({
+        groups: [],
+        assignmentGroupPks: [],
+        groupRows: [],
       });
-      userRepo.findMemberGroupIds.mockResolvedValue([]);
 
       const result = await service.getUserRoles(1);
 
@@ -82,20 +72,17 @@ describe('UserRolesService', () => {
       expect(userRepo.findAssignments).not.toHaveBeenCalled();
     });
 
-    it('throws when non-system context without groupId', async () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'tenant' };
-        return undefined;
-      });
+    it('propagates Forbidden from scope resolution', async () => {
+      roleScope.resolveRoleUi.mockRejectedValue(new ForbiddenException('No context'));
 
       await expect(service.getUserRoles(1)).rejects.toThrow(ForbiddenException);
     });
 
-    it('loads assignments scoped to current group in non-system context', async () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'tenant' };
-        if (key === 'groupId') return 1;
-        return undefined;
+    it('loads assignments for scoped groups and dedupes roles', async () => {
+      roleScope.resolveRoleUi.mockResolvedValue({
+        groups: [{ id: '1', code: 'g', type: 't', name: 'G', status: 'active', contextId: '1' }],
+        assignmentGroupPks: [1n],
+        groupRows: [],
       });
       userRepo.findAssignments.mockResolvedValue([
         {
@@ -136,47 +123,57 @@ describe('UserRolesService', () => {
       expect(policy.assertAccess).not.toHaveBeenCalled();
     });
 
-    it('returns [] in system context when target user has no member groups', async () => {
+    it('returns [] when scope yields no groups', async () => {
       userRepo.findById.mockResolvedValue({ id: 1 });
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'system' };
-        return undefined;
+      roleScope.resolveRoleUi.mockResolvedValue({
+        groups: [],
+        assignmentGroupPks: [],
+        groupRows: [],
       });
-      userRepo.findMemberGroupIds.mockResolvedValue([]);
 
       const result = await service.getUserRolesTree(1);
 
       expect(result).toEqual([]);
-      expect(userRepo.findMemberGroupIds).toHaveBeenCalledWith(1);
-      expect(groupCatalog.getGroupsByIds).toHaveBeenCalledWith([]);
     });
 
-    it('builds tree for current group in non-system context', async () => {
+    it('builds tree for scoped groups', async () => {
       userRepo.findById.mockResolvedValue({ id: 5 });
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'tenant' };
-        if (key === 'groupId') return 10;
-        return undefined;
+      roleScope.resolveRoleUi.mockResolvedValue({
+        groups: [
+          {
+            id: '10',
+            code: 'g1',
+            type: 'x',
+            name: 'G1',
+            status: 'active',
+            contextId: '1',
+          },
+        ],
+        assignmentGroupPks: [10n],
+        groupRows: [
+          {
+            id: 10n,
+            code: 'g1',
+            type: 'x',
+            name: 'G1',
+            status: 'active',
+            context_id: 1n,
+            context: { type: 'x', code: 'y' },
+          },
+        ],
       });
-      groupCatalog.getGroupsByIds.mockResolvedValue([
-        {
-          id: '10',
-          name: 'G1',
-          contextId: '1',
-          code: 'g1',
-          type: 'x',
-          status: 'active',
-        },
-      ]);
-      groupRepo.findActiveByIds.mockResolvedValue([
-        { id: 10n, context_id: 1n, context: { type: 'x', code: 'y' } },
-      ]);
-      roleContextCatalog.getRoleIdsMapForContextsFromDb.mockResolvedValue(
-        new Map([['1', ['100', '101']]]),
-      );
-      roleCatalog.getAllActiveRoles.mockResolvedValue([
-        { id: '100', code: 'a', name: 'R100', status: 'active', parentId: null },
-        { id: '101', code: 'b', name: 'R101', status: 'active', parentId: null },
+      roleContextRepo.findMany.mockImplementation(async (opts: any) => {
+        if (opts?.where?.context_id?.in) {
+          return [
+            { context_id: 1n, role_id: 100n },
+            { context_id: 1n, role_id: 101n },
+          ];
+        }
+        return [];
+      });
+      roleRepo.findMany.mockResolvedValue([
+        { id: 100n, code: 'a', name: 'R100', status: 'active', parent_id: null },
+        { id: 101n, code: 'b', name: 'R101', status: 'active', parent_id: null },
       ]);
       userRepo.findAssignments.mockResolvedValue([
         { group_id: 10n, role_id: 100n, role: {}, group: {} },
@@ -184,7 +181,6 @@ describe('UserRolesService', () => {
 
       const result = await service.getUserRolesTree(5);
 
-      expect(groupCatalog.getGroupsByIds).toHaveBeenCalledWith([10]);
       expect(result).toHaveLength(1);
       expect(result[0].group_id).toBe(10);
       expect(result[0].checked).toBe(false);
@@ -223,12 +219,10 @@ describe('UserRolesService', () => {
       expect(rbacService.syncRolesInGroup).toHaveBeenCalledWith(1, 2, [2, 3], true);
     });
 
-    it('forbids group_id outside context for non-system', async () => {
+    it('delegates batch group guard to UserRoleScopeService', async () => {
       userRepo.findById.mockResolvedValue({ id: 1 });
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'tenant' };
-        if (key === 'groupId') return 99;
-        return undefined;
+      roleScope.guardBatchGroups.mockImplementation(() => {
+        throw new ForbiddenException('group_id is not allowed in the current context');
       });
 
       await expect(

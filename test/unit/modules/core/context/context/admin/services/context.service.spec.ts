@@ -24,7 +24,7 @@ describe('AdminContextService', () => {
         };
 
         rbacService = {
-            userHasPermissionsInGroup: jest.fn(),
+            hasPermissions: jest.fn(),
             isSystemAdmin: jest.fn().mockResolvedValue(true),
         };
 
@@ -60,12 +60,12 @@ describe('AdminContextService', () => {
     describe('createContext', () => {
         it('should throw ForbiddenException if user is not system admin', async () => {
             rbacService.isSystemAdmin.mockResolvedValue(false);
-            rbacService.userHasPermissionsInGroup.mockResolvedValue(false);
+            rbacService.hasPermissions.mockResolvedValue(false);
             await expect(service.createContext({}, 1)).rejects.toThrow(ForbiddenException);
         });
 
         it('should call create if user is system admin', async () => {
-            rbacService.userHasPermissionsInGroup.mockResolvedValue(true);
+            rbacService.hasPermissions.mockResolvedValue(true);
             contextRepo.findByTypeAndRefId.mockResolvedValue(null);
             contextRepo.findByCode.mockResolvedValue(null);
             contextRepo.create.mockResolvedValue({ id: 2 });

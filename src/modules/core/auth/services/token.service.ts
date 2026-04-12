@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as jwt from 'jsonwebtoken';
 import { RedisUtil } from '@/core/utils/redis.util';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 
 @Injectable()
 export class TokenService {
@@ -48,8 +49,8 @@ export class TokenService {
         return Math.random().toString(36).slice(2) + Date.now().toString(36);
     }
 
-    generateTokens(userId: any, email?: string) {
-        const payload = { sub: userId, email } as Record<string, any>;
+    generateTokens(userId: PrimaryKey, email?: string) {
+        const payload = { sub: userId, email } as Record<string, unknown>;
         const accessToken = this.jwtService.sign(payload);
         const accessTtlSec = this.getAccessTtlSec();
 
@@ -74,7 +75,7 @@ export class TokenService {
         const audience = this.getJwtAudience();
         const issuer = this.getJwtIssuer();
         return jwt.verify(refreshToken, refreshSecret, { audience, issuer }) as jwt.JwtPayload & {
-            sub: number | string;
+            sub: PrimaryKey;
             jti?: string;
             email?: string;
         };
@@ -88,7 +89,7 @@ export class TokenService {
         }
     }
 
-    async issueAndStoreNewTokens(userId: any, email?: string) {
+    async issueAndStoreNewTokens(userId: PrimaryKey, email?: string) {
         const { accessToken, refreshToken, refreshJti, accessTtlSec } = this.generateTokens(userId, email);
         try {
             if (this.redis && this.redis.isEnabled()) {
@@ -99,7 +100,7 @@ export class TokenService {
         return { accessToken, refreshToken, accessTtlSec } as const;
     }
 
-    buildRefreshKey(userId: any, jti: string): string {
+    buildRefreshKey(userId: PrimaryKey, jti: string): string {
         return `auth:refresh:${userId}:${jti}`;
     }
 }

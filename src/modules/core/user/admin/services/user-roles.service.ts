@@ -1,22 +1,28 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   Inject,
   NotFoundException,
 } from '@nestjs/common';
-import { RequestContext } from '@/common/shared/utils';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
-import { GROUP_REPOSITORY, IGroupRepository } from '@/modules/core/context/group/domain/group.repository';
+import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
+import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
 import { PolicyService } from './policy.service';
-import { GroupCatalogService, GroupCatalogItem } from '@/modules/core/rbac/catalog/group-catalog.service';
-import { RoleCatalogService } from '@/modules/core/rbac/catalog/role-catalog.service';
-import { RoleContextCatalogService } from '@/modules/core/rbac/catalog/role-context-catalog.service';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
+import { isSysCtx } from '@/common/shared/utils/request-group-context.util';
+import {
+  UserRoleScopeService,
+  type RbacUiGroup,
+} from './user-role-scope.service';
+
+export type { RbacUiGroup };
+
+type RbacUiRole = { id: string; code: string; name: string | null; status: string; parentId: string | null };
 
 /**
- * Gán / xem role của user (catalog, tree, batch sync).
+ * Gán / xem role của user (tree, batch sync).
  * Tách khỏi {@link UserService} để tránh phình service CRUD user.
  */
 @Injectable()
@@ -24,25 +30,28 @@ export class UserRolesService {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
-    @Inject(GROUP_REPOSITORY)
-    private readonly groupRepo: IGroupRepository,
+    @Inject(ROLE_REPOSITORY)
+    private readonly roleRepo: IRoleRepository,
+    @Inject(ROLE_CONTEXT_REPOSITORY)
+    private readonly roleContextRepo: IRoleContextRepository,
     private readonly policy: PolicyService,
-    private readonly groupCatalog: GroupCatalogService,
-    private readonly roleCatalog: RoleCatalogService,
-    private readonly roleContextCatalog: RoleContextCatalogService,
     private readonly rbacService: RbacService,
+    private readonly roleScope: UserRoleScopeService,
   ) { }
 
-  async getUserRoles(id: any, _groupIds?: any) {
+  async getUserRoles(id: PrimaryKey, _groupIds?: string) {
     await this.policy.assertAccess(id);
 
-    const { assignmentGroupPks } = await this.resolveRoleUiScope(id);
+    const { assignmentGroupPks } = await this.roleScope.resolveRoleUi(id);
     if (assignmentGroupPks.length === 0) {
       return [];
     }
 
     const assignments = await this.userRepo.findAssignments(id, assignmentGroupPks);
-    const grouped = new Map<any, any>();
+    const grouped = new Map<
+      any,
+      { group_id: any; group_code: any; group_name: any; roles: any[]; seenRole: Set<string> }
+    >();
 
     for (const assignment of assignments) {
       const groupId = assignment.group_id;
@@ -52,52 +61,48 @@ export class UserRolesService {
           group_code: assignment.group?.code,
           group_name: assignment.group?.name,
           roles: [],
+          seenRole: new Set(),
         });
       }
 
-      const groupEntry = grouped.get(groupId);
-      const isExistedRole = groupEntry.roles.some((role: any) => role.role_id === assignment.role_id);
-      if (!isExistedRole) {
-        groupEntry.roles.push({
-          role_id: assignment.role_id,
-          role_code: assignment.role?.code,
-          role_name: assignment.role?.name,
-        });
-      }
+      const groupEntry = grouped.get(groupId)!;
+      const rk = String(toPrimaryKey(assignment.role_id));
+      if (groupEntry.seenRole.has(rk)) continue;
+      groupEntry.seenRole.add(rk);
+      groupEntry.roles.push({
+        role_id: assignment.role_id,
+        role_code: assignment.role?.code,
+        role_name: assignment.role?.name,
+      });
     }
 
-    return Array.from(grouped.values());
+    return Array.from(grouped.values()).map(({ seenRole: _s, ...rest }) => rest);
   }
 
-  /**
-   * Cây group → role (catalog theo context + tick assignment).
-   * - Context **system**: các **nhóm mà tài khoản đang xem là thành viên** (user_groups, group active).
-   * - Context **khác**: chỉ **group hiện tại** (RequestContext.groupId).
-   */
-  async getUserRolesTree(id: any, _groupIds?: string) {
-    const { groups, assignmentGroupPks } = await this.resolveRoleUiScope(id);
+  async getUserRolesTree(id: PrimaryKey, _groupIds?: string) {
+    const user = await this.userRepo.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    const { groups, assignmentGroupPks, groupRows } = await this.roleScope.resolveRoleUi(id);
     if (groups.length === 0) return [];
 
     await this.policy.assertAccess(id);
 
-    // 1. Phách dữ liệu cơ sở (Groups từ DB, Assignments, Meta Roles)
-    const [groupDetailRows, assignments, allRoles] = await this.fetchBaseData(id, groups, assignmentGroupPks);
+    const [assignments, allRoles] = await this.fetchAssignmentsAndAllRoles(id, assignmentGroupPks);
+    const groupDetailRows = groupRows;
 
     const groupRowMap = new Map(groupDetailRows.map((r: any) => [String(toPrimaryKey(r.id)), r]));
-    const roleMap = new Map(allRoles.map(r => [r.id, r]));
+    const roleMap = new Map(allRoles.map((r) => [r.id, r]));
 
-    // 2. Lấy Role Catalog cho tất cả các context liên quan
     const { rolesByContextMap, rolesByTypeCodeMap } = await this.fetchRoleContextMappings(groups, groupRowMap);
 
-    // 3. Gom nhóm assignments
     const assignedByGroupMap = this.groupAssignments(assignments);
 
-    // 4. Lắp ghép cây kết quả
     return groups.map((g) => {
       const detail = groupRowMap.get(g.id);
       const ctxId = detail?.context_id ? String(toPrimaryKey(detail.context_id)) : g.contextId;
-      const tcKey = (detail?.context?.type && detail?.context?.code) 
-        ? `${detail.context.type}\0${detail.context.code}` 
+      const tcKey = (detail?.context?.type && detail?.context?.code)
+        ? `${detail.context.type}\0${detail.context.code}`
         : null;
 
       const roleIdsFromCatalog = new Set([
@@ -111,16 +116,24 @@ export class UserRolesService {
     });
   }
 
-  /** Lấy dữ liệu cơ bản song song */
-  private async fetchBaseData(id: any, groups: any[], assignmentGroupPks: any[]) {
+  private fetchAssignmentsAndAllRoles(id: PrimaryKey, assignmentGroupPks: PrimaryKey[]) {
     return Promise.all([
-      this.groupRepo.findActiveByIds(groups.map(g => toPrimaryKey(g.id))),
       this.userRepo.findAssignments(id, assignmentGroupPks),
-      this.roleCatalog.getAllActiveRoles(),
+      this.loadAllActiveRoles(),
     ]);
   }
 
-  /** Tra cứu Catalog tập trung cho tất cả context IDs và Type/Code pairs */
+  private async loadAllActiveRoles(): Promise<RbacUiRole[]> {
+    const rows = await this.roleRepo.findMany({ status: 'active' } as any);
+    return (rows as any[]).map((r) => ({
+      id: String(r.id),
+      code: r.code,
+      name: r.name ?? null,
+      status: r.status,
+      parentId: r.parent_id != null ? String(r.parent_id) : null,
+    }));
+  }
+
   private async fetchRoleContextMappings(groups: any[], groupRowMap: Map<string, any>) {
     const contextIds = new Set<string>();
     const typeCodePairs: { type: string; code: string }[] = [];
@@ -135,14 +148,90 @@ export class UserRolesService {
     }
 
     const [rolesByContextMap, rolesByTypeCodeMap] = await Promise.all([
-      this.roleContextCatalog.getRoleIdsMapForContextsFromDb([...contextIds]),
-      this.roleContextCatalog.getRoleIdsMapForContextTypeCodesFromDb(typeCodePairs),
+      this.loadRoleIdsMapForContexts([...contextIds]),
+      this.loadRoleIdsMapForContextTypeCodes(typeCodePairs),
     ]);
 
     return { rolesByContextMap, rolesByTypeCodeMap };
   }
 
-  /** Phân loại assignments theo group_id */
+  private async loadRoleIdsMapForContexts(contextIds: readonly string[]): Promise<Map<string, string[]>> {
+    const unique = [...new Set(contextIds.filter((x) => x && x !== 'undefined' && x !== 'null'))];
+    const out = new Map<string, string[]>();
+    if (unique.length === 0) return out;
+
+    const links = await this.roleContextRepo.findMany({
+      where: {
+        context_id: { in: unique.map((id) => toPrimaryKey(id)) },
+        role: { status: 'active' as any },
+      },
+      select: { context_id: true, role_id: true },
+    });
+    for (const rc of links as any[]) {
+      const ctxId = String(rc.context_id);
+      const roleId = String(rc.role_id);
+      const list = out.get(ctxId) ?? [];
+      list.push(roleId);
+      out.set(ctxId, list);
+    }
+    for (const [k, v] of out) {
+      const sorted = [...new Set(v)].sort((a, b) => {
+        const na = Number(a);
+        const nb = Number(b);
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+        return a.localeCompare(b);
+      });
+      out.set(k, sorted);
+    }
+    return out;
+  }
+
+  private async loadRoleIdsMapForContextTypeCodes(
+    pairs: ReadonlyArray<{ type: string; code: string }>,
+  ): Promise<Map<string, string[]>> {
+    const uniq = new Map<string, { type: string; code: string }>();
+    for (const p of pairs) {
+      if (!p?.type || !p?.code) continue;
+      const k = `${p.type}\0${p.code}`;
+      uniq.set(k, { type: p.type, code: p.code });
+    }
+    const out = new Map<string, string[]>();
+    if (uniq.size === 0) return out;
+
+    const or = [...uniq.values()].map((p) => ({ type: p.type, code: p.code }));
+
+    const links = await this.roleContextRepo.findMany({
+      where: {
+        role: { status: 'active' as any },
+        context: { OR: or },
+      },
+      select: {
+        role_id: true,
+        context: { select: { type: true, code: true } },
+      },
+    });
+
+    for (const rc of links as any[]) {
+      const c = rc.context;
+      if (!c?.type || !c?.code) continue;
+      const k = `${String(c.type)}\0${String(c.code)}`;
+      const rid = String(rc.role_id);
+      const list = out.get(k) ?? [];
+      list.push(rid);
+      out.set(k, list);
+    }
+    for (const [k, v] of out) {
+      const sorted = [...new Set(v)].sort((a, b) => {
+        const na = Number(a);
+        const nb = Number(b);
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+        return a.localeCompare(b);
+      });
+      out.set(k, sorted);
+    }
+    return out;
+  }
+
   private groupAssignments(assignments: any[]): Map<string, Set<string>> {
     const map = new Map<string, Set<string>>();
     for (const a of assignments) {
@@ -153,9 +242,7 @@ export class UserRolesService {
     return map;
   }
 
-  /** Xây dựng cấu trúc của một Group Node trong cây */
   private buildGroupNode(g: any, roleIdsFromCatalog: Set<string>, assignedRoleIds: Set<string>, roleMap: Map<string, any>) {
-    // Sắp xếp ID Role (Catalog-driven)
     const sortedIds = [...roleIdsFromCatalog].sort((a, b) => {
       const na = Number(a), nb = Number(b);
       return (Number.isFinite(na) && Number.isFinite(nb)) ? na - nb : a.localeCompare(b);
@@ -181,39 +268,7 @@ export class UserRolesService {
     };
   }
 
-  /**
-   * System: nhóm active mà user là member + catalog tương ứng.
-   * Non-system: đúng một nhóm = groupId trong request context.
-   */
-  private async resolveRoleUiScope(targetUserId: any): Promise<{
-    groups: GroupCatalogItem[];
-    assignmentGroupPks: any[];
-  }> {
-    const context = RequestContext.get<{ type?: string } | null>('context');
-    const ctxGroupId = RequestContext.get<any>('groupId');
-
-    if (context?.type === 'system') {
-      const memberIds = await this.userRepo.findMemberGroupIds(targetUserId);
-      const groups = await this.groupCatalog.getGroupsByIds(memberIds);
-      return {
-        groups,
-        assignmentGroupPks: memberIds.map((x) => toPrimaryKey(x)),
-      };
-    }
-
-    if (ctxGroupId === undefined || ctxGroupId === null) {
-      throw new ForbiddenException('No context available');
-    }
-
-    const groups = await this.groupCatalog.getGroupsByIds([ctxGroupId]);
-    return {
-      groups,
-      assignmentGroupPks: [toPrimaryKey(ctxGroupId)],
-    };
-  }
-
-  /** Đồng bộ role theo nhiều group trong một request. */
-  async batchSyncUserRoles(id: any, items: Array<{ group_id: any; role_ids: any[] }>) {
+  async batchSyncUserRoles(id: PrimaryKey, items: Array<{ group_id: PrimaryKey; role_ids: PrimaryKey[] }>) {
     const user = await this.userRepo.findById(id);
     if (!user) throw new NotFoundException('User not found');
 
@@ -223,7 +278,7 @@ export class UserRolesService {
       throw new BadRequestException('Body must be a JSON array of { group_id, role_ids }');
     }
 
-    this.assertBatchGroupsAllowed(items);
+    this.roleScope.guardBatchGroups(items);
 
     for (const raw of items) {
       if (raw == null || typeof raw !== 'object') {
@@ -237,34 +292,18 @@ export class UserRolesService {
       }
     }
 
-    const isSystemContext = RequestContext.get<{ type?: string } | null>('context')?.type === 'system';
-
-    const lastByGroup = new Map<string, { group_id: any; role_ids: any[] }>();
+    const sys = isSysCtx();
+    const lastByGroup = new Map<string, { group_id: PrimaryKey; role_ids: PrimaryKey[] }>();
     for (const it of items) {
       lastByGroup.set(String(toPrimaryKey(it.group_id)), it);
     }
 
-    for (const it of lastByGroup.values()) {
-      await this.rbacService.syncRolesInGroup(id, it.group_id, it.role_ids ?? [], isSystemContext);
-    }
+    await Promise.all(
+      [...lastByGroup.values()].map((it) =>
+        this.rbacService.syncRolesInGroup(id, it.group_id, it.role_ids ?? [], sys),
+      ),
+    );
 
     return { success: true };
-  }
-
-  private assertBatchGroupsAllowed(items: Array<{ group_id: any }>): void {
-    const context = RequestContext.get<any>('context');
-    if (context?.type === 'system') return;
-
-    const ctxGroupId = RequestContext.get<any>('groupId');
-    if (ctxGroupId === undefined || ctxGroupId === null) {
-      throw new ForbiddenException('No context available');
-    }
-
-    const ctxPk = String(toPrimaryKey(ctxGroupId));
-    for (const it of items) {
-      if (String(toPrimaryKey(it.group_id)) !== ctxPk) {
-        throw new ForbiddenException('group_id is not allowed in the current context');
-      }
-    }
   }
 }

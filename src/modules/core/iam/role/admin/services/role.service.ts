@@ -7,9 +7,6 @@ import { BaseService } from '@/common/core/services';
 import { normalizeIdArray, transformPermission, resolveRoleContexts } from '@/modules/core/iam/utils/iam-transform.helper';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { RoleCatalogService } from '@/modules/core/rbac/catalog/role-catalog.service';
-import { RoleContextCatalogService } from '@/modules/core/rbac/catalog/role-context-catalog.service';
-import { PermissionCatalogService } from '@/modules/core/rbac/catalog/permission-catalog.service';
 @Injectable()
 export class RoleService extends BaseService<any, IRoleRepository> {
   constructor(
@@ -18,9 +15,6 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     @Inject(USER_ROLE_ASSIGNMENT_REPOSITORY)
     private readonly assignmentRepo: IUserRoleAssignmentRepository,
     private readonly rbacCache: RbacCacheService,
-    private readonly roleCatalog: RoleCatalogService,
-    private readonly roleContextCatalog: RoleContextCatalogService,
-    private readonly permCatalog: PermissionCatalogService,
   ) {
     super(roleRepo);
   }
@@ -51,7 +45,6 @@ export class RoleService extends BaseService<any, IRoleRepository> {
   async assignPermissions(roleId: any, permissionIds: any[]) {
     await this.verifyRoleExistence(roleId);
     await this.roleRepo.syncPermissions(roleId, permissionIds);
-    await this.permCatalog.refreshAll().catch(() => undefined);
     await this.rbacCache.bumpVersion().catch(() => undefined);
 
     return this.getOne(roleId);
@@ -84,8 +77,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     if (contextIds?.length) {
       await this.roleRepo.syncContexts(role.id, contextIds);
     }
-    await this.roleCatalog.refreshAll().catch(() => undefined);
-    await this.roleContextCatalog.refreshAll().catch(() => undefined);
+    await this.rbacCache.bumpVersion().catch(() => undefined);
     return this.getOne(role.id);
   }
 
@@ -121,9 +113,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     if (contextIds !== null) {
       await this.roleRepo.syncContexts(id, contextIds);
     }
-    await this.roleCatalog.refreshAll().catch(() => undefined);
-    await this.roleContextCatalog.refreshAll().catch(() => undefined);
-    await this.permCatalog.refreshAll().catch(() => undefined);
+    await this.rbacCache.bumpVersion().catch(() => undefined);
     return this.getOne(id);
   }
 
@@ -138,9 +128,6 @@ export class RoleService extends BaseService<any, IRoleRepository> {
   }
 
   protected override async afterDelete() {
-    await this.roleCatalog.refreshAll().catch(() => undefined);
-    await this.roleContextCatalog.refreshAll().catch(() => undefined);
-    await this.permCatalog.refreshAll().catch(() => undefined);
     await this.rbacCache.bumpVersion().catch(() => undefined);
   }
 

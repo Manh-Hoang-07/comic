@@ -5,6 +5,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
@@ -21,7 +22,7 @@ export class ProfileService {
   /**
    * @param jwtUser `req.user` sau JWT validate — nếu đã có đủ `profile` (cache/DB trong JwtStrategy) thì không query lại.
    */
-  async getProfile(userId: any, jwtUser?: any) {
+  async getProfile(userId: PrimaryKey, jwtUser?: any) {
     if (
       jwtUser &&
       typeof jwtUser === 'object' &&
@@ -67,7 +68,7 @@ export class ProfileService {
 
   // ── Password Operations ────────────────────────────────────────────────────
 
-  async changePassword(userId: any, oldPassword: string, newPassword: string) {
+  async changePassword(userId: PrimaryKey, oldPassword: string, newPassword: string) {
     const user = await this.userRepo.findByIdForAuth(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 

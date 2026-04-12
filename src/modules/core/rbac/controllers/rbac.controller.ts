@@ -3,6 +3,7 @@ import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RequestContext } from '@/common/shared/utils';
+import { isSysCtx } from '@/common/shared/utils/request-group-context.util';
 import { PERM } from '@/modules/core/rbac/rbac.constants';
 import { RbacId } from '@/modules/core/rbac/rbac.types';
 
@@ -33,8 +34,7 @@ export class RbacController {
         'Group ID is required. Please specify group_id in body or X-Group-Id header.',
       );
     }
-    const isSystemContext = RequestContext.get<{ type?: string } | null>('context')?.type === 'system';
-    return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids ?? [], isSystemContext);
+    return this.service.syncRolesInGroup(targetUserId, groupId, body.role_ids ?? [], isSysCtx());
   }
 }
 

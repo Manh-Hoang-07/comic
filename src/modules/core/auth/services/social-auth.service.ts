@@ -1,4 +1,5 @@
 import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import { TokenService } from './token.service';
@@ -56,7 +57,7 @@ export class SocialAuthService {
         }
 
         // Generate and store response
-        const userId = dbUser.id;
+        const userId = dbUser.id as PrimaryKey;
         const tokens = this.tokenService.generateTokens(userId, dbUser.email!);
 
         await this.redis
@@ -75,10 +76,11 @@ export class SocialAuthService {
         };
     }
 
-    private resolveFullName(profile: any): string {
+    private resolveFullName(profile: { firstName?: string; lastName?: string; email?: string }): string {
         return (
             [profile.firstName, profile.lastName].filter(Boolean).join(' ') ||
-            profile.email.split('@')[0]
+            (profile.email ? profile.email.split('@')[0] : '') ||
+            'User'
         );
     }
 

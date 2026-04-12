@@ -1,12 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
 import { IContextRepository, CONTEXT_REPOSITORY } from '@/modules/core/context/context/domain/context.repository';
-import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
 import { BaseService } from '@/common/core/services';
 import { ContextType, SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RequestContext } from '@/common/shared/utils';
-import { ContextCatalogService } from '@/modules/core/rbac/catalog/context-catalog.service';
 
 @Injectable()
 export class AdminContextService extends BaseService<any, IContextRepository> {
@@ -15,11 +13,8 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   constructor(
     @Inject(CONTEXT_REPOSITORY)
     private readonly contextRepo: IContextRepository,
-    @Inject(forwardRef(() => RbacService))
-    private readonly rbacService: RbacService,
     @Inject(GROUP_REPOSITORY)
     private readonly groupRepo: IGroupRepository,
-    private readonly contextCatalog: ContextCatalogService,
   ) {
     super(contextRepo);
   }
@@ -91,7 +86,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
   protected async afterCreate(): Promise<void> {
     this.systemContextCache = null;
-    await this.contextCatalog.refreshAll().catch(() => undefined);
   }
 
   async updateContext(id: any, data: any, requesterUserId: any) {
@@ -126,7 +120,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
   protected async afterUpdate(): Promise<void> {
     this.systemContextCache = null;
-    await this.contextCatalog.refreshAll().catch(() => undefined);
   }
 
   async deleteContext(id: any) {
@@ -153,7 +146,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
   protected async afterDelete(): Promise<void> {
     this.systemContextCache = null;
-    await this.contextCatalog.refreshAll().catch(() => undefined);
   }
 }
 

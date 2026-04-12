@@ -5,15 +5,12 @@ import { BaseService } from '@/common/core/services';
 import { transformPermission } from '@/modules/core/iam/utils/iam-transform.helper';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { PermissionCatalogService } from '@/modules/core/rbac/catalog/permission-catalog.service';
-
 @Injectable()
 export class PermissionService extends BaseService<any, IPermissionRepository> {
   constructor(
     @Inject(PERMISSION_REPOSITORY)
     private readonly permissionRepo: IPermissionRepository,
     private readonly rbacCache: RbacCacheService,
-    private readonly permCatalog: PermissionCatalogService,
   ) {
     super(permissionRepo);
   }
@@ -57,7 +54,6 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
   }
 
   protected override async afterUpdate() {
-    await this.permCatalog.refreshAll().catch(() => undefined);
     await this.rbacCache.bumpVersion().catch(() => undefined);
   }
 
@@ -68,7 +64,6 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
   }
 
   protected override async afterDelete() {
-    await this.permCatalog.refreshAll().catch(() => undefined);
     await this.rbacCache.bumpVersion().catch(() => undefined);
   }
 

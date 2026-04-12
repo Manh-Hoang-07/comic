@@ -56,7 +56,7 @@ export class UserGroupService {
     const context = RequestContext.get<any>('context');
     if (context?.type === 'system') return true;
 
-    return this.rbacService.userHasPermissionsInGroup(userId, groupId, [
+    return this.rbacService.hasPermissions(userId, groupId, [
       PERM.ROLE.MANAGE, // Thay thế cho các quyền group.manage/add không có trong DB
     ]);
   }

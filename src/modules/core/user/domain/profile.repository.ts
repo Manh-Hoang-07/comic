@@ -1,7 +1,8 @@
 import { Profile } from '@prisma/client';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 
 export const PROFILE_REPOSITORY = 'IProfileRepository';
 
 export interface IProfileRepository {
-  upsertByUserId(userId: any, data: any): Promise<Profile>;
+  upsertByUserId(userId: PrimaryKey, data: any): Promise<Profile>;
 }

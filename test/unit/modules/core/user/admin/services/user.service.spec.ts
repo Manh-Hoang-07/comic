@@ -1,17 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { UserService } from '@/modules/core/user/admin/services/user.service';
 import { PolicyService } from '@/modules/core/user/admin/services/policy.service';
 import { PasswordService } from '@/modules/core/user/admin/services/password.service';
 import { RelationService } from '@/modules/core/user/admin/services/relation.service';
 import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
-import { RequestContext } from '@/common/shared/utils';
-import * as groupOwnership from '@/common/shared/utils/group-ownership.util';
-
+import { GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
+import { UserRoleScopeService } from '@/modules/core/user/admin/services/user-role-scope.service';
 jest.mock('@/common/auth/utils/auth-context.helper', () => ({
   getCurrentUserId: jest.fn().mockReturnValue(42),
 }));
 
 describe('UserService (admin)', () => {
+  let moduleRef: TestingModule;
   let service: UserService;
   let userRepo: {
     findById: jest.Mock;
@@ -47,45 +47,30 @@ describe('UserService (admin)', () => {
     };
     relationService = { sync: jest.fn().mockResolvedValue(undefined) };
 
-    const module: TestingModule = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       providers: [
         UserService,
+        UserRoleScopeService,
         { provide: USER_REPOSITORY, useValue: userRepo },
+        { provide: GROUP_REPOSITORY, useValue: {} },
         { provide: PolicyService, useValue: policy },
         { provide: PasswordService, useValue: passwordService },
         { provide: RelationService, useValue: relationService },
       ],
     }).compile();
 
-    service = module.get(UserService);
+    service = moduleRef.get(UserService);
   });
 
   describe('prepareFilters', () => {
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
+    it('delegates to UserRoleScopeService.mergeListFilter', async () => {
+      const scope = moduleRef.get(UserRoleScopeService);
+      const spy = jest.spyOn(scope, 'mergeListFilter').mockReturnValue({ merged: true } as any);
 
-    it('merges group filter for system context', async () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) =>
-        key === 'context' ? { type: 'system' } : undefined,
-      );
-      jest.spyOn(groupOwnership, 'getGroupFilter').mockReturnValue({ group_id: 9 });
+      const out = await (service as any).prepareFilters({ search: 'x' });
 
-      const out = await (service as any).prepareFilters({ search: 'a' });
-
-      expect(out).toEqual(expect.objectContaining({ search: 'a', group_id: 9 }));
-    });
-
-    it('adds groupId from context for non-system', async () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'tenant' };
-        if (key === 'groupId') return 200;
-        return undefined;
-      });
-
-      const out = await (service as any).prepareFilters({ status: 'active' });
-
-      expect(out).toEqual({ status: 'active', groupId: 200 });
+      expect(spy).toHaveBeenCalledWith({ search: 'x' });
+      expect(out).toEqual({ merged: true });
     });
   });
 

@@ -27,10 +27,10 @@ describe('MenuService', () => {
         };
 
         rbacService = {
-            userHasPermissionsInGroup: jest.fn(),
-            preparePermissionCheck: jest.fn().mockResolvedValue(undefined),
-            getUserPermissions: jest.fn(),
-            matchesAssignedBitmap: jest.fn(),
+            hasPermissions: jest.fn(),
+            prepare: jest.fn().mockResolvedValue(undefined),
+            getPermissions: jest.fn(),
+            hasCode: jest.fn(),
         };
 
         const redisUtil = {
@@ -82,7 +82,7 @@ describe('MenuService', () => {
             const mockMenus = [{ id: 1, code: 'm1', show_in_menu: true }];
             menuRepo.findAllWithChildren.mockResolvedValue(mockMenus);
 
-            rbacService.getUserPermissions.mockResolvedValue(new Uint8Array());
+            rbacService.getPermissions.mockResolvedValue(new Set<string>());
             (menuHelper.filterAdminMenus as jest.Mock).mockReturnValue(mockMenus);
             (menuHelper.buildMenuTree as jest.Mock).mockReturnValue([{ id: 1, children: [] }]);
 

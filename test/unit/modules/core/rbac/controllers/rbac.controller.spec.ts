@@ -11,7 +11,7 @@ describe('RbacController', () => {
 
     beforeEach(async () => {
         service = {
-            userHasPermissionsInGroup: jest.fn(),
+            hasPermissions: jest.fn(),
             syncRolesInGroup: jest.fn(),
             isSystemAdmin: jest.fn().mockResolvedValue(true),
         };

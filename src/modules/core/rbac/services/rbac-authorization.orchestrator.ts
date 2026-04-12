@@ -1,0 +1,47 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { RequestContext } from '@/common/shared/utils';
+import { AdminGroupService } from '@/modules/core/context/group/admin/services/group.service';
+import { NullableRbacId } from '@/modules/core/rbac/rbac.types';
+
+/**
+ * Một điểm vào cho bước “scope group + context” trước khi check RBAC,
+ * để guard không lặp logic và dễ trace khi debug.
+ */
+@Injectable()
+export class RbacAuthorizationOrchestrator {
+  constructor(private readonly groupService: AdminGroupService) {}
+
+  /**
+   * Đọc `groupIdRaw` từ RequestContext (middleware). Không có header → `null` (scope system).
+   * Có header → load snapshot, validate active, ghi `groupId` / `context` / `contextId` vào RequestContext.
+   */
+  async resolveActiveGroupScopeForRbac(): Promise<NullableRbacId> {
+    const groupIdRaw = RequestContext.get<unknown>('groupIdRaw') ?? null;
+    let groupId: any | null = groupIdRaw ?? null;
+
+    if (groupId === null) {
+      return null;
+    }
+
+    const group = await this.groupService.getContextSnapshot(groupId).catch(() => null);
+    if (!group) throw new BadRequestException('Group not found');
+    if (!this.isActive(group)) throw new BadRequestException('Group is inactive');
+    if (!group.context || !this.isActive(group.context)) {
+      throw new BadRequestException('Context is missing or inactive');
+    }
+
+    const contextId = group.context?.id ?? group.context_id ?? null;
+    if (!contextId) throw new BadRequestException('Context is invalid');
+
+    RequestContext.set('groupId', group.id ?? groupId);
+    RequestContext.set('context', group.context);
+    RequestContext.set('contextId', contextId);
+    groupId = group.id ?? groupId;
+
+    return groupId;
+  }
+
+  private isActive(entity: { status?: string } | null | undefined): boolean {
+    return (entity?.status ?? 'active') === 'active';
+  }
+}

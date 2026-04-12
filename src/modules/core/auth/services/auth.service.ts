@@ -1,4 +1,5 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { LoginDto } from '@/modules/core/auth/dto/login.dto';
 import { RegisterDto } from '@/modules/core/auth/dto/register.dto';
@@ -30,7 +31,7 @@ export class AuthService {
     return this.loginService.login(dto);
   }
 
-  async logout(userId: any, token?: string) {
+  async logout(userId: PrimaryKey | null, token?: string) {
     return this.loginService.logout(userId, token);
   }
 
@@ -38,7 +39,7 @@ export class AuthService {
     return this.loginService.refreshTokenByValue(refreshToken);
   }
 
-  async me(userId: any) {
+  async me(userId: PrimaryKey) {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     return safeUser(user);

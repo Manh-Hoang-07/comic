@@ -3,6 +3,7 @@ import { User, Prisma } from '@prisma/client';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { PrismaRepository } from '@/common/core/repositories';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, UserFilter } from '../../domain/user.repository';
 
 @Injectable()
@@ -39,7 +40,7 @@ export class UserRepositoryImpl extends PrismaRepository<
     };
   }
 
-  async findMemberGroupIds(userId: any): Promise<any[]> {
+  async findMemberGroupIds(userId: PrimaryKey): Promise<PrimaryKey[]> {
     const rows = await this.prisma.userGroup.findMany({
       where: {
         user_id: toPrimaryKey(userId),
@@ -51,7 +52,7 @@ export class UserRepositoryImpl extends PrismaRepository<
     return rows.map((r) => r.group_id);
   }
 
-  async findAssignments(userId: any, groupIds?: any[]) {
+  async findAssignments(userId: PrimaryKey, groupIds?: PrimaryKey[]) {
     const where: Prisma.UserRoleAssignmentWhereInput = {
       user_id: toPrimaryKey(userId),
     };
@@ -140,7 +141,7 @@ export class UserRepositoryImpl extends PrismaRepository<
     return row as User | null;
   }
 
-  async findByIdForAuth(id: any): Promise<User | null> {
+  async findByIdForAuth(id: PrimaryKey): Promise<User | null> {
     const row = await this.prisma.user.findUnique({
       where: { id: toPrimaryKey(id) },
       select: {
@@ -151,11 +152,11 @@ export class UserRepositoryImpl extends PrismaRepository<
     return row as User | null;
   }
 
-  async updateLastLogin(userId: any): Promise<void> {
+  async updateLastLogin(userId: PrimaryKey): Promise<void> {
     await this.update(userId, { last_login_at: new Date() });
   }
 
-  async checkMultipleUniques(payload: { email?: string; phone?: string; username?: string }, excludeId?: any): Promise<void> {
+  async checkMultipleUniques(payload: { email?: string; phone?: string; username?: string }, excludeId?: PrimaryKey): Promise<void> {
     const orConditions = [];
     if (payload.email) orConditions.push({ email: payload.email });
     if (payload.phone) orConditions.push({ phone: payload.phone });

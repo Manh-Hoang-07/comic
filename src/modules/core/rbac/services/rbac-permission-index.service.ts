@@ -1,25 +1,22 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PERM } from '@/modules/core/rbac/rbac.constants';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { PermissionCatalogService } from '@/modules/core/rbac/catalog/permission-catalog.service';
+import { IPermissionRepository, PERMISSION_REPOSITORY } from '@/modules/core/iam/permission/domain/permission.repository';
 
 type PermissionNode = { code: string; parentCode: string | null };
 
 @Injectable()
 export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy {
   private permissionByCode = new Map<string, PermissionNode>();
-  private denseIndexByCode = new Map<string, number>();
-  private denseCodes: string[] = [];
   private lastPermFetchMs = 0;
   private readonly permIndexTtlMs = 24 * 60 * 60 * 1000;
-  // Safety net in case pub/sub is down; keep it infrequent.
   private readonly prewarmIntervalMs = 6 * 60 * 60 * 1000;
   private readonly permIndexRefreshChannel = 'rbac:perm_index_refresh';
   private permissionIndexRefreshInFlight: Promise<void> | null = null;
   private prewarmTimer: NodeJS.Timeout | null = null;
 
   constructor(
-    private readonly permissionCatalog: PermissionCatalogService,
+    @Inject(PERMISSION_REPOSITORY) private readonly permissionRepo: IPermissionRepository,
     private readonly redis: RedisUtil,
   ) { }
 
@@ -44,12 +41,11 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
     }
   }
 
-  async preparePermissionCheck(): Promise<void> {
+  async prepare(): Promise<void> {
     await this.ensurePermissionIndexes();
   }
 
   async refreshNow(): Promise<void> {
-    // Force refresh on next ensure call.
     this.lastPermFetchMs = 0;
     await this.ensurePermissionIndexes(true);
   }
@@ -58,27 +54,8 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
     return this.grants(need, (code) => assignedCodes.has(code));
   }
 
-  matchesAssignedBitmap(bitmap: Uint8Array, need: string): boolean {
-    return this.grants(need, (code) => this.hasCodeBit(bitmap, code));
-  }
-
   hasAnyRequiredFromAssigned(assignedCodes: Set<string>, required: string[]): boolean {
     return required.some((need) => this.matchesAssigned(assignedCodes, need));
-  }
-
-  buildAssignedBitmap(assignedCodes: Iterable<string>): Uint8Array {
-    const byteLen = Math.ceil(this.denseCodes.length / 8);
-    const buf = new Uint8Array(byteLen);
-    for (const code of assignedCodes) {
-      const idx = this.denseIndexByCode.get(code);
-      if (idx === undefined) continue;
-      buf[idx >> 3] |= 1 << (idx & 7);
-    }
-    return buf;
-  }
-
-  hasAnyRequiredFromAssignedBitmap(bitmap: Uint8Array, required: string[]): boolean {
-    return required.some((need) => this.matchesAssignedBitmap(bitmap, need));
   }
 
   private async ensurePermissionIndexes(force = false): Promise<void> {
@@ -91,12 +68,16 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
 
     this.permissionIndexRefreshInFlight = (async () => {
       const byCode = new Map<string, PermissionNode>();
-      const all = await this.permissionCatalog.getAllActivePermissions();
-      for (const p of all as PermissionNode[]) {
-        if (p.code) byCode.set(p.code, p);
+      const nodes = await this.permissionRepo.findActiveForRbacIndex();
+      const byId = new Map<string, { code: string; parent_id: any | null }>();
+      for (const n of nodes as any[]) {
+        byId.set(String(n.id), { code: n.code, parent_id: n.parent_id ?? null });
+      }
+      for (const n of nodes as any[]) {
+        const parent = n.parent_id != null ? byId.get(String(n.parent_id)) : null;
+        if (n.code) byCode.set(n.code, { code: n.code, parentCode: parent?.code ?? null });
       }
       this.permissionByCode = byCode;
-      this.rebuildDenseIndex(byCode);
       this.lastPermFetchMs = Date.now();
     })();
 
@@ -107,23 +88,6 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
     }
   }
 
-  private rebuildDenseIndex(byCode: Map<string, PermissionNode>): void {
-    // Stable dense index to keep bitmaps compact.
-    const codes = [...byCode.keys()].filter(Boolean).sort((a, b) => a.localeCompare(b));
-    const idx = new Map<string, number>();
-    for (let i = 0; i < codes.length; i++) idx.set(codes[i], i);
-    this.denseCodes = codes;
-    this.denseIndexByCode = idx;
-  }
-
-  private hasCodeBit(bitmap: Uint8Array, code: string): boolean {
-    const idx = this.denseIndexByCode.get(code);
-    if (idx === undefined) return false;
-    const byte = bitmap[idx >> 3];
-    return (byte & (1 << (idx & 7))) !== 0;
-  }
-
-  /** Single inheritance walk: `has(code)` is bitmap lookup or Set membership. */
   private grants(need: string, has: (code: string) => boolean): boolean {
     if (has(PERM.SYSTEM.MANAGE)) return true;
     if (has(need)) return true;

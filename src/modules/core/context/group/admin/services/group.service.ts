@@ -9,7 +9,6 @@ import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 import { RedisUtil } from '@/core/utils/redis.util';
 import { IPaginationOptions } from '@/common/core/repositories/repository.interface';
-import { GroupCatalogService } from '@/modules/core/rbac/catalog/group-catalog.service';
 
 @Injectable()
 export class AdminGroupService extends BaseService<any, IGroupRepository> {
@@ -21,7 +20,6 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     private readonly rbacService: RbacService,
     private readonly groupAction: GroupActionService,
     private readonly redis: RedisUtil,
-    private readonly groupCatalog: GroupCatalogService,
   ) {
     super(groupRepo);
   }
@@ -108,19 +106,14 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
   }
 
   protected async afterCreate(group: any) {
-    await this.groupCatalog.refreshAll().catch(() => undefined);
     if (group.owner_id) {
       await this.groupAction.syncGroupOwner(group.id, group.owner_id);
     }
   }
 
-  protected async afterUpdate(): Promise<void> {
-    await this.groupCatalog.refreshAll().catch(() => undefined);
-  }
+  protected async afterUpdate(): Promise<void> { }
 
-  protected async afterDelete(): Promise<void> {
-    await this.groupCatalog.refreshAll().catch(() => undefined);
-  }
+  protected async afterDelete(): Promise<void> { }
 
   // ── Transformation ─────────────────────────────────────────────────────────
 

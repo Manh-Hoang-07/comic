@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AdminGroupController } from './controllers/group.controller';
 import { AdminGroupService } from './services/group.service';
 import { GroupActionService } from './services/group-action.service';
@@ -8,7 +8,7 @@ import { RbacRepositoryModule } from '@/modules/core/rbac/rbac.repository.module
 
 @Module({
   imports: [
-    RbacModule,
+    forwardRef(() => RbacModule),
     ContextRepositoryModule,
     RbacRepositoryModule,
   ],

@@ -29,7 +29,7 @@ describe('UserGroupService', () => {
             findManyRaw: jest.fn(),
         };
         rbacService = {
-            userHasPermissionsInGroup: jest.fn(),
+            hasPermissions: jest.fn(),
             assignRoleToUser: jest.fn(),
             isSystemAdmin: jest.fn().mockResolvedValue(false),
             syncRolesInGroup: jest.fn().mockResolvedValue(undefined),
@@ -74,7 +74,7 @@ describe('UserGroupService', () => {
     describe('addMember', () => {
         it('should throw ForbiddenException if requester cannot manage group', async () => {
             groupRepo.findById.mockResolvedValue({ owner_id: BigInt(10) });
-            rbacService.userHasPermissionsInGroup.mockResolvedValue(false);
+            rbacService.hasPermissions.mockResolvedValue(false);
 
             await expect(service.addMember(1, 5, [], 1)).rejects.toThrow(ForbiddenException);
         });

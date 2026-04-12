@@ -1,5 +1,6 @@
 import { Injectable, Inject, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
 import { RedisUtil } from '@/core/utils/redis.util';
 import { TokenService } from '@/modules/core/auth/services/token.service';
@@ -57,13 +58,13 @@ export class LoginService {
     this.userRepo.updateLastLogin(user.id).catch(() => undefined);
 
     // 5. Issue Tokens
-    const numericUserId = user.id;
+    const userPk = user.id as PrimaryKey;
     const { accessToken, refreshToken, refreshJti, accessTtlSec } =
-      this.tokenService.generateTokens(numericUserId, user.email!);
+      this.tokenService.generateTokens(userPk, user.email!);
 
     await this.redis
       .set(
-        `auth:refresh:${numericUserId}:${refreshJti}`,
+        `auth:refresh:${userPk}:${refreshJti}`,
         '1',
         this.tokenService.getRefreshTtlSec(),
       )
@@ -75,7 +76,7 @@ export class LoginService {
   /**
    * Terminate the session and blacklist the current token.
    */
-  async logout(userId: any, token?: string) {
+  async logout(_userId: PrimaryKey | null, token?: string) {
     if (token) {
       const ttlSeconds = this.tokenService.getAccessTtlSec();
       await this.tokenBlacklistService.add(token, ttlSeconds);
@@ -90,7 +91,7 @@ export class LoginService {
     const decoded = this.tokenService.decodeRefresh(refreshToken);
     if (!decoded) throw new UnauthorizedException('Invalid or expired token');
 
-    const userId = decoded.sub;
+    const userId = decoded.sub as PrimaryKey;
     const jti = decoded.jti as string | undefined;
 
     if (!userId || !jti) {
@@ -103,10 +104,7 @@ export class LoginService {
 
     await this.redis.del(refreshKey);
 
-    const tokens = await this.tokenService.issueAndStoreNewTokens(
-      userId,
-      (decoded as any).email as string | undefined,
-    );
+    const tokens = await this.tokenService.issueAndStoreNewTokens(userId, decoded.email);
 
     return {
       token: tokens.accessToken,

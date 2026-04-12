@@ -1,11 +1,12 @@
 import { Injectable, ForbiddenException, Inject } from '@nestjs/common';
-import { RequestContext } from '@/common/shared/utils';
+import { assertReqGroup, isSysCtx, reqGroupId } from '@/common/shared/utils/request-group-context.util';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 
 export type RoleScope =
   | { kind: 'all' }
-  | { kind: 'scoped'; groupIds: any[] }
+  | { kind: 'scoped'; groupIds: PrimaryKey[] }
   | { kind: 'none' };
 
 @Injectable()
@@ -15,15 +16,11 @@ export class PolicyService {
     private readonly userRepo: IUserRepository,
   ) {}
 
-  async assertAccess(userId: any): Promise<void> {
-    const context = RequestContext.get<any>('context');
-    const groupId = RequestContext.get<any>('groupId');
+  async assertAccess(userId: PrimaryKey): Promise<void> {
+    if (isSysCtx()) return;
 
-    if (context?.type === 'system') return;
-
-    if (!context || !groupId) {
-      throw new ForbiddenException('No context available');
-    }
+    assertReqGroup();
+    const groupId = reqGroupId();
 
     const ok = await this.userRepo.exists({
       id: toPrimaryKey(userId),
@@ -48,25 +45,20 @@ export class PolicyService {
           ? raw
           : undefined;
 
-    const context = RequestContext.get<any>('context');
-    const ctxGroupId = RequestContext.get<any>('groupId');
-
-    if (context?.type === 'system') {
+    if (isSysCtx()) {
       if (!ids?.length) {
         return { kind: 'all' };
       }
       return { kind: 'scoped', groupIds: ids };
     }
 
-    if (!ctxGroupId) {
-      throw new ForbiddenException('No context available');
-    }
-
+    assertReqGroup();
+    const ctxGroupId = reqGroupId();
     const ctxPk = toPrimaryKey(ctxGroupId);
     if (ids?.length) {
       const narrowed = ids
-        .map((g: any) => toPrimaryKey(g))
-        .filter((g: any) => String(g) === String(ctxPk));
+        .map((g) => toPrimaryKey(g))
+        .filter((g) => String(g) === String(ctxPk));
       if (!narrowed.length) {
         return { kind: 'none' };
       }
@@ -76,7 +68,7 @@ export class PolicyService {
     return { kind: 'scoped', groupIds: [ctxGroupId] };
   }
 
-  async assertUnique(payload: any, excludeId?: any): Promise<void> {
+  async assertUnique(payload: any, excludeId?: PrimaryKey): Promise<void> {
     await this.userRepo.checkMultipleUniques(
       {
         email: payload.email,

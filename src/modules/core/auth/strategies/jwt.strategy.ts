@@ -3,7 +3,16 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+
+/** Payload access JWT sau khi verify (field dùng trong validate). */
+type JwtAccessPayload = {
+  sub: PrimaryKey;
+  email?: string;
+  iat?: number;
+  exp?: number;
+};
 
 /** Chuẩn hóa Prisma (bigint/date) để JSON.stringify/cache + gắn req.user */
 function userEntityToJwtPayload(user: Record<string, unknown>): Record<string, unknown> {
@@ -29,7 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: JwtAccessPayload) {
     const userId = payload.sub;
     const cacheKey = `user:profile:${userId}`;
 

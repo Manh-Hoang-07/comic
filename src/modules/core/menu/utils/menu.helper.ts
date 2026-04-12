@@ -67,12 +67,12 @@ export function filterClientMenus(menus: any[], userId?: any): any[] {
 
 /**
  * Filters a list of menus based on RBAC permissions for Admin/Dashboard.
- * `matches` mặc định chỉ so khớp mã tuyến tính; truyền matcher từ RbacService để áp dụng quy tắc quyền cha đủ cho quyền con.
+ * Truyền matcher từ RbacService để áp dụng kế thừa quyền cha và `system.manage`.
  */
 export function filterAdminMenus(
     menus: any[],
-    userPerms: Uint8Array,
-    matches: (assigned: Uint8Array, requiredCode: string) => boolean = () => false,
+    userPerms: Set<string>,
+    matches: (assigned: Set<string>, requiredCode: string) => boolean = () => false,
 ): any[] {
     return menus.filter((menu) => {
         // Public menus are always shown

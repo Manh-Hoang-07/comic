@@ -1,117 +1,94 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
-import { USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
-import { USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
-import { ROLE_HAS_PERMISSION_REPOSITORY } from '@/modules/core/rbac/role-has-permission/domain/role-has-permission.repository';
-import { ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
-import { GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
-import { ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
-import { PrismaService } from '@/core/database/prisma/prisma.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ContextType } from '@/modules/core/rbac/rbac.constants';
+import { RbacPermissionIndexService } from '@/modules/core/rbac/services/rbac-permission-index.service';
+import { RbacRoleAssignmentService } from '@/modules/core/rbac/services/rbac-role-assignment.service';
+import { ROLE_HAS_PERMISSION_REPOSITORY } from '@/modules/core/rbac/role-has-permission/domain/role-has-permission.repository';
+import { NotFoundException } from '@nestjs/common';
 
 describe('RbacService', () => {
-    let service: RbacService;
-    let assignmentRepo: any;
-    let roleHasPermRepo: any;
-    let roleContextRepo: any;
-    let groupRepo: any;
-    let rbacCache: any;
-    let prisma: any;
+  let service: RbacService;
+  let rbacCache: jest.Mocked<Pick<RbacCacheService, 'getPermissions' | 'setPermissions'>>;
+  let permissionIndex: jest.Mocked<Pick<RbacPermissionIndexService, 'prepare' | 'hasAnyRequiredFromAssigned' | 'matchesAssigned'>>;
+  let roleAssignment: jest.Mocked<Pick<RbacRoleAssignmentService, 'getActiveRoleIds' | 'syncRolesInGroup'>>;
+  let roleHasPermRepo: { findActivePermissionCodesByRoleIds: jest.Mock };
 
-    beforeEach(async () => {
-        assignmentRepo = {
-            findManyRaw: jest.fn(),
-            findUnique: jest.fn(),
-            create: jest.fn(),
-            createMany: jest.fn(),
-            deleteMany: jest.fn()
-        };
-        roleHasPermRepo = { findMany: jest.fn() };
-        roleContextRepo = { findMany: jest.fn() };
-        groupRepo = { findById: jest.fn() };
-        rbacCache = {
-            isCached: jest.fn(),
-            hasPermission: jest.fn(),
-            setPermissions: jest.fn(),
-            redis: { smembers: jest.fn() }
-        };
-        prisma = {
-            $transaction: (cb: any) => cb(prisma),
-            userRoleAssignment: { deleteMany: jest.fn(), createMany: jest.fn() },
-            permission: { findMany: jest.fn().mockResolvedValue([]) }
-        };
+  beforeEach(async () => {
+    rbacCache = {
+      getPermissions: jest.fn(),
+      setPermissions: jest.fn(),
+    };
+    permissionIndex = {
+      prepare: jest.fn().mockResolvedValue(undefined),
+      hasAnyRequiredFromAssigned: jest.fn(),
+      matchesAssigned: jest.fn(),
+    };
+    roleAssignment = {
+      getActiveRoleIds: jest.fn(),
+      syncRolesInGroup: jest.fn().mockResolvedValue(undefined),
+    };
+    roleHasPermRepo = {
+      findActivePermissionCodesByRoleIds: jest.fn(),
+    };
 
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                RbacService,
-                { provide: USER_GROUP_REPOSITORY, useValue: {} },
-                { provide: USER_ROLE_ASSIGNMENT_REPOSITORY, useValue: assignmentRepo },
-                { provide: ROLE_HAS_PERMISSION_REPOSITORY, useValue: roleHasPermRepo },
-                { provide: ROLE_CONTEXT_REPOSITORY, useValue: roleContextRepo },
-                { provide: GROUP_REPOSITORY, useValue: groupRepo },
-                { provide: USER_REPOSITORY, useValue: {} },
-                { provide: ROLE_REPOSITORY, useValue: {} },
-                { provide: RbacCacheService, useValue: rbacCache },
-                { provide: PrismaService, useValue: prisma },
-            ],
-        }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        RbacService,
+        { provide: RbacCacheService, useValue: rbacCache },
+        { provide: RbacPermissionIndexService, useValue: permissionIndex },
+        { provide: RbacRoleAssignmentService, useValue: roleAssignment },
+        { provide: ROLE_HAS_PERMISSION_REPOSITORY, useValue: roleHasPermRepo },
+      ],
+    }).compile();
 
-        service = module.get<RbacService>(RbacService);
+    service = module.get(RbacService);
+  });
+
+  describe('hasPermissions', () => {
+    it('returns true when index grants any required permission', async () => {
+      rbacCache.getPermissions.mockResolvedValue({ codes: ['p1'], cached: true });
+      permissionIndex.hasAnyRequiredFromAssigned.mockReturnValue(true);
+
+      const result = await service.hasPermissions(1, 10, ['p1']);
+
+      expect(permissionIndex.prepare).toHaveBeenCalled();
+      expect(permissionIndex.hasAnyRequiredFromAssigned).toHaveBeenCalledWith(expect.any(Set), ['p1']);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('refreshPermissions', () => {
+    it('loads role ids, codes, caches and returns set', async () => {
+      rbacCache.getPermissions.mockResolvedValueOnce({ codes: [], cached: false });
+      roleAssignment.getActiveRoleIds.mockResolvedValue([100n]);
+      roleHasPermRepo.findActivePermissionCodesByRoleIds.mockResolvedValue(['a', 'b']);
+
+      const set = await service.refreshPermissions(1, 10);
+
+      expect(roleAssignment.getActiveRoleIds).toHaveBeenCalledWith(1, 10);
+      expect(roleHasPermRepo.findActivePermissionCodesByRoleIds).toHaveBeenCalledWith([100n]);
+      expect(rbacCache.setPermissions).toHaveBeenCalledWith(1, 10, expect.arrayContaining(['a', 'b']));
+      expect(set.has('a')).toBe(true);
+      expect(set.has('b')).toBe(true);
+    });
+  });
+
+  describe('syncRolesInGroup', () => {
+    it('delegates to role assignment and refreshes', async () => {
+      rbacCache.getPermissions.mockResolvedValue({ codes: [], cached: true });
+      roleAssignment.getActiveRoleIds.mockResolvedValue([]);
+      roleHasPermRepo.findActivePermissionCodesByRoleIds.mockResolvedValue([]);
+
+      await service.syncRolesInGroup(1, 10, [1], true);
+
+      expect(roleAssignment.syncRolesInGroup).toHaveBeenCalledWith(1, 10, [1], true);
+      expect(rbacCache.setPermissions).toHaveBeenCalled();
     });
 
-    describe('userHasPermissionsInGroup', () => {
-        it('should refresh if not cached and return true if has any permission', async () => {
-            rbacCache.isCached.mockResolvedValue(false);
-            rbacCache.hasPermission.mockResolvedValue(true);
+    it('propagates not found from role assignment', async () => {
+      roleAssignment.syncRolesInGroup.mockRejectedValue(new NotFoundException('Group not found'));
 
-            // Mock refresh login
-            assignmentRepo.findManyRaw.mockResolvedValue([{ role_id: 1n }]);
-            roleHasPermRepo.findMany.mockResolvedValue([{ permission: { code: 'p1', status: 'active' } }]);
-
-            const result = await service.userHasPermissionsInGroup(1, 10, ['p1']);
-
-            expect(rbacCache.isCached).toHaveBeenCalled();
-            expect(rbacCache.setPermissions).toHaveBeenCalledWith(1, 10, ['p1']);
-            expect(result).toBe(true);
-        });
+      await expect(service.syncRolesInGroup(1, 10, [1])).rejects.toThrow(NotFoundException);
     });
-
-    describe('refreshUserPermissions', () => {
-        it('should flatten permissions correctly', async () => {
-            assignmentRepo.findManyRaw.mockResolvedValue([{ role_id: 100n }]);
-            roleHasPermRepo.findMany.mockResolvedValue([{ permission: { id: 1n, code: 'child', parent_id: 2n, status: 'active' } }]);
-            prisma.permission.findMany.mockResolvedValue([
-                { id: 1n, code: 'child', parent_id: 2n, status: 'active' },
-                { id: 2n, code: 'parent', parent_id: null, status: 'active' }
-            ]);
-
-            await service.refreshUserPermissions(1, 10);
-
-            expect(rbacCache.setPermissions).toHaveBeenCalledWith(1, 10, expect.arrayContaining(['child', 'parent']));
-        });
-    });
-
-    describe('syncRolesInGroup', () => {
-        it('should error if group not found', async () => {
-            groupRepo.findById.mockResolvedValue(null);
-            await expect(service.syncRolesInGroup(1, 10, [1])).rejects.toThrow(NotFoundException);
-        });
-
-        it('should update DB and call refresh', async () => {
-            groupRepo.findById.mockResolvedValue({ id: 10, context_id: 1 });
-            roleContextRepo.findMany.mockResolvedValue([{ role_id: 1n }]);
-
-            // Mock refresh
-            assignmentRepo.findManyRaw.mockResolvedValue([]);
-
-            await service.syncRolesInGroup(1, 10, [1]);
-
-            expect(prisma.userRoleAssignment.deleteMany).toHaveBeenCalled();
-            expect(prisma.userRoleAssignment.createMany).toHaveBeenCalled();
-            expect(rbacCache.setPermissions).toHaveBeenCalled();
-        });
-    });
+  });
 });

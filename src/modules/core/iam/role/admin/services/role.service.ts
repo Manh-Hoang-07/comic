@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
 import { RequestContext } from '@/common/shared/utils';
 import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
@@ -7,8 +7,12 @@ import { BaseService } from '@/common/core/services';
 import { normalizeIdArray, transformPermission, resolveRoleContexts } from '@/modules/core/iam/utils/iam-transform.helper';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
+import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
+import { prepareQuery } from '@/common/core/utils';
 @Injectable()
 export class RoleService extends BaseService<any, IRoleRepository> {
+  private readonly logger = new Logger(RoleService.name);
+
   constructor(
     @Inject(ROLE_REPOSITORY)
     private readonly roleRepo: IRoleRepository,
@@ -19,7 +23,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     super(roleRepo);
   }
 
-  protected override async prepareFilters(filter: any) {
+  protected override async prepareFilters(filter: any, _options?: any) {
     const context = RequestContext.get<any>('context');
     const contextId = RequestContext.get<any>('contextId');
 
@@ -137,6 +141,41 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     const role = await this.roleRepo.findById(id);
     if (!role) throw new NotFoundException('Role not found');
     return role;
+  }
+
+  protected override async executeGetList(queryOrOptions: any = {}) {
+    const tracker = RequestContext.get<CheckpointTracker>('tracker');
+    
+    // The super.executeGetList already handles everything, we just wrap it with checkpoints
+    // but we can't easily wrap it, so we reimplement the logic here for better tracing
+    const { filter, options } = prepareQuery(queryOrOptions);
+    const normalized = await this.prepareOptions(options);
+    const preparedFilters = await this.prepareFilters(filter, normalized);
+
+    if (preparedFilters === false) {
+      return { data: [], meta: { page: normalized.page, limit: normalized.limit, total: 0 } as any };
+    }
+
+    normalized.filter = preparedFilters && typeof preparedFilters === 'object' ? preparedFilters : filter;
+
+    const startDb = performance.now();
+    // Bỏ qua bước COUNT để kiểm tra xem có phải do độ trễ của 2 câu lệnh SQL riêng biệt không
+    const result = await this.roleRepo.findAll({ ...normalized, skipCount: true } as any);
+    const endDb = performance.now();
+    this.logger.log(`[PERF] RoleRepository.findAll (skipCount: true) took: ${(endDb - startDb).toFixed(2)}ms`);
+
+    tracker?.addCheckpoint('controller_db_query_end');
+
+    const transformedData = await Promise.all(
+      result.data.map((row) => {
+        const t = this.transform(row);
+        return t instanceof Promise ? t : Promise.resolve(t);
+      }),
+    );
+    result.data = transformedData as any[];
+    tracker?.addCheckpoint('controller_transform_end');
+
+    return this.afterGetList(result);
   }
 
   protected override transform(role: any) {

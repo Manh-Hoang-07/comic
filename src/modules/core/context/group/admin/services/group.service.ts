@@ -52,7 +52,7 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
 
       const group = await this.groupRepo.findByIdForContext(id);
       if (!group) throw new NotFoundException(`Group with ID ${id} not found`);
-      await this.redis.set(cacheKey, JSON.stringify(group), 300);
+      await this.redis.set(cacheKey, JSON.stringify(group), 3600);
       return group;
     }
 

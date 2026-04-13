@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
+import { RequestContext } from '@/common/shared/utils';
 import { decodeAssignedCodes, encodeAssignedCodes } from '@/modules/core/rbac/services/rbac-assigned-codes.codec';
 
 /** Giá trị Redis cũ (bitmap) — gặp thì xóa key và refresh dạng danh sách mã. */
@@ -45,12 +46,22 @@ export class RbacCacheService implements OnModuleInit {
 
   private async ensureVersion(): Promise<number> {
     if (!this.redis.isEnabled()) return 1;
-    if (Date.now() - this.versionLastFetch < this.versionTtlMs) return this.version;
+
+    // Fast path: reuse version from RequestContext if already fetched in this request
+    const reqV = RequestContext.get<number>('rbac_version');
+    if (reqV) return reqV;
+
+    if (Date.now() - this.versionLastFetch < this.versionTtlMs) {
+      RequestContext.set('rbac_version', this.version);
+      return this.version;
+    }
 
     const meta = await this.redis.hgetall(this.versionKey);
     const parsed = Number(meta?.[this.versionField] || 1);
     this.version = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
     this.versionLastFetch = Date.now();
+    
+    RequestContext.set('rbac_version', this.version);
     return this.version;
   }
 

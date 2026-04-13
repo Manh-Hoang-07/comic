@@ -16,7 +16,7 @@ import {
   PublicHttpCacheInterceptor,
 } from '@/common/http/interceptors';
 import { FilePathInterceptor } from '@/common/file/interceptors';
-import { JwtAuthGuard, RbacGuard } from '@/common/auth/guards';
+import { JwtAuthGuard, RbacGuard, SecurityGuard } from '@/common/auth/guards';
 import { RequestContextMiddleware, GroupContextMiddleware } from '@/common/http/middlewares';
 import { RateLimitModule } from '@/core/security/throttler.module';
 
@@ -66,8 +66,7 @@ import { ComicsModule } from '@/modules/comics/comic.module';
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_INTERCEPTOR, useClass: FilePathInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TimeoutInterceptor },
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: RbacGuard },
+    { provide: APP_GUARD, useClass: SecurityGuard },
   ],
 })
 export class AppModule implements NestModule {

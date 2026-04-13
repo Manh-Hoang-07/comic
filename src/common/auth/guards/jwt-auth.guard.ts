@@ -13,6 +13,7 @@ import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators'
 import { ResponseUtil } from '@/common/shared/utils';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { RequestContext } from '@/common/shared/utils';
+import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
 import { extractBearerToken, isJwtExpired } from './jwt-token.helper';
 
 @Injectable()
@@ -29,23 +30,36 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   // ── canActivate ────────────────────────────────────────────────────────────
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const tracker = RequestContext.get<CheckpointTracker>('tracker');
+    tracker?.addCheckpoint('jwt_guard_enter');
+
     const request = context.switchToHttp().getRequest();
     const token = extractBearerToken(request.headers.authorization);
     const isPublic = this.isPublicRoute(context);
 
-    if (token && this.tokenBlacklist) {
-      const blocked = await this.tokenBlacklist.has(token);
-      if (blocked) {
-        this.clearAuth(request);
-        return false;
-      }
+    // If it's a public route and no token, just skip early
+    if (isPublic && !token) {
+      tracker?.addCheckpoint('jwt_guard_end');
+      return true;
     }
 
-    if (isPublic) {
-      return this.handlePublicRoute(context, request, token);
+    // Parallelize blacklist check and Passport strategy validation
+    const blacklistPromise = token && this.tokenBlacklist ? this.tokenBlacklist.has(token) : Promise.resolve(false);
+    const authPromise = isPublic 
+      ? this.handlePublicRoute(context, request, token) 
+      : this.handleProtectedRoute(context);
+
+    const [isBlocked, isAuthOk] = await Promise.all([blacklistPromise, authPromise]);
+    tracker?.addCheckpoint('jwt_auth_parallel_end');
+
+    if (isBlocked) {
+      this.clearAuth(request);
+      tracker?.addCheckpoint('jwt_guard_end');
+      return false;
     }
 
-    return this.handleProtectedRoute(context);
+    tracker?.addCheckpoint('jwt_guard_end');
+    return isAuthOk;
   }
 
   // ── handleRequest ──────────────────────────────────────────────────────────

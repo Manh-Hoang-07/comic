@@ -12,6 +12,8 @@ import { CustomLoggerService } from '@/core/logger/logger.service';
 import { Auth } from '@/common/auth/utils';
 import { LOG_REQUEST_KEY, LogRequestOptions } from '@/common/shared/decorators';
 import { extractRequestId, resolveLogTarget } from './logging.helper';
+import { RequestContext } from '@/common/shared/utils';
+import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -23,20 +25,26 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     if (context.getType() !== 'http') return next.handle();
 
-    // Only log when the route has @LogRequest()
+    const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<Response>();
+
+    const isAdmin = request.url.includes('/admin/') || request.url.startsWith('/admin');
+
+    // Resolve log config or use default for admin
     const logConfig = this.reflector.getAllAndOverride<LogRequestOptions>(
       LOG_REQUEST_KEY,
       [context.getHandler(), context.getClass()],
     );
-    if (!logConfig) return next.handle();
+    
+    if (!logConfig && !isAdmin) return next.handle();
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const response = context.switchToHttp().getResponse<Response>();
+    const tracker = RequestContext.get<CheckpointTracker>('tracker');
+    tracker?.addCheckpoint('interceptor_enter');
 
     const requestId = extractRequestId(request);
     response.setHeader('X-Request-ID', requestId);
 
-    const logTarget = resolveLogTarget(request, logConfig);
+    const logTarget = logConfig ? resolveLogTarget(request, logConfig) : { filePath: undefined, fileBaseName: isAdmin ? 'admin_access' : undefined };
     const logFileOptions = logTarget.filePath
       ? { filePath: logTarget.filePath }
       : logTarget.fileBaseName
@@ -61,27 +69,31 @@ export class LoggingInterceptor implements NestInterceptor {
     } as const;
 
     const startTime = Date.now();
+    tracker?.addCheckpoint('controller_start');
 
     return next.handle().pipe(
       tap(() => {
+        tracker?.addCheckpoint('controller_end');
         const duration = Date.now() - startTime;
         this.logger.log(
-          'Outgoing Response',
+          isAdmin ? `Admin API Call: ${baseContext.url}` : 'Outgoing Response',
           {
             ...baseContext,
             extra: {
               ...baseContext.extra,
               statusCode: response.statusCode,
               durationMs: duration,
+              timings: tracker?.toLogDetails(),
             },
           },
           logFileOptions,
         );
       }),
       catchError((error) => {
+        tracker?.addCheckpoint('controller_error');
         const duration = Date.now() - startTime;
         this.logger.error(
-          'Error Response',
+          isAdmin ? `Admin API Error: ${baseContext.url}` : 'Error Response',
           error?.stack,
           {
             ...baseContext,
@@ -90,6 +102,7 @@ export class LoggingInterceptor implements NestInterceptor {
               statusCode: (error as any)?.status || 500,
               durationMs: duration,
               errorMessage: error?.message,
+              timings: tracker?.toLogDetails(),
             },
           },
           logFileOptions,

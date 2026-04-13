@@ -1,10 +1,14 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { RequestContext } from '@/common/shared/utils';
+import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
 
 @Injectable()
 export class GroupContextMiddleware implements NestMiddleware {
   async use(req: Request, _res: Response, next: NextFunction) {
+    const tracker = RequestContext.get<CheckpointTracker>('tracker');
+    tracker?.addCheckpoint('middleware_group_context');
+
     const headerGroupId = this.extractGroupId(req);
 
     RequestContext.set('groupIdRaw', headerGroupId);

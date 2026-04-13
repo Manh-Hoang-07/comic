@@ -3,6 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { RedisUtil } from '@/core/utils/redis.util';
+import { RequestContext } from '@/common/shared/utils';
+import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 
@@ -39,10 +41,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtAccessPayload) {
+    const tracker = RequestContext.get<CheckpointTracker>('tracker');
+    tracker?.addCheckpoint('jwt_strategy_validate_enter');
+
     const userId = payload.sub;
     const cacheKey = `user:profile:${userId}`;
 
     const cachedUser = await this.redis.get(cacheKey);
+    tracker?.addCheckpoint('jwt_strategy_cache_read_end');
 
     if (cachedUser) {
       try {
@@ -57,6 +63,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     const user = await this.userRepo.findById(userId);
+    tracker?.addCheckpoint('jwt_strategy_db_read_end');
 
     if (!user) {
       return null;

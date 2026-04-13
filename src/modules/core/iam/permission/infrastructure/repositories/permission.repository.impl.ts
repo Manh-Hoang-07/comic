@@ -25,6 +25,9 @@ export class PermissionRepositoryImpl extends PrismaRepository<
             parent_id: true,
             created_at: true,
             updated_at: true,
+        };
+        this.defaultDetailSelect = {
+            ...this.defaultSelect,
             parent: { select: { id: true, name: true, code: true, status: true } },
             children: { select: { id: true, name: true, code: true, status: true } },
         };

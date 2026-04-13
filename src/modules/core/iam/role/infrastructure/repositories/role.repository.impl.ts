@@ -16,6 +16,7 @@ export class RoleRepositoryImpl extends PrismaRepository<
 
     constructor(private readonly prisma: PrismaService) {
         super(prisma.role as unknown as any);
+
         this.defaultSelect = {
             id: true,
             code: true,
@@ -24,6 +25,10 @@ export class RoleRepositoryImpl extends PrismaRepository<
             parent_id: true,
             created_at: true,
             updated_at: true,
+        };
+
+        this.defaultDetailSelect = {
+            ...this.defaultSelect,
             parent: { select: { id: true, name: true, code: true, status: true } },
             children: { select: { id: true, name: true, code: true, status: true } },
             permissions: { include: { permission: true } },

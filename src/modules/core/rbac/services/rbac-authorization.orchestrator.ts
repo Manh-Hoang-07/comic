@@ -23,6 +23,12 @@ export class RbacAuthorizationOrchestrator {
       return null;
     }
 
+    // Request-level cache to avoid multiple DB/Redis hits in the same request
+    const cachedScope = RequestContext.get<NullableRbacId>('resolved_group_scope');
+    if (cachedScope !== undefined && RequestContext.get('resolved_group_id_raw') === groupIdRaw) {
+      return cachedScope;
+    }
+
     const group = await this.groupService.getContextSnapshot(groupId).catch(() => null);
     if (!group) throw new BadRequestException('Group not found');
     if (!this.isActive(group)) throw new BadRequestException('Group is inactive');
@@ -36,7 +42,11 @@ export class RbacAuthorizationOrchestrator {
     RequestContext.set('groupId', group.id ?? groupId);
     RequestContext.set('context', group.context);
     RequestContext.set('contextId', contextId);
+    
     groupId = group.id ?? groupId;
+    
+    RequestContext.set('resolved_group_scope', groupId);
+    RequestContext.set('resolved_group_id_raw', groupIdRaw);
 
     return groupId;
   }

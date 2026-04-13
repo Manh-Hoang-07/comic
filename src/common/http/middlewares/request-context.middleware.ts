@@ -1,11 +1,15 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { RequestContext } from '@/common/shared/utils';
+import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     RequestContext.run(req, res, () => {
+      const tracker = new CheckpointTracker();
+      tracker.addCheckpoint('request_entry');
+
       const method = req.method;
       const url = req.originalUrl || req.url;
       const userAgent = req.get('User-Agent') || '';
@@ -20,6 +24,7 @@ export class RequestContextMiddleware implements NestMiddleware {
             : `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
       // Save to per-request store
+      RequestContext.set('tracker', tracker);
       RequestContext.set('method', method);
       RequestContext.set('url', url);
       RequestContext.set('userAgent', userAgent);
@@ -33,5 +38,3 @@ export class RequestContextMiddleware implements NestMiddleware {
     });
   }
 }
-
-

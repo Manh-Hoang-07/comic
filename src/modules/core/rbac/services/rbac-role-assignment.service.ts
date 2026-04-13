@@ -14,14 +14,11 @@ export class RbacRoleAssignmentService {
   ) { }
 
   async assignRoleToUser(userId: RbacId, roleId: RbacId, groupId: RbacId): Promise<void> {
-    const existing = await this.assignmentRepo.findUnique(userId, roleId, groupId);
-    if (!existing) {
-      await this.assignmentRepo.create({
-        user_id: toPrimaryKey(userId),
-        role_id: toPrimaryKey(roleId),
-        group_id: toPrimaryKey(groupId),
-      });
-    }
+    await this.assignmentRepo.createMany([{
+      user_id: toPrimaryKey(userId),
+      role_id: toPrimaryKey(roleId),
+      group_id: toPrimaryKey(groupId),
+    }]);
   }
 
   async syncRolesInGroup(
@@ -51,17 +48,20 @@ export class RbacRoleAssignmentService {
   }
 
   private async validateRolesForContext(roleIds: RbacId[], contextId: any): Promise<void> {
+    const normalizedRoleIds = roleIds.map((id) => toPrimaryKey(id));
     const links = await this.roleContextRepo.findMany({
       where: {
         context_id: toPrimaryKey(contextId),
+        role_id: { in: normalizedRoleIds },
         role: { status: 'active' as any },
       },
       select: { role_id: true },
     });
+
     const validIds = new Set((links as any[]).map((l) => String(toPrimaryKey(l.role_id))));
-    for (const id of roleIds) {
-      if (!validIds.has(toPrimaryKey(id).toString())) {
-        throw new BadRequestException(`Role ID ${id} is not allowed in this context`);
+    for (const id of normalizedRoleIds) {
+      if (!validIds.has(String(id))) {
+        throw new BadRequestException(`Role ID ${id} is not allowed or not active in this context`);
       }
     }
   }

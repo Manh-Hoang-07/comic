@@ -5,7 +5,6 @@ import { RbacPermissionIndexService } from '@/modules/core/rbac/services/rbac-pe
 import { RbacRoleAssignmentService } from '@/modules/core/rbac/services/rbac-role-assignment.service';
 import { NullableRbacId, RbacId } from '@/modules/core/rbac/rbac.types';
 import { RequestContext } from '@/common/shared/utils';
-import { IRoleHasPermissionRepository, ROLE_HAS_PERMISSION_REPOSITORY } from '@/modules/core/rbac/role-has-permission/domain/role-has-permission.repository';
 
 function toAssignedSet(codes: Iterable<string>): Set<string> {
   return new Set(Array.from(codes).filter((c) => typeof c === 'string' && c.length > 0));
@@ -17,8 +16,6 @@ export class RbacService {
     private readonly rbacCache: RbacCacheService,
     private readonly permissionIndexService: RbacPermissionIndexService,
     private readonly roleAssignmentService: RbacRoleAssignmentService,
-    @Inject(ROLE_HAS_PERMISSION_REPOSITORY)
-    private readonly roleHasPermRepo: IRoleHasPermissionRepository,
   ) { }
 
   private readonly refreshInFlight = new Map<string, Promise<Set<string>>>();
@@ -58,8 +55,7 @@ export class RbacService {
 
     const refreshPromise = (async () => {
       await this.prepare();
-      const roleIds = await this.roleAssignmentService.getActiveRoleIds(userId, groupId);
-      const codes = await this.roleHasPermRepo.findActivePermissionCodesByRoleIds(roleIds);
+      const codes = await this.roleAssignmentService.getActivePermissionCodes(userId, groupId);
       const set = toAssignedSet(codes);
       await this.rbacCache.setPermissions(userId, groupId, Array.from(set));
       return set;

@@ -103,8 +103,12 @@ function removeEmpty(obj: any): any {
 // ─── File Writer ──────────────────────────────────────────────────────────────
 
 function ensureDir(dirPath: string): void {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
+  try {
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+  } catch (e) {
+    // Ignore filesystem errors (e.g. read-only on Vercel)
   }
 }
 
@@ -120,6 +124,17 @@ function writeEntryToFiles(
   options?: LogWriteOptions,
 ): void {
   const line = JSON.stringify(entry);
+
+  if (process.env.VERCEL) {
+    if (level === 'error' || level === 'fatal') {
+      console.error(line);
+    } else if (level === 'warn') {
+      console.warn(line);
+    } else {
+      console.log(line);
+    }
+    return;
+  }
 
   // Custom absolute path: write only there
   if (options?.filePath) {

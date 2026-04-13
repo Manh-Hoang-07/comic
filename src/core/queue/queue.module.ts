@@ -24,7 +24,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                     };
                 }
 
-                // Fallback local connect
+                // Vercel Fallback: Default to known Upstash URL if not explicitly provided in environment
+                if (process.env.VERCEL) {
+                    return {
+                        createClient: () => {
+                            const Redis = require('ioredis');
+                            const fallbackUrl = 'rediss://default:gQAAAAAAAVCsAAIncDExNzAzNDU4MTc3Mjg0ZmYxOTc1YWViNDk5MzljOTU2NHAxODYxODg@crack-monitor-86188.upstash.io:6379';
+                            return new Redis(fallbackUrl, {
+                                maxRetriesPerRequest: null,
+                                enableReadyCheck: false,
+                                tls: { rejectUnauthorized: false },
+                            });
+                        },
+                    };
+                }
+
+                // Fallback local connect (Local Development)
                 return {
                     redis: {
                         host: configService.get<string>('REDIS_HOST') || 'localhost',

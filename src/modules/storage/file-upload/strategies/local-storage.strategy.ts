@@ -14,9 +14,13 @@ export class LocalStorageStrategy implements IUploadStrategy {
     this.destination = storageConfig.destination;
     this.baseUrl = storageConfig.baseUrl;
 
-    // Tạo thư mục nếu chưa tồn tại
-    if (!fs.existsSync(this.destination)) {
-      fs.mkdirSync(this.destination, { recursive: true });
+    // Tạo thư mục nếu chưa tồn tại (tránh crash trên Vercel/Serverless)
+    try {
+      if (!fs.existsSync(this.destination)) {
+        fs.mkdirSync(this.destination, { recursive: true });
+      }
+    } catch (error) {
+      console.warn(`[LocalStorageStrategy] Could not create local storage directory at ${this.destination}: ${error.message}`);
     }
   }
 

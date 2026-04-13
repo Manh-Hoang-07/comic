@@ -13,7 +13,7 @@ export default registerAs('storage', () => ({
   
   // Local storage config
   local: {
-    destination: './storage/uploads', // Hardcoded - not sensitive
+    destination: process.env.VERCEL ? '/tmp/uploads' : './storage/uploads', // `/tmp` is the only writable directory on Vercel
     baseUrl: '/uploads', // Hardcoded - not sensitive
   },
   

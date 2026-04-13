@@ -1,6 +1,4 @@
 import 'reflect-metadata';
-import * as moduleAlias from 'module-alias';
-moduleAlias.addAliases({ '@': __dirname });
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';

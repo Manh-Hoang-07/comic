@@ -8,34 +8,28 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => {
                 const redisUrl = configService.get<string>('REDIS_URL');
-                let redisConfig: any = {};
 
                 if (redisUrl) {
-                    try {
-                        const url = new URL(redisUrl);
-                        redisConfig = {
-                            host: url.hostname,
-                            port: Number(url.port),
-                            username: url.username ? decodeURIComponent(url.username) : undefined,
-                            password: url.password ? decodeURIComponent(url.password) : undefined,
-                            ...(url.protocol === 'rediss:' ? { tls: { rejectUnauthorized: false } } : {}),
-                        };
-                    } catch (e) {
-                        // Fallback if URL parsing fails or if users prefer host/port envs
-                        redisConfig = {
-                            host: configService.get<string>('REDIS_HOST') || 'localhost',
-                            port: configService.get<number>('REDIS_PORT') || 6379,
-                        };
-                    }
-                } else {
-                    redisConfig = {
-                        host: configService.get<string>('REDIS_HOST') || 'localhost',
-                        port: configService.get<number>('REDIS_PORT') || 6379,
+                    // Use createClient to cleanly delegate string parsing to ioredis natively
+                    return {
+                        createClient: () => {
+                            // eslint-disable-next-line @typescript-eslint/no-var-requires
+                            const Redis = require('ioredis');
+                            return new Redis(redisUrl, {
+                                maxRetriesPerRequest: null,
+                                enableReadyCheck: false,
+                                ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+                            });
+                        },
                     };
                 }
 
+                // Fallback local connect
                 return {
-                    redis: redisConfig,
+                    redis: {
+                        host: configService.get<string>('REDIS_HOST') || 'localhost',
+                        port: configService.get<number>('REDIS_PORT') || 6379,
+                    },
                 };
             },
             inject: [ConfigService],

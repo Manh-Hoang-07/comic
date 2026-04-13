@@ -7,10 +7,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         BullModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => {
-                const redisUrl = configService.get<string>('REDIS_URL');
+                let redisUrl = configService.get<string>('REDIS_URL');
+
+                // Force override on Vercel if user misconfigured a local connection
+                if (process.env.VERCEL && (!redisUrl || redisUrl.includes('localhost') || redisUrl.includes('127.0.0.1'))) {
+                    redisUrl = 'rediss://default:gQAAAAAAAVCsAAIncDExNzAzNDU4MTc3Mjg0ZmYxOTc1YWViNDk5MzljOTU2NHAxODYxODg@crack-monitor-86188.upstash.io:6379';
+                }
 
                 if (redisUrl) {
-                    // Use createClient to cleanly delegate string parsing to ioredis natively
                     return {
                         createClient: () => {
                             // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -19,21 +23,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                                 maxRetriesPerRequest: null,
                                 enableReadyCheck: false,
                                 ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
-                            });
-                        },
-                    };
-                }
-
-                // Vercel Fallback: Default to known Upstash URL if not explicitly provided in environment
-                if (process.env.VERCEL) {
-                    return {
-                        createClient: () => {
-                            const Redis = require('ioredis');
-                            const fallbackUrl = 'rediss://default:gQAAAAAAAVCsAAIncDExNzAzNDU4MTc3Mjg0ZmYxOTc1YWViNDk5MzljOTU2NHAxODYxODg@crack-monitor-86188.upstash.io:6379';
-                            return new Redis(fallbackUrl, {
-                                maxRetriesPerRequest: null,
-                                enableReadyCheck: false,
-                                tls: { rejectUnauthorized: false },
                             });
                         },
                     };

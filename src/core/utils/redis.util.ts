@@ -11,11 +11,15 @@ export class RedisUtil implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly configService: ConfigService) {
     this.url = process.env.REDIS_URL || this.configService.get<string>('REDIS_URL');
+    if (process.env.VERCEL && (!this.url || this.url.includes('localhost') || this.url.includes('127.0.0.1'))) {
+      this.url = 'rediss://default:gQAAAAAAAVCsAAIncDExNzAzNDU4MTc3Mjg0ZmYxOTc1YWViNDk5MzljOTU2NHAxODYxODg@crack-monitor-86188.upstash.io:6379';
+    }
     if (this.url) {
       const options = {
         lazyConnect: true,
         maxRetriesPerRequest: 1,
         retryStrategy: () => null,
+        ...(this.url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
       };
       this.client = new Redis(this.url, options);
       this.subClient = new Redis(this.url, options);

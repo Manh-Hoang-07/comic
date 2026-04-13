@@ -18,6 +18,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                             port: Number(url.port),
                             username: url.username ? decodeURIComponent(url.username) : undefined,
                             password: url.password ? decodeURIComponent(url.password) : undefined,
+                            ...(url.protocol === 'rediss:' ? { tls: { rejectUnauthorized: false } } : {}),
                         };
                     } catch (e) {
                         // Fallback if URL parsing fails or if users prefer host/port envs

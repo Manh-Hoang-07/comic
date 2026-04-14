@@ -6,9 +6,9 @@ import { PublicGeneralConfigService } from './public/services/general-config.ser
 import { SystemConfigRepositoryModule } from '../system-config.repository.module';
 
 @Module({
-    imports: [SystemConfigRepositoryModule],
-    controllers: [AdminGeneralConfigController, PublicGeneralConfigController],
-    providers: [AdminGeneralConfigService, PublicGeneralConfigService],
-    exports: [AdminGeneralConfigService, PublicGeneralConfigService],
+  imports: [SystemConfigRepositoryModule],
+  controllers: [AdminGeneralConfigController, PublicGeneralConfigController],
+  providers: [AdminGeneralConfigService, PublicGeneralConfigService],
+  exports: [AdminGeneralConfigService, PublicGeneralConfigService],
 })
-export class GeneralConfigModule { }
+export class GeneralConfigModule {}

@@ -16,4 +16,4 @@ import { RbacRepositoryModule } from '@/modules/core/rbac/rbac.repository.module
   providers: [AdminGroupService, GroupActionService],
   exports: [AdminGroupService, GroupActionService],
 })
-export class AdminGroupModule { }
+export class AdminGroupModule {}

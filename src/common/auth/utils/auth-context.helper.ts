@@ -2,47 +2,49 @@ import { ExecutionContext } from '@nestjs/common';
 import { RequestContext } from '@/common/shared/utils';
 
 export interface AuthenticatedUser {
-    id: any;
-    email?: string;
-    username?: string;
-    status?: string;
-    [key: string]: any;
+  id: any;
+  email?: string;
+  username?: string;
+  status?: string;
+  [key: string]: any;
 }
 
 /**
  * Get current authenticated user from global RequestContext or ExecutionContext.
  */
-export function getCurrentUser(context?: ExecutionContext): AuthenticatedUser | null {
-    if (context) {
-        const request = context.switchToHttp().getRequest();
-        return request.user || null;
-    }
-    return RequestContext.get<AuthenticatedUser | null>('user') || null;
+export function getCurrentUser(
+  context?: ExecutionContext,
+): AuthenticatedUser | null {
+  if (context) {
+    const request = context.switchToHttp().getRequest();
+    return request.user || null;
+  }
+  return RequestContext.get<AuthenticatedUser | null>('user') || null;
 }
 
 /**
  * Get current authenticated user ID.
  */
 export function getCurrentUserId(context?: ExecutionContext): any | null {
-    const user = getCurrentUser(context);
-    if (!user) return null;
-    return user.id;
+  const user = getCurrentUser(context);
+  if (!user) return null;
+  return user.id;
 }
 
 /**
  * Check if a user is currently logged in.
  */
 export function isAuthenticated(context?: ExecutionContext): boolean {
-    return !!getCurrentUser(context);
+  return !!getCurrentUser(context);
 }
 
 /**
  * Get a specific property from the current user object.
  */
 export function getUserProperty<T = any>(
-    key: keyof AuthenticatedUser | string,
-    context?: ExecutionContext,
+  key: keyof AuthenticatedUser | string,
+  context?: ExecutionContext,
 ): T | null {
-    const user = getCurrentUser(context);
-    return user ? (user[key as string] as T) : null;
+  const user = getCurrentUser(context);
+  return user ? (user[key as string] as T) : null;
 }

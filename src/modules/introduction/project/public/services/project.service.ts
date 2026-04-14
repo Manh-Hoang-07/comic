@@ -1,10 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IProjectRepository, PROJECT_REPOSITORY, ProjectFilter } from '@/modules/introduction/project/domain/project.repository';
+import {
+  IProjectRepository,
+  PROJECT_REPOSITORY,
+  ProjectFilter,
+} from '@/modules/introduction/project/domain/project.repository';
 import { ProjectStatus } from '@/shared/enums/types/project-status.enum';
 import { BaseContentService } from '@/common/core/services';
 
 @Injectable()
-export class PublicProjectService extends BaseContentService<any, IProjectRepository> {
+export class PublicProjectService extends BaseContentService<
+  any,
+  IProjectRepository
+> {
   constructor(
     @Inject(PROJECT_REPOSITORY)
     private readonly projectRepo: IProjectRepository,
@@ -16,11 +23,11 @@ export class PublicProjectService extends BaseContentService<any, IProjectReposi
     // Public API chỉ hiển thị project completed hoặc in_progress
     return {
       ...filter,
-      status: { in: [ProjectStatus.completed, ProjectStatus.in_progress] as any } as any
+      status: {
+        in: [ProjectStatus.completed, ProjectStatus.in_progress] as any,
+      } as any,
     };
   }
-
-
 
   async findBySlug(slug: string) {
     const project = await this.projectRepo.findBySlug(slug);
@@ -44,7 +51,8 @@ export class PublicProjectService extends BaseContentService<any, IProjectReposi
   protected transform(project: any) {
     if (!project) return project;
     const item = super.transform(project) as any;
-    if (item.view_count !== undefined) item.view_count = Number(item.view_count);
+    if (item.view_count !== undefined)
+      item.view_count = Number(item.view_count);
 
     // Normalize images
     if (item.images) {
@@ -65,5 +73,3 @@ export class PublicProjectService extends BaseContentService<any, IProjectReposi
     return item;
   }
 }
-
-

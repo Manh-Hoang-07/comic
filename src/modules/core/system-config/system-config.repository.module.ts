@@ -5,19 +5,19 @@ import { EMAIL_CONFIG_REPOSITORY } from './email/domain/repositories/email-confi
 import { EmailConfigRepositoryImpl } from './email/infrastructure/repositories/email-config.repository.impl';
 
 const repositories: Provider[] = [
-    {
-        provide: GENERAL_CONFIG_REPOSITORY,
-        useClass: GeneralConfigRepositoryImpl,
-    },
-    {
-        provide: EMAIL_CONFIG_REPOSITORY,
-        useClass: EmailConfigRepositoryImpl,
-    },
+  {
+    provide: GENERAL_CONFIG_REPOSITORY,
+    useClass: GeneralConfigRepositoryImpl,
+  },
+  {
+    provide: EMAIL_CONFIG_REPOSITORY,
+    useClass: EmailConfigRepositoryImpl,
+  },
 ];
 
 @Global()
 @Module({
-    providers: [...repositories],
-    exports: [...repositories],
+  providers: [...repositories],
+  exports: [...repositories],
 })
-export class SystemConfigRepositoryModule { }
+export class SystemConfigRepositoryModule {}

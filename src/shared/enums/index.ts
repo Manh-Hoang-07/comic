@@ -23,12 +23,15 @@ export * from './types/template-type.enum';
 export * from './types/chapter-status.enum';
 export * from './types/comic-status.enum';
 
-
 // Interfaces
 export { EnumValueMetadata } from './interfaces/enum-metadata.interface';
 
 // DTOs
-export { EnumValueMetadataDto, EnumResponseDto, AllEnumsResponseDto } from './dtos/enum-response.dto';
+export {
+  EnumValueMetadataDto,
+  EnumResponseDto,
+  AllEnumsResponseDto,
+} from './dtos/enum-response.dto';
 
 // Module
 export { EnumModule } from './enum.module';

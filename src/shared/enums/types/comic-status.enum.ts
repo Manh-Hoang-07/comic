@@ -1,39 +1,34 @@
 export enum ComicStatus {
-    draft = 'draft',
-    published = 'published',
-    completed = 'completed',
-    hidden = 'hidden',
+  draft = 'draft',
+  published = 'published',
+  completed = 'completed',
+  hidden = 'hidden',
 }
 
 /**
  * Labels cho ComicStatus
  */
 export const ComicStatusLabels: Record<ComicStatus, string> = {
-    [ComicStatus.draft]: 'Nháp',
-    [ComicStatus.published]: 'Đã xuất bản',
-    [ComicStatus.completed]: 'Hoàn thành',
-    [ComicStatus.hidden]: 'Ẩn',
+  [ComicStatus.draft]: 'Nháp',
+  [ComicStatus.published]: 'Đã xuất bản',
+  [ComicStatus.completed]: 'Hoàn thành',
+  [ComicStatus.hidden]: 'Ẩn',
 };
 
 /**
  * Các trạng thái truyện có thể hiển thị công khai
  */
 export const PUBLIC_COMIC_STATUSES = [
-    ComicStatus.published,
-    ComicStatus.completed,
+  ComicStatus.published,
+  ComicStatus.completed,
 ];
 
 /**
  * Các trạng thái truyện quản trị có thể thao tác
  */
 export const MANAGEABLE_COMIC_STATUSES = [
-    ComicStatus.draft,
-    ComicStatus.published,
-    ComicStatus.completed,
-    ComicStatus.hidden,
+  ComicStatus.draft,
+  ComicStatus.published,
+  ComicStatus.completed,
+  ComicStatus.hidden,
 ];
-
-
-
-
-

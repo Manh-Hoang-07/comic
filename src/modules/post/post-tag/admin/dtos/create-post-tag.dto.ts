@@ -30,4 +30,3 @@ export class CreatePostTagDto {
   @IsString()
   canonical_url?: string;
 }
-

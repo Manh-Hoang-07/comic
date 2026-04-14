@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
-import { IPostRepository, POST_REPOSITORY, PostFilter } from '@/modules/post/post/domain/post.repository';
+import {
+  IPostRepository,
+  POST_REPOSITORY,
+  PostFilter,
+} from '@/modules/post/post/domain/post.repository';
 import { GetPostsDto } from '../dtos/get-posts.dto';
 import { BaseContentService } from '@/common/core/services';
 
@@ -19,8 +23,8 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
   protected override async prepareOptions(options: any): Promise<any> {
     const prepared = await super.prepareOptions(options);
 
-        // Nếu request chưa có select/include cụ thể, áp dụng default select
-        if (!prepared.select && !prepared.include) {
+    // Nếu request chưa có select/include cụ thể, áp dụng default select
+    if (!prepared.select && !prepared.include) {
       prepared.select = {
         id: true,
         name: true,
@@ -40,7 +44,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
             name: true,
             slug: true,
             status: true,
-          }
+          },
         },
         categories: {
           select: {
@@ -50,9 +54,9 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
                 name: true,
                 slug: true,
                 status: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         tags: {
           select: {
@@ -61,10 +65,10 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
                 id: true,
                 name: true,
                 slug: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       };
     }
 
@@ -101,8 +105,6 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
 
     return { ...normalized, status: 'published' };
   }
-
-
 
   async getOneBySlug(slug: string) {
     const post = await this.postRepo.findPublishedBySlug(slug);
@@ -141,7 +143,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
       p.categories = (p.categories as any[])
         .map((link) => link?.category)
         .filter(Boolean)
-        .filter(cat => cat.status === 'active') // Ensure only active categories
+        .filter((cat) => cat.status === 'active') // Ensure only active categories
         .map((cat: any) => {
           const { id, name, slug, description } = cat;
           return { id, name, slug, description };
@@ -160,7 +162,3 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     return p;
   }
 }
-
-
-
-

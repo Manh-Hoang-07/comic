@@ -7,7 +7,7 @@ import { IProfileRepository } from '../../domain/profile.repository';
 
 @Injectable()
 export class ProfileRepositoryImpl implements IProfileRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async upsertByUserId(userId: PrimaryKey, data: any): Promise<Profile> {
     const pk = toPrimaryKey(userId);

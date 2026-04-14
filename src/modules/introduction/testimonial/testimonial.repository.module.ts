@@ -4,12 +4,12 @@ import { TestimonialRepositoryImpl } from './infrastructure/repositories/testimo
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: TESTIMONIAL_REPOSITORY,
-            useClass: TestimonialRepositoryImpl,
-        },
-    ],
-    exports: [TESTIMONIAL_REPOSITORY],
+  providers: [
+    {
+      provide: TESTIMONIAL_REPOSITORY,
+      useClass: TestimonialRepositoryImpl,
+    },
+  ],
+  exports: [TESTIMONIAL_REPOSITORY],
 })
-export class TestimonialRepositoryModule { }
+export class TestimonialRepositoryModule {}

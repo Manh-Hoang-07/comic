@@ -5,12 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { MenuRepositoryModule } from '../menu.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    MenuRepositoryModule,
-  ],
+  imports: [RbacModule, MenuRepositoryModule],
   controllers: [AdminMenuController],
   providers: [MenuService],
   exports: [MenuService, RbacModule, MenuRepositoryModule],
 })
-export class AdminMenuModule { }
+export class AdminMenuModule {}

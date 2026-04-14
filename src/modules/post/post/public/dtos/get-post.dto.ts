@@ -4,4 +4,3 @@ export class GetPostDto {
   @IsString()
   slug: string;
 }
-

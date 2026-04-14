@@ -4,12 +4,12 @@ import { PartnerRepositoryImpl } from './infrastructure/repositories/partner.rep
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: PARTNER_REPOSITORY,
-            useClass: PartnerRepositoryImpl,
-        },
-    ],
-    exports: [PARTNER_REPOSITORY],
+  providers: [
+    {
+      provide: PARTNER_REPOSITORY,
+      useClass: PartnerRepositoryImpl,
+    },
+  ],
+  exports: [PARTNER_REPOSITORY],
 })
-export class PartnerRepositoryModule { }
+export class PartnerRepositoryModule {}

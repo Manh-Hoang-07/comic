@@ -37,7 +37,10 @@ export class RedisThrottlerStorageService implements ThrottlerStorage {
       const now = Math.floor(Date.now() / 1000);
 
       // MGET: một round-trip thay vì hai GET tuần tự (quan trọng khi Redis xa vùng)
-      const [blockData, currentData] = await this.redis.mget(blockKey, redisKey);
+      const [blockData, currentData] = await this.redis.mget(
+        blockKey,
+        redisKey,
+      );
 
       if (blockData) {
         const blockUntil = parseInt(blockData, 10);
@@ -54,7 +57,7 @@ export class RedisThrottlerStorageService implements ThrottlerStorage {
 
       // current count đã có từ MGET ở trên
       let totalHits = 0;
-      
+
       if (currentData) {
         totalHits = parseInt(currentData, 10);
       }
@@ -63,8 +66,12 @@ export class RedisThrottlerStorageService implements ThrottlerStorage {
       if (totalHits >= limit) {
         // Already at limit, block immediately
         const blockUntil = now + Math.floor(blockDuration / 1000);
-        await this.redis.set(blockKey, blockUntil.toString(), Math.ceil(blockDuration / 1000));
-        
+        await this.redis.set(
+          blockKey,
+          blockUntil.toString(),
+          Math.ceil(blockDuration / 1000),
+        );
+
         return {
           totalHits: limit,
           timeToExpire: 0,
@@ -97,4 +104,3 @@ export class RedisThrottlerStorageService implements ThrottlerStorage {
     }
   }
 }
-

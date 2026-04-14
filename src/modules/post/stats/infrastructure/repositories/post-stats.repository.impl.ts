@@ -2,16 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { PostStats, Prisma } from '@prisma/client';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { PrismaRepository } from '@/common/core/repositories';
-import { IPostStatsRepository, PostStatsFilter } from '../../domain/post-stats.repository';
+import {
+  IPostStatsRepository,
+  PostStatsFilter,
+} from '../../domain/post-stats.repository';
 
 @Injectable()
-export class PostStatsRepositoryImpl extends PrismaRepository<
-  PostStats,
-  Prisma.PostStatsWhereInput,
-  Prisma.PostStatsCreateInput,
-  Prisma.PostStatsUpdateInput,
-  Prisma.PostStatsOrderByWithRelationInput
-> implements IPostStatsRepository {
+export class PostStatsRepositoryImpl
+  extends PrismaRepository<
+    PostStats,
+    Prisma.PostStatsWhereInput,
+    Prisma.PostStatsCreateInput,
+    Prisma.PostStatsUpdateInput,
+    Prisma.PostStatsOrderByWithRelationInput
+  >
+  implements IPostStatsRepository
+{
   constructor(private readonly prisma: PrismaService) {
     super((prisma as any).postStats as any);
     this.isSoftDelete = false;
@@ -28,7 +34,10 @@ export class PostStatsRepositoryImpl extends PrismaRepository<
     return where;
   }
 
-  async sum(field: keyof PostStats, filter: PostStatsFilter = {}): Promise<number> {
+  async sum(
+    field: keyof PostStats,
+    filter: PostStatsFilter = {},
+  ): Promise<number> {
     const where = this.buildWhere(filter);
     const result = await (this.prisma as any).postStats.aggregate({
       where,
@@ -41,7 +50,9 @@ export class PostStatsRepositoryImpl extends PrismaRepository<
 
   async incrementViews(postId: any, count: number): Promise<void> {
     const pk = this.toPrimaryKey(postId);
-    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+    const today = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }),
+    );
     today.setHours(0, 0, 0, 0);
 
     await (this.prisma as any).postStats.upsert({
@@ -73,7 +84,11 @@ export class PostStatsRepositoryImpl extends PrismaRepository<
     });
   }
 
-  async getDailyViewStats(postId: any, startDate: Date, endDate: Date): Promise<any[]> {
+  async getDailyViewStats(
+    postId: any,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<any[]> {
     const pk = this.toPrimaryKey(postId);
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -98,4 +113,3 @@ export class PostStatsRepositoryImpl extends PrismaRepository<
     });
   }
 }
-

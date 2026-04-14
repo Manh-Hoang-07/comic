@@ -13,7 +13,10 @@ export class UpdateProfileDto {
   @IsString()
   image?: string;
 
-  @ApiPropertyOptional({ description: 'Ngày sinh (YYYY-MM-DD)', example: '1990-01-01' })
+  @ApiPropertyOptional({
+    description: 'Ngày sinh (YYYY-MM-DD)',
+    example: '1990-01-01',
+  })
   @IsOptional()
   @IsString()
   birthday?: string;

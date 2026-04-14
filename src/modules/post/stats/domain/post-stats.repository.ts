@@ -11,6 +11,9 @@ export interface PostStatsFilter {
 export interface IPostStatsRepository extends IRepository<PostStats> {
   sum(field: keyof PostStats, filter?: PostStatsFilter): Promise<number>;
   incrementViews(postId: any, count: number): Promise<void>;
-  getDailyViewStats(postId: any, startDate: Date, endDate: Date): Promise<any[]>;
+  getDailyViewStats(
+    postId: any,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<any[]>;
 }
-

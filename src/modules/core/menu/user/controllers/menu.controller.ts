@@ -9,7 +9,7 @@ export class UserMenuController {
   constructor(
     private readonly service: MenuService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   @Permission('user')
   @Get()
@@ -21,4 +21,3 @@ export class UserMenuController {
     });
   }
 }
-

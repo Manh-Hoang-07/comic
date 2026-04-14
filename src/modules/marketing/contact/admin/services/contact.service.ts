@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Contact } from '@prisma/client';
-import { IContactRepository, CONTACT_REPOSITORY } from '@/modules/marketing/contact/domain/contact.repository';
+import {
+  IContactRepository,
+  CONTACT_REPOSITORY,
+} from '@/modules/marketing/contact/domain/contact.repository';
 import { ContactStatus } from '@/shared/enums/types/contact-status.enum';
 import { BaseService } from '@/common/core/services';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
@@ -48,7 +51,4 @@ export class ContactService extends BaseService<Contact, IContactRepository> {
   }
 
   // ── Transformation ─────────────────────────────────────────────────────────
-
 }
-
-

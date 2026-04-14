@@ -4,12 +4,12 @@ import { FaqRepositoryImpl } from './infrastructure/repositories/faq.repository.
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: FAQ_REPOSITORY,
-            useClass: FaqRepositoryImpl,
-        },
-    ],
-    exports: [FAQ_REPOSITORY],
+  providers: [
+    {
+      provide: FAQ_REPOSITORY,
+      useClass: FaqRepositoryImpl,
+    },
+  ],
+  exports: [FAQ_REPOSITORY],
 })
-export class FaqRepositoryModule { }
+export class FaqRepositoryModule {}

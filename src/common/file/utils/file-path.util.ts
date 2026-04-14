@@ -8,7 +8,10 @@
  * @param baseUrl - Base URL của project (ví dụ: https://example.com)
  * @returns URL đầy đủ hoặc path gốc nếu không cần thêm domain
  */
-export function addDomainToPath(path: string | null | undefined, baseUrl: string): string | null | undefined {
+export function addDomainToPath(
+  path: string | null | undefined,
+  baseUrl: string,
+): string | null | undefined {
   if (!path || !baseUrl) {
     return path;
   }
@@ -41,7 +44,18 @@ export function addDomainToPath(path: string | null | undefined, baseUrl: string
 export function transformFilePaths(
   obj: any,
   baseUrl: string,
-  pathFields: string[] = ['image', 'mobile_image', 'avatar', 'photo', 'url', 'path', 'thumbnail', 'cover', 'logo', 'icon']
+  pathFields: string[] = [
+    'image',
+    'mobile_image',
+    'avatar',
+    'photo',
+    'url',
+    'path',
+    'thumbnail',
+    'cover',
+    'logo',
+    'icon',
+  ],
 ): any {
   if (!obj || !baseUrl) {
     return obj;
@@ -58,7 +72,7 @@ export function transformFilePaths(
 
   // Nếu là array, transform từng phần tử
   if (Array.isArray(obj)) {
-    return obj.map(item => transformFilePaths(item, baseUrl, pathFields));
+    return obj.map((item) => transformFilePaths(item, baseUrl, pathFields));
   }
 
   // Nếu không phải object hoặc là null thì giữ nguyên
@@ -67,7 +81,10 @@ export function transformFilePaths(
   }
 
   // Nếu là Date hoặc các class đặc biệt (ví dụ Prisma Decimal), giữ nguyên để tránh biến thành {}
-  if (Object.prototype.toString.call(obj) === '[object Date]' || (obj.constructor && obj.constructor.name !== 'Object')) {
+  if (
+    Object.prototype.toString.call(obj) === '[object Date]' ||
+    (obj.constructor && obj.constructor.name !== 'Object')
+  ) {
     return obj;
   }
 
@@ -99,7 +116,10 @@ export function transformFilePaths(
       }
     } else {
       // Not a path field, but assume if it looks like a path we process it
-      if (typeof value === 'string' && (value.startsWith('/uploads') || value.startsWith('/storage'))) {
+      if (
+        typeof value === 'string' &&
+        (value.startsWith('/uploads') || value.startsWith('/storage'))
+      ) {
         transformed[key] = addDomainToPath(value, baseUrl);
       } else {
         // Recursively transform nested objects/arrays
@@ -110,4 +130,3 @@ export function transformFilePaths(
 
   return transformed;
 }
-

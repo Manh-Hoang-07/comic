@@ -1,12 +1,22 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { ITestimonialRepository, TESTIMONIAL_REPOSITORY, TestimonialFilter } from '@/modules/introduction/testimonial/domain/testimonial.repository';
-import { IProjectRepository, PROJECT_REPOSITORY } from '@/modules/introduction/project/domain/project.repository';
+import {
+  ITestimonialRepository,
+  TESTIMONIAL_REPOSITORY,
+  TestimonialFilter,
+} from '@/modules/introduction/testimonial/domain/testimonial.repository';
+import {
+  IProjectRepository,
+  PROJECT_REPOSITORY,
+} from '@/modules/introduction/project/domain/project.repository';
 import { BaseService } from '@/common/core/services';
 import { Testimonial } from '@prisma/client';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
-export class TestimonialService extends BaseService<Testimonial, ITestimonialRepository> {
+export class TestimonialService extends BaseService<
+  Testimonial,
+  ITestimonialRepository
+> {
   constructor(
     @Inject(TESTIMONIAL_REPOSITORY)
     private readonly testimonialRepo: ITestimonialRepository,
@@ -15,7 +25,6 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
   ) {
     super(testimonialRepo);
   }
-
 
   async getSimpleList(query: any) {
     return this.getList({
@@ -27,7 +36,10 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
   protected async beforeCreate(data: any) {
     if (data.project_id) {
       const project = await this.projectRepo.findById(data.project_id);
-      if (!project) throw new NotFoundException(`Project with ID ${data.project_id} not found`);
+      if (!project)
+        throw new NotFoundException(
+          `Project with ID ${data.project_id} not found`,
+        );
     }
     return data;
   }
@@ -35,7 +47,10 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
   protected async beforeUpdate(id: any, data: any) {
     if (data.project_id) {
       const project = await this.projectRepo.findById(data.project_id);
-      if (!project) throw new NotFoundException(`Project with ID ${data.project_id} not found`);
+      if (!project)
+        throw new NotFoundException(
+          `Project with ID ${data.project_id} not found`,
+        );
     }
     return data;
   }
@@ -57,8 +72,3 @@ export class TestimonialService extends BaseService<Testimonial, ITestimonialRep
     return item;
   }
 }
-
-
-
-
-

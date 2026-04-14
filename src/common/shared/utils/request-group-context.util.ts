@@ -3,7 +3,9 @@ import { RequestContext } from '@/common/shared/utils/request-context.util';
 
 /** Request đang ở context system (super admin). */
 export function isSysCtx(): boolean {
-  return RequestContext.get<{ type?: string } | null>('context')?.type === 'system';
+  return (
+    RequestContext.get<{ type?: string } | null>('context')?.type === 'system'
+  );
 }
 
 /** `groupId` gắn với request (header / middleware). */

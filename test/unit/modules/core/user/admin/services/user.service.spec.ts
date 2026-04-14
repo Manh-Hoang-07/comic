@@ -65,7 +65,9 @@ describe('UserService (admin)', () => {
   describe('prepareFilters', () => {
     it('delegates to UserRoleScopeService.mergeListFilter', async () => {
       const scope = moduleRef.get(UserRoleScopeService);
-      const spy = jest.spyOn(scope, 'mergeListFilter').mockReturnValue({ merged: true } as any);
+      const spy = jest
+        .spyOn(scope, 'mergeListFilter')
+        .mockReturnValue({ merged: true } as any);
 
       const out = await (service as any).prepareFilters({ search: 'x' });
 
@@ -76,7 +78,11 @@ describe('UserService (admin)', () => {
 
   describe('transform', () => {
     it('removes password from entity', () => {
-      const row = (service as any).transform({ id: 1, email: 'a@b.com', password: 'x' });
+      const row = (service as any).transform({
+        id: 1,
+        email: 'a@b.com',
+        password: 'x',
+      });
       expect(row).toEqual({ id: 1, email: 'a@b.com' });
     });
   });
@@ -147,7 +153,11 @@ describe('UserService (admin)', () => {
 
   describe('getOne', () => {
     it('asserts access then loads user via repository', async () => {
-      userRepo.findById.mockResolvedValue({ id: 1, email: 'a@b.com', password: 'x' });
+      userRepo.findById.mockResolvedValue({
+        id: 1,
+        email: 'a@b.com',
+        password: 'x',
+      });
 
       const row = await service.getOne(1);
 

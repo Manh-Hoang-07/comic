@@ -3,12 +3,12 @@ import { COMMENT_REPOSITORY } from './domain/comment.repository';
 import { CommentRepositoryImpl } from './infrastructure/repositories/comment.repository.impl';
 
 @Module({
-    providers: [
-        {
-            provide: COMMENT_REPOSITORY,
-            useClass: CommentRepositoryImpl,
-        },
-    ],
-    exports: [COMMENT_REPOSITORY],
+  providers: [
+    {
+      provide: COMMENT_REPOSITORY,
+      useClass: CommentRepositoryImpl,
+    },
+  ],
+  exports: [COMMENT_REPOSITORY],
 })
-export class CommentRepositoryModule { }
+export class CommentRepositoryModule {}

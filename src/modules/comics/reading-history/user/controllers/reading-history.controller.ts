@@ -5,7 +5,6 @@ import {
   Delete,
   Body,
   Param,
-  
   ValidationPipe,
 } from '@nestjs/common';
 import { ReadingHistoryService } from '../services/reading-history.service';
@@ -13,7 +12,7 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('user/reading-history')
 export class ReadingHistoryController {
-  constructor(private readonly readingHistoryService: ReadingHistoryService) { }
+  constructor(private readonly readingHistoryService: ReadingHistoryService) {}
 
   @Permission('user')
   @Get()
@@ -23,8 +22,13 @@ export class ReadingHistoryController {
 
   @Permission('user')
   @Post()
-  async updateOrCreate(@Body(ValidationPipe) body: { comic_id: any; chapter_id: any }) {
-    return this.readingHistoryService.updateOrCreate(body.comic_id, body.chapter_id);
+  async updateOrCreate(
+    @Body(ValidationPipe) body: { comic_id: any; chapter_id: any },
+  ) {
+    return this.readingHistoryService.updateOrCreate(
+      body.comic_id,
+      body.chapter_id,
+    );
   }
 
   @Permission('user')
@@ -33,7 +37,3 @@ export class ReadingHistoryController {
     return this.readingHistoryService.clearHistory(comicId);
   }
 }
-
-
-
-

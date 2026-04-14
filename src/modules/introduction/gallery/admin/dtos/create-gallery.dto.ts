@@ -51,4 +51,3 @@ export class CreateGalleryDto {
   @Type(() => Number)
   sort_order?: number = 0;
 }
-

@@ -85,12 +85,12 @@ export class DateUtil {
     }).formatToParts(date);
 
     const map: Record<string, string> = {
-      Y: parts.find(p => p.type === 'year')?.value || '0000',
-      m: parts.find(p => p.type === 'month')?.value || '00',
-      d: parts.find(p => p.type === 'day')?.value || '00',
-      H: timeParts.find(p => p.type === 'hour')?.value || '00',
-      i: timeParts.find(p => p.type === 'minute')?.value || '00',
-      s: timeParts.find(p => p.type === 'second')?.value || '00',
+      Y: parts.find((p) => p.type === 'year')?.value || '0000',
+      m: parts.find((p) => p.type === 'month')?.value || '00',
+      d: parts.find((p) => p.type === 'day')?.value || '00',
+      H: timeParts.find((p) => p.type === 'hour')?.value || '00',
+      i: timeParts.find((p) => p.type === 'minute')?.value || '00',
+      s: timeParts.find((p) => p.type === 'second')?.value || '00',
     };
 
     return pattern.replace(/Y|m|d|H|i|s/g, (token) => map[token]);

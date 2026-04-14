@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators';
+import {
+  PERMS_REQUIRED_KEY,
+  PUBLIC_PERMISSION,
+} from '@/common/auth/decorators';
 import { ResponseUtil, RequestContext } from '@/common/shared/utils';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
@@ -43,10 +46,11 @@ export class SecurityGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    const permissions = this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]) || [];
+    const permissions =
+      this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) || [];
 
     // 2. Handle Public Routes
     if (isPublic || permissions.includes(PUBLIC_PERMISSION)) {
@@ -59,15 +63,22 @@ export class SecurityGuard extends AuthGuard('jwt') {
     }
 
     // 3. Handle Protected Routes
-    const isUserOnly = permissions.some((p) => [RbacPermission.USER, 'user'].includes(p as any));
-    
+    const isUserOnly = permissions.some((p) =>
+      [RbacPermission.USER, 'user'].includes(p as any),
+    );
+
     // Parallelize all checks to minimize latency
     const authPromise = this.handlePassportAuth(context);
-    const blacklistPromise = token && this.tokenBlacklist ? this.tokenBlacklist.has(token) : Promise.resolve(false);
-    
+    const blacklistPromise =
+      token && this.tokenBlacklist
+        ? this.tokenBlacklist.has(token)
+        : Promise.resolve(false);
+
     // Only run RBAC logic if permissions beyond 'user' are required
     const needsRbac = permissions.length > 0 && !isUserOnly;
-    const groupPromise = needsRbac ? this.rbacAuthz.resolveActiveGroupScopeForRbac() : Promise.resolve(null);
+    const groupPromise = needsRbac
+      ? this.rbacAuthz.resolveActiveGroupScopeForRbac()
+      : Promise.resolve(null);
     const preparePromise = needsRbac ? this.rbac.prepare() : Promise.resolve();
 
     const [isAuthOk, isBlocked, groupId] = await Promise.all([
@@ -81,22 +92,35 @@ export class SecurityGuard extends AuthGuard('jwt') {
 
     // 4. Validate Results
     if (!isAuthOk) {
-       throw new HttpException(ResponseUtil.unauthorized('Auth required'), 401);
+      throw new HttpException(ResponseUtil.unauthorized('Auth required'), 401);
     }
 
     if (isBlocked) {
       this.clearAuth(request);
-      throw new HttpException(ResponseUtil.unauthorized('Token is blacklisted'), 401);
+      throw new HttpException(
+        ResponseUtil.unauthorized('Token is blacklisted'),
+        401,
+      );
     }
 
     // 5. Final RBAC Check
     if (needsRbac) {
       const userId = Auth.id(context) || request.user?.id;
-      if (!userId) throw new HttpException(ResponseUtil.unauthorized('User identity lost'), 401);
+      if (!userId)
+        throw new HttpException(
+          ResponseUtil.unauthorized('User identity lost'),
+          401,
+        );
 
-      const hasPerms = await this.rbac.hasPermissions(userId, groupId, permissions);
+      const hasPerms = await this.rbac.hasPermissions(
+        userId,
+        groupId,
+        permissions,
+      );
       if (!hasPerms) {
-        const res = ResponseUtil.forbidden(`Access denied. Need: ${permissions.join(',')}`);
+        const res = ResponseUtil.forbidden(
+          `Access denied. Need: ${permissions.join(',')}`,
+        );
         throw new HttpException(res, res.httpStatus || 403);
       }
       tracker?.addCheckpoint('security_rbac_check_end');
@@ -130,11 +154,14 @@ export class SecurityGuard extends AuthGuard('jwt') {
   /**
    * Run Passport JWT strategy
    */
-  private async handlePassportAuth(context: ExecutionContext): Promise<boolean> {
+  private async handlePassportAuth(
+    context: ExecutionContext,
+  ): Promise<boolean> {
     try {
       const result = super.canActivate(context);
       if (result instanceof Promise) return await result;
-      if (typeof (result as any)?.toPromise === 'function') return await (result as any).toPromise();
+      if (typeof (result as any)?.toPromise === 'function')
+        return await (result as any).toPromise();
       return result as boolean;
     } catch (err) {
       return false;

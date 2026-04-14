@@ -5,15 +5,9 @@ import { ComicRepositoryModule } from '../../comic/comic.repository.module';
 import { StatsRepositoryModule } from '../stats.repository.module';
 
 @Module({
-  imports: [
-    ComicRepositoryModule,
-    StatsRepositoryModule,
-  ],
+  imports: [ComicRepositoryModule, StatsRepositoryModule],
   controllers: [StatsController],
   providers: [StatsService],
   exports: [StatsService],
 })
-export class PublicStatsModule { }
-
-
-
+export class PublicStatsModule {}

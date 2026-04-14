@@ -1,6 +1,12 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IComicRepository, COMIC_REPOSITORY } from '../../../comic/domain/comic.repository';
-import { IComicStatsRepository, COMIC_STATS_REPOSITORY } from '../../domain/comic-stats.repository';
+import {
+  IComicRepository,
+  COMIC_REPOSITORY,
+} from '../../../comic/domain/comic.repository';
+import {
+  IComicStatsRepository,
+  COMIC_STATS_REPOSITORY,
+} from '../../domain/comic-stats.repository';
 
 @Injectable()
 export class StatsService {
@@ -9,7 +15,7 @@ export class StatsService {
     private readonly comicRepository: IComicRepository,
     @Inject(COMIC_STATS_REPOSITORY)
     private readonly statsRepository: IComicStatsRepository,
-  ) { }
+  ) {}
 
   /**
    * Lấy stats của comic
@@ -27,11 +33,12 @@ export class StatsService {
       view_count: Number(stats?.view_count || 0n),
       follow_count: Number(stats?.follow_count || 0n),
       rating_count: Number(stats?.rating_count || 0n),
-      rating_average: stats && Number(stats.rating_count || 0n) > 0
-        ? (Number(stats.rating_sum || 0n) / Number(stats.rating_count)).toFixed(2)
-        : '0',
+      rating_average:
+        stats && Number(stats.rating_count || 0n) > 0
+          ? (
+              Number(stats.rating_sum || 0n) / Number(stats.rating_count)
+            ).toFixed(2)
+          : '0',
     };
   }
 }
-
-

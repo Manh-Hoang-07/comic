@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
 } from '@nestjs/common';
 import { PostCategoryService } from '@/modules/post/post-category/admin/services/post-category.service';
@@ -19,7 +18,7 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('admin/post-categories')
 export class PostCategoryController {
-  constructor(private readonly postCategoryService: PostCategoryService) { }
+  constructor(private readonly postCategoryService: PostCategoryService) {}
 
   @Permission('post_category.manage')
   @Get()
@@ -63,6 +62,3 @@ export class PostCategoryController {
     return this.postCategoryService.delete(id);
   }
 }
-
-
-

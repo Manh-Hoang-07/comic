@@ -17,13 +17,15 @@ import {
 } from '@/common/http/interceptors';
 import { FilePathInterceptor } from '@/common/file/interceptors';
 import { JwtAuthGuard, RbacGuard, SecurityGuard } from '@/common/auth/guards';
-import { RequestContextMiddleware, GroupContextMiddleware } from '@/common/http/middlewares';
+import {
+  RequestContextMiddleware,
+  GroupContextMiddleware,
+} from '@/common/http/middlewares';
 import { RateLimitModule } from '@/core/security/throttler.module';
 
 // Business Logic Aggregate Modules
 import { CoreModulesModule } from '@/modules/core/core.module';
 import { IntroductionModule } from '@/modules/introduction/introduction.module';
-
 
 // Other Domain Modules
 import { PostModule } from '@/modules/post/post.module';
@@ -45,7 +47,6 @@ import { ComicsModule } from '@/modules/comics/comic.module';
     // Business Logic Modules
     CoreModulesModule,
     IntroductionModule,
-
 
     // Remaining Independent Modules
     PostModule,
@@ -71,6 +72,8 @@ import { ComicsModule } from '@/modules/comics/comic.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestContextMiddleware, GroupContextMiddleware).forRoutes('*');
+    consumer
+      .apply(RequestContextMiddleware, GroupContextMiddleware)
+      .forRoutes('*');
   }
 }

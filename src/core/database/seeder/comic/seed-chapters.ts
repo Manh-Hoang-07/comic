@@ -6,27 +6,44 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedChapters {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
     const existingChapters = await this.prisma.chapter.count();
     if (existingChapters > 0) return;
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'comic');
-    const config: any = JSON.parse(fs.readFileSync(path.join(baseDir, 'comic-config.json'), 'utf8'));
-    const cmangaData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'cmanga.json'), 'utf8'));
-    const nettruyenData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'nettruyen.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'comic',
+    );
+    const config: any = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'comic-config.json'), 'utf8'),
+    );
+    const cmangaData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'cmanga.json'), 'utf8'),
+    );
+    const nettruyenData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'nettruyen.json'), 'utf8'),
+    );
 
     // Merge nettruyen + cmanga data that have chapter images
     const allDetailedData = [...nettruyenData, ...cmangaData];
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'admin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'admin' },
+    });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);
 
     const comics = await this.prisma.comic.findMany();
     if (comics.length === 0) return;
 
-    const systemGroup = await this.prisma.group.findFirst({ where: { code: 'system' } });
+    const systemGroup = await this.prisma.group.findFirst({
+      where: { code: 'system' },
+    });
     const groupId = systemGroup ? systemGroup.id : null;
 
     const popularComics: string[] = config.popular_comics;
@@ -36,7 +53,7 @@ export class SeedChapters {
     const chapterTitles: Record<string, string[]> = config.chapter_titles;
 
     for (const comic of comics) {
-      const detailedComic = allDetailedData.find(c => c.slug === comic.slug);
+      const detailedComic = allDetailedData.find((c) => c.slug === comic.slug);
 
       if (detailedComic && detailedComic.chapters) {
         for (const chap of detailedComic.chapters) {
@@ -70,7 +87,8 @@ export class SeedChapters {
           : Math.floor(Math.random() * (defMax - defMin + 1)) + defMin;
 
         for (let i = 1; i <= chaptersCount; i++) {
-          const pagesCount = Math.floor(Math.random() * (pageMax - pageMin + 1)) + pageMin;
+          const pagesCount =
+            Math.floor(Math.random() * (pageMax - pageMin + 1)) + pageMin;
           const pages = Array.from({ length: pagesCount }, (_, idx) => ({
             page_number: idx + 1,
             image_url: `https://via.placeholder.com/800x1200?text=${comic.title}+Ch${i}+Pg${idx + 1}`,
@@ -80,9 +98,10 @@ export class SeedChapters {
           }));
 
           const titlesForComic = chapterTitles[comic.slug];
-          const title = titlesForComic && i <= titlesForComic.length
-            ? titlesForComic[i - 1]
-            : `Chapter ${i}`;
+          const title =
+            titlesForComic && i <= titlesForComic.length
+              ? titlesForComic[i - 1]
+              : `Chapter ${i}`;
 
           await this.prisma.chapter.create({
             data: {
@@ -108,4 +127,3 @@ export class SeedChapters {
     await this.prisma.chapter.deleteMany({});
   }
 }
-

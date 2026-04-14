@@ -21,12 +21,12 @@ export class HomepageService {
 
   // Cache TTL theo từng block (giây)
   private readonly CACHE_TTL = {
-    PROJECTS: 600,        // 10 phút - Dự án thay đổi không thường xuyên
+    PROJECTS: 600, // 10 phút - Dự án thay đổi không thường xuyên
     ABOUT_SECTIONS: 3600, // 1 giờ - Giới thiệu ít thay đổi
-    STAFF: 1800,          // 30 phút - Nhân viên có thể thay đổi
-    PARTNERS: 3600,       // 1 giờ - Đối tác ít thay đổi
-    CERTIFICATES: 3600,   // 1 giờ - Chứng chỉ ít thay đổi
-    FAQS: 1200,           // 20 phút - FAQs
+    STAFF: 1800, // 30 phút - Nhân viên có thể thay đổi
+    PARTNERS: 3600, // 1 giờ - Đối tác ít thay đổi
+    CERTIFICATES: 3600, // 1 giờ - Chứng chỉ ít thay đổi
+    FAQS: 1200, // 20 phút - FAQs
   };
 
   constructor(
@@ -37,7 +37,7 @@ export class HomepageService {
     private readonly partnerService: PublicPartnerService,
     private readonly certificateService: PublicCertificateService,
     private readonly faqService: PublicFaqService,
-  ) { }
+  ) {}
 
   /**
    * Lấy tất cả dữ liệu cần thiết cho trang chủ
@@ -67,7 +67,10 @@ export class HomepageService {
       this.cacheService.getOrSet(
         this.CACHE_KEYS.ABOUT_SECTIONS,
         async () => {
-          const result = await this.aboutService.getList({ limit: 20, page: 1 });
+          const result = await this.aboutService.getList({
+            limit: 20,
+            page: 1,
+          });
           return result?.data || [];
         },
         this.CACHE_TTL.ABOUT_SECTIONS,
@@ -77,7 +80,10 @@ export class HomepageService {
       this.cacheService.getOrSet(
         this.CACHE_KEYS.STAFF,
         async () => {
-          const result = await this.staffService.getList({ limit: 20, page: 1 });
+          const result = await this.staffService.getList({
+            limit: 20,
+            page: 1,
+          });
           return result?.data || [];
         },
         this.CACHE_TTL.STAFF,
@@ -87,7 +93,10 @@ export class HomepageService {
       this.cacheService.getOrSet(
         this.CACHE_KEYS.PARTNERS,
         async () => {
-          const result = await this.partnerService.getList({ limit: 20, page: 1 });
+          const result = await this.partnerService.getList({
+            limit: 20,
+            page: 1,
+          });
           return result?.data || [];
         },
         this.CACHE_TTL.PARTNERS,
@@ -97,7 +106,10 @@ export class HomepageService {
       this.cacheService.getOrSet(
         this.CACHE_KEYS.CERTIFICATES,
         async () => {
-          const result = await this.certificateService.getList({ limit: 20, page: 1 });
+          const result = await this.certificateService.getList({
+            limit: 20,
+            page: 1,
+          });
           return result?.data || [];
         },
         this.CACHE_TTL.CERTIFICATES,
@@ -141,9 +153,7 @@ export class HomepageService {
    */
   async clearAllCache(): Promise<void> {
     await Promise.all(
-      Object.values(this.CACHE_KEYS).map((key) =>
-        this.cacheService.del(key),
-      ),
+      Object.values(this.CACHE_KEYS).map((key) => this.cacheService.del(key)),
     );
   }
 
@@ -189,5 +199,3 @@ export class HomepageService {
     await this.cacheService.del(this.CACHE_KEYS.FAQS);
   }
 }
-
-

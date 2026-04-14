@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { UserGroupService } from '../services/group.service';
@@ -6,7 +15,7 @@ import { UserGroupService } from '../services/group.service';
 /**
  * Controller cho Owner/User quản lý Members trong Group
  * Routes: /api/groups/:id/members
- * 
+ *
  * Route không có "admin" vì đây là quản lý trong context của group,
  * không phải system admin. Permission check sẽ quyết định ai được phép.
  */
@@ -31,7 +40,12 @@ export class GroupMemberController {
       throw new ForbiddenException('Authentication required');
     }
 
-    await this.groupService.addMember(groupId, body.user_id, body.role_ids, userId);
+    await this.groupService.addMember(
+      groupId,
+      body.user_id,
+      body.role_ids,
+      userId,
+    );
     return { message: 'Member added successfully' };
   }
 
@@ -50,7 +64,12 @@ export class GroupMemberController {
       throw new ForbiddenException('Authentication required');
     }
 
-    await this.groupService.assignRolesToMember(groupId, memberId, body.role_ids, userId);
+    await this.groupService.assignRolesToMember(
+      groupId,
+      memberId,
+      body.role_ids,
+      userId,
+    );
     return { message: 'Roles assigned successfully' };
   }
 
@@ -81,6 +100,3 @@ export class GroupMemberController {
     return this.groupService.getGroupMembers(id);
   }
 }
-
-
-

@@ -4,12 +4,12 @@ import { NotificationRepositoryImpl } from './infrastructure/repositories/notifi
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: NOTIFICATION_REPOSITORY,
-            useClass: NotificationRepositoryImpl,
-        },
-    ],
-    exports: [NOTIFICATION_REPOSITORY],
+  providers: [
+    {
+      provide: NOTIFICATION_REPOSITORY,
+      useClass: NotificationRepositoryImpl,
+    },
+  ],
+  exports: [NOTIFICATION_REPOSITORY],
 })
-export class NotificationRepositoryModule { }
+export class NotificationRepositoryModule {}

@@ -1,6 +1,6 @@
 /**
  * DataLoader Utility - Giải quyết N+1 Query Problem
- * 
+ *
  * Batch và cache database queries để giảm số lượng queries
  * Thay vì query N lần cho N items, chỉ query 1 lần cho tất cả
  */
@@ -106,9 +106,7 @@ export class DataLoader<K, V> {
    */
   async loadMany(keys: K[]): Promise<(V | Error)[]> {
     return Promise.all(
-      keys.map((key) =>
-        this.load(key).catch((error) => error)
-      )
+      keys.map((key) => this.load(key).catch((error) => error)),
     );
   }
 
@@ -166,7 +164,7 @@ export class DataLoader<K, V> {
     }
 
     // Split into batches if needed
-    const batches: typeof queue[] = [];
+    const batches: (typeof queue)[] = [];
     for (let i = 0; i < queue.length; i += this.options.maxBatchSize) {
       batches.push(queue.slice(i, i + this.options.maxBatchSize));
     }
@@ -183,7 +181,7 @@ export class DataLoader<K, V> {
           if (results.length !== keys.length) {
             throw new Error(
               `DataLoader batch function must return array of same length as keys. ` +
-              `Expected ${keys.length}, got ${results.length}`
+                `Expected ${keys.length}, got ${results.length}`,
             );
           }
 
@@ -209,7 +207,7 @@ export class DataLoader<K, V> {
             this.cache.delete(cacheKey);
           });
         }
-      })
+      }),
     );
   }
 }
@@ -217,10 +215,7 @@ export class DataLoader<K, V> {
 /**
  * Helper function để group array by key
  */
-export function groupBy<T>(
-  array: T[],
-  keyFn: (item: T) => any
-): Map<any, T[]> {
+export function groupBy<T>(array: T[], keyFn: (item: T) => any): Map<any, T[]> {
   const map = new Map<any, T[]>();
 
   for (const item of array) {
@@ -242,7 +237,7 @@ export function groupBy<T>(
  */
 export function createLookupMap<T>(
   array: T[],
-  keyFn: (item: T) => any
+  keyFn: (item: T) => any,
 ): Map<any, T> {
   const map = new Map<any, T>();
 
@@ -253,19 +248,3 @@ export function createLookupMap<T>(
 
   return map;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

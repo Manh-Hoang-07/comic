@@ -11,4 +11,3 @@ export const ContactStatusLabels: Record<ContactStatus, string> = {
   [ContactStatus.Replied]: 'Đã trả lời',
   [ContactStatus.Closed]: 'Đã đóng',
 };
-

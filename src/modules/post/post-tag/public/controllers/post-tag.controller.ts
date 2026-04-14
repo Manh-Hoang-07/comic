@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Param,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, Query, Param, ValidationPipe } from '@nestjs/common';
 import { PostTagService } from '@/modules/post/post-tag/public/services/post-tag.service';
 import { GetTagsDto } from '@/modules/post/post-tag/public/dtos/get-tags.dto';
 import { GetTagDto } from '@/modules/post/post-tag/public/dtos/get-tag.dto';
@@ -13,7 +7,7 @@ import { prepareQuery } from '@/common/core/utils';
 
 @Controller('public/post-tags')
 export class PostTagController {
-  constructor(private readonly postTagService: PostTagService) { }
+  constructor(private readonly postTagService: PostTagService) {}
 
   @Permission('public')
   @Get()
@@ -27,5 +21,3 @@ export class PostTagController {
     return this.postTagService.findBySlug(dto.slug);
   }
 }
-
-

@@ -1,23 +1,20 @@
-
 import { Group } from '@prisma/client';
 import { IRepository } from '@/common/core/repositories';
 
 export const GROUP_REPOSITORY = 'IGroupRepository';
 
 export interface GroupFilter {
-    search?: string;
-    code?: string;
-    type?: string;
-    status?: string;
-    contextId?: any;
-    ownerId?: any;
-    ids?: any[];
+  search?: string;
+  code?: string;
+  type?: string;
+  status?: string;
+  contextId?: any;
+  ownerId?: any;
+  ids?: any[];
 }
 
 export interface IGroupRepository extends IRepository<Group> {
-    findByCode(code: string): Promise<Group | null>;
-    findActiveByIds(ids: any[]): Promise<Group[]>;
-    findByIdForContext(id: any): Promise<any | null>;
+  findByCode(code: string): Promise<Group | null>;
+  findActiveByIds(ids: any[]): Promise<Group[]>;
+  findByIdForContext(id: any): Promise<any | null>;
 }
-
-

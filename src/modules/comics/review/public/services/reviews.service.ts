@@ -1,13 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { toPlain } from '@/common/shared/utils';
-import { IReviewRepository, REVIEW_REPOSITORY } from '../../domain/review.repository';
+import {
+  IReviewRepository,
+  REVIEW_REPOSITORY,
+} from '../../domain/review.repository';
 
 @Injectable()
 export class PublicReviewsService {
   constructor(
     @Inject(REVIEW_REPOSITORY)
     private readonly reviewRepository: IReviewRepository,
-  ) { }
+  ) {}
 
   /**
    * Lấy danh sách reviews của comic
@@ -22,8 +25,8 @@ export class PublicReviewsService {
             name: true,
             username: true,
             image: true,
-          }
-        }
+          },
+        },
       },
       sort: 'created_at:DESC',
       page,
@@ -36,5 +39,3 @@ export class PublicReviewsService {
     };
   }
 }
-
-

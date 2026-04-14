@@ -5,11 +5,10 @@ import { Country } from '@prisma/client';
 
 @Injectable()
 export class CountryService extends BaseService<Country, ICountryRepository> {
-    constructor(
-        @Inject('ICountryRepository')
-        protected readonly repository: ICountryRepository,
-    ) {
-        super(repository);
-    }
+  constructor(
+    @Inject('ICountryRepository')
+    protected readonly repository: ICountryRepository,
+  ) {
+    super(repository);
+  }
 }
-

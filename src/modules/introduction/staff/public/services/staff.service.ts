@@ -1,5 +1,9 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IStaffRepository, STAFF_REPOSITORY, StaffFilter } from '@/modules/introduction/staff/domain/staff.repository';
+import {
+  IStaffRepository,
+  STAFF_REPOSITORY,
+  StaffFilter,
+} from '@/modules/introduction/staff/domain/staff.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { BaseService } from '@/common/core/services';
 import { Staff } from '@prisma/client';
@@ -15,7 +19,7 @@ export class PublicStaffService extends BaseService<Staff, IStaffRepository> {
 
   async getList(query: any) {
     const filter: StaffFilter = {
-      status: BasicStatus.active
+      status: BasicStatus.active,
     };
     if (query.search) filter.search = query.search;
     if (query.department) filter.department = query.department;
@@ -29,7 +33,11 @@ export class PublicStaffService extends BaseService<Staff, IStaffRepository> {
   }
 
   async findByDepartment(department: string) {
-    const result = await this.getList({ department, limit: 100, page: 1 } as any);
+    const result = await this.getList({
+      department,
+      limit: 100,
+      page: 1,
+    } as any);
     return result.data;
   }
 
@@ -41,8 +49,3 @@ export class PublicStaffService extends BaseService<Staff, IStaffRepository> {
     return staff;
   }
 }
-
-
-
-
-

@@ -4,9 +4,11 @@ import { PasswordService } from '@/modules/core/user/admin/services/password.ser
 import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 
 jest.mock('bcryptjs', () => ({
-  hash: jest.fn().mockImplementation((pwd: string, rounds: number) =>
-    Promise.resolve(`hashed:${pwd}:${rounds}`),
-  ),
+  hash: jest
+    .fn()
+    .mockImplementation((pwd: string, rounds: number) =>
+      Promise.resolve(`hashed:${pwd}:${rounds}`),
+    ),
 }));
 
 import * as bcrypt from 'bcryptjs';
@@ -22,7 +24,10 @@ describe('PasswordService (admin)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PasswordService, { provide: USER_REPOSITORY, useValue: userRepo }],
+      providers: [
+        PasswordService,
+        { provide: USER_REPOSITORY, useValue: userRepo },
+      ],
     }).compile();
 
     service = module.get(PasswordService);
@@ -41,16 +46,18 @@ describe('PasswordService (admin)', () => {
     it('throws when user not found', async () => {
       userRepo.findById.mockResolvedValue(null);
 
-      await expect(service.changePassword(1, { password: 'new' } as any)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.changePassword(1, { password: 'new' } as any),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(userRepo.update).not.toHaveBeenCalled();
     });
 
     it('hashes password and updates user', async () => {
       userRepo.findById.mockResolvedValue({ id: 1, email: 'a@b.com' });
 
-      const result = await service.changePassword(1, { password: 'newPass' } as any);
+      const result = await service.changePassword(1, {
+        password: 'newPass',
+      } as any);
 
       expect(userRepo.update).toHaveBeenCalledWith(1, {
         password: expect.stringContaining('hashed:newPass'),

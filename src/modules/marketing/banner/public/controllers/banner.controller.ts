@@ -4,18 +4,17 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('public/banners')
 export class PublicBannerController {
-    constructor(private readonly bannerService: PublicBannerService) { }
+  constructor(private readonly bannerService: PublicBannerService) {}
 
-    @Permission('public')
-    @Get()
-    findActiveBanners(@Query('locationCode') locationCode?: string) {
-        return this.bannerService.getList({ locationCode, status: 'active' });
-    }
+  @Permission('public')
+  @Get()
+  findActiveBanners(@Query('locationCode') locationCode?: string) {
+    return this.bannerService.getList({ locationCode, status: 'active' });
+  }
 
-    @Permission('public')
-    @Get(':id')
-    findBannerById(@Param('id') id: string) {
-        return this.bannerService.getOne(Number(id));
-    }
+  @Permission('public')
+  @Get(':id')
+  findBannerById(@Param('id') id: string) {
+    return this.bannerService.getOne(Number(id));
+  }
 }
-

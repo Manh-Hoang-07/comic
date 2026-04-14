@@ -11,4 +11,4 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
   providers: [PostService, PostActionService],
   exports: [PostService, PostActionService],
 })
-export class AdminPostModule { }
+export class AdminPostModule {}

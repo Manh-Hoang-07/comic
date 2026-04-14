@@ -1,11 +1,17 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { ComicFollow } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IFollowRepository, FOLLOW_REPOSITORY } from '../../domain/follow.repository';
+import {
+  IFollowRepository,
+  FOLLOW_REPOSITORY,
+} from '../../domain/follow.repository';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
-export class FollowsService extends BaseService<ComicFollow, IFollowRepository> {
+export class FollowsService extends BaseService<
+  ComicFollow,
+  IFollowRepository
+> {
   constructor(
     @Inject(FOLLOW_REPOSITORY)
     protected readonly followRepository: IFollowRepository,
@@ -21,10 +27,16 @@ export class FollowsService extends BaseService<ComicFollow, IFollowRepository> 
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
-    const existing = await this.repository.findOne({ user_id: userId, comic_id: comicId });
+    const existing = await this.repository.findOne({
+      user_id: userId,
+      comic_id: comicId,
+    });
     if (existing) return this.transform(existing);
 
-    const saved = await this.repository.create({ user_id: userId, comic_id: comicId });
+    const saved = await this.repository.create({
+      user_id: userId,
+      comic_id: comicId,
+    });
     await this.followRepository.syncFollowCount(comicId);
 
     return this.transform(saved);
@@ -46,7 +58,4 @@ export class FollowsService extends BaseService<ComicFollow, IFollowRepository> 
 
     return this.repository.exists({ user_id: userId, comic_id: comicId });
   }
-
 }
-
-

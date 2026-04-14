@@ -1,4 +1,10 @@
-import { IsOptional, IsString, IsNumber, IsEnum, IsBoolean } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsBoolean,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 import { PostStatus } from '@/shared/enums';

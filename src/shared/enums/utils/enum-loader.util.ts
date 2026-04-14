@@ -15,7 +15,7 @@ export interface EnumMetadata {
  * Convention: Mỗi enum file phải export:
  * - {EnumName} (enum object từ Prisma)
  * - {EnumName}Labels (Record<EnumName, string>)
- * 
+ *
  * Ví dụ: basic-status.enum.ts
  * - Export: BasicStatus, BasicStatusLabels
  * - Key sẽ là: basic_status
@@ -34,23 +34,23 @@ export class EnumLoader {
 
     const enumMap = new Map<string, EnumMetadata>();
     const typesDir = path.join(__dirname, '../types');
-    
+
     // Đọc tất cả file .enum.ts trong thư mục types
-    const files = fs.readdirSync(typesDir).filter(
-      file => file.endsWith('.enum.ts') && !file.includes('.d.ts')
-    );
+    const files = fs
+      .readdirSync(typesDir)
+      .filter((file) => file.endsWith('.enum.ts') && !file.includes('.d.ts'));
 
     for (const file of files) {
       try {
         const filePath = path.join(typesDir, file);
         // Dynamic import
         const module = await import(filePath);
-        
+
         // Tìm enum và labels export
         // Convention: tên file basic-status.enum.ts -> BasicStatus, BasicStatusLabels
         const enumName = this.getEnumNameFromFile(file);
         const labelsName = `${enumName}Labels`;
-        
+
         const enumValue = module[enumName];
         const labels = module[labelsName];
 
@@ -81,7 +81,7 @@ export class EnumLoader {
     const baseName = fileName.replace('.enum.ts', '');
     return baseName
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join('');
   }
 
@@ -101,7 +101,7 @@ export class EnumLoader {
   static getEnumNameFromKey(key: string): string {
     return key
       .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join('');
   }
 
@@ -112,4 +112,3 @@ export class EnumLoader {
     this.enumCache = null;
   }
 }
-

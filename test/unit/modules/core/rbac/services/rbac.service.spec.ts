@@ -8,9 +8,18 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('RbacService', () => {
   let service: RbacService;
-  let rbacCache: jest.Mocked<Pick<RbacCacheService, 'getPermissions' | 'setPermissions'>>;
-  let permissionIndex: jest.Mocked<Pick<RbacPermissionIndexService, 'prepare' | 'hasAnyRequiredFromAssigned' | 'matchesAssigned'>>;
-  let roleAssignment: jest.Mocked<Pick<RbacRoleAssignmentService, 'getActiveRoleIds' | 'syncRolesInGroup'>>;
+  let rbacCache: jest.Mocked<
+    Pick<RbacCacheService, 'getPermissions' | 'setPermissions'>
+  >;
+  let permissionIndex: jest.Mocked<
+    Pick<
+      RbacPermissionIndexService,
+      'prepare' | 'hasAnyRequiredFromAssigned' | 'matchesAssigned'
+    >
+  >;
+  let roleAssignment: jest.Mocked<
+    Pick<RbacRoleAssignmentService, 'getActiveRoleIds' | 'syncRolesInGroup'>
+  >;
   let roleHasPermRepo: { findActivePermissionCodesByRoleIds: jest.Mock };
 
   beforeEach(async () => {
@@ -46,28 +55,46 @@ describe('RbacService', () => {
 
   describe('hasPermissions', () => {
     it('returns true when index grants any required permission', async () => {
-      rbacCache.getPermissions.mockResolvedValue({ codes: ['p1'], cached: true });
+      rbacCache.getPermissions.mockResolvedValue({
+        codes: ['p1'],
+        cached: true,
+      });
       permissionIndex.hasAnyRequiredFromAssigned.mockReturnValue(true);
 
       const result = await service.hasPermissions(1, 10, ['p1']);
 
       expect(permissionIndex.prepare).toHaveBeenCalled();
-      expect(permissionIndex.hasAnyRequiredFromAssigned).toHaveBeenCalledWith(expect.any(Set), ['p1']);
+      expect(permissionIndex.hasAnyRequiredFromAssigned).toHaveBeenCalledWith(
+        expect.any(Set),
+        ['p1'],
+      );
       expect(result).toBe(true);
     });
   });
 
   describe('refreshPermissions', () => {
     it('loads role ids, codes, caches and returns set', async () => {
-      rbacCache.getPermissions.mockResolvedValueOnce({ codes: [], cached: false });
+      rbacCache.getPermissions.mockResolvedValueOnce({
+        codes: [],
+        cached: false,
+      });
       roleAssignment.getActiveRoleIds.mockResolvedValue([100n]);
-      roleHasPermRepo.findActivePermissionCodesByRoleIds.mockResolvedValue(['a', 'b']);
+      roleHasPermRepo.findActivePermissionCodesByRoleIds.mockResolvedValue([
+        'a',
+        'b',
+      ]);
 
       const set = await service.refreshPermissions(1, 10);
 
       expect(roleAssignment.getActiveRoleIds).toHaveBeenCalledWith(1, 10);
-      expect(roleHasPermRepo.findActivePermissionCodesByRoleIds).toHaveBeenCalledWith([100n]);
-      expect(rbacCache.setPermissions).toHaveBeenCalledWith(1, 10, expect.arrayContaining(['a', 'b']));
+      expect(
+        roleHasPermRepo.findActivePermissionCodesByRoleIds,
+      ).toHaveBeenCalledWith([100n]);
+      expect(rbacCache.setPermissions).toHaveBeenCalledWith(
+        1,
+        10,
+        expect.arrayContaining(['a', 'b']),
+      );
       expect(set.has('a')).toBe(true);
       expect(set.has('b')).toBe(true);
     });
@@ -81,14 +108,23 @@ describe('RbacService', () => {
 
       await service.syncRolesInGroup(1, 10, [1], true);
 
-      expect(roleAssignment.syncRolesInGroup).toHaveBeenCalledWith(1, 10, [1], true);
+      expect(roleAssignment.syncRolesInGroup).toHaveBeenCalledWith(
+        1,
+        10,
+        [1],
+        true,
+      );
       expect(rbacCache.setPermissions).toHaveBeenCalled();
     });
 
     it('propagates not found from role assignment', async () => {
-      roleAssignment.syncRolesInGroup.mockRejectedValue(new NotFoundException('Group not found'));
+      roleAssignment.syncRolesInGroup.mockRejectedValue(
+        new NotFoundException('Group not found'),
+      );
 
-      await expect(service.syncRolesInGroup(1, 10, [1])).rejects.toThrow(NotFoundException);
+      await expect(service.syncRolesInGroup(1, 10, [1])).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

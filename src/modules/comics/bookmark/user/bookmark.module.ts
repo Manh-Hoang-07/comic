@@ -5,15 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { BookmarkRepositoryModule } from '../bookmark.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    BookmarkRepositoryModule,
-  ],
+  imports: [RbacModule, BookmarkRepositoryModule],
   controllers: [BookmarksController],
   providers: [BookmarksService],
   exports: [BookmarksService],
 })
-export class UserBookmarksModule { }
-
-
-
+export class UserBookmarksModule {}

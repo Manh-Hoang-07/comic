@@ -4,41 +4,41 @@ import { NotificationService } from '@/modules/core/notification/admin/services/
 import { JwtAuthGuard, RbacGuard } from '@/common/auth/guards';
 
 describe('Admin NotificationController', () => {
-    let controller: NotificationController;
-    let service: any;
+  let controller: NotificationController;
+  let service: any;
 
-    beforeEach(async () => {
-        service = {
-            create: jest.fn(),
-            getList: jest.fn(),
-            getSimpleList: jest.fn(),
-            getOne: jest.fn(),
-            update: jest.fn(),
-            delete: jest.fn(),
-        };
+  beforeEach(async () => {
+    service = {
+      create: jest.fn(),
+      getList: jest.fn(),
+      getSimpleList: jest.fn(),
+      getOne: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
 
-        const module: TestingModule = await Test.createTestingModule({
-            controllers: [NotificationController],
-            providers: [
-                { provide: NotificationService, useValue: service },
-            ],
-        })
-            .overrideGuard(JwtAuthGuard).useValue({ canActivate: () => true })
-            .overrideGuard(RbacGuard).useValue({ canActivate: () => true })
-            .compile();
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [NotificationController],
+      providers: [{ provide: NotificationService, useValue: service }],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RbacGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
-        controller = module.get<NotificationController>(NotificationController);
+    controller = module.get<NotificationController>(NotificationController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should call service.create', async () => {
+      const dto = { title: 'Test' };
+      await controller.create(dto as any);
+      expect(service.create).toHaveBeenCalledWith(dto);
     });
-
-    it('should be defined', () => {
-        expect(controller).toBeDefined();
-    });
-
-    describe('create', () => {
-        it('should call service.create', async () => {
-            const dto = { title: 'Test' };
-            await controller.create(dto as any);
-            expect(service.create).toHaveBeenCalledWith(dto);
-        });
-    });
+  });
 });

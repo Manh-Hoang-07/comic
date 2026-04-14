@@ -1,6 +1,12 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IPostRepository, POST_REPOSITORY } from '@/modules/post/post/domain/post.repository';
-import { IPostStatsRepository, POST_STATS_REPOSITORY } from '../../domain/post-stats.repository';
+import {
+  IPostRepository,
+  POST_REPOSITORY,
+} from '@/modules/post/post/domain/post.repository';
+import {
+  IPostStatsRepository,
+  POST_STATS_REPOSITORY,
+} from '../../domain/post-stats.repository';
 
 @Injectable()
 export class PostStatsService {
@@ -9,7 +15,7 @@ export class PostStatsService {
     private readonly postRepository: IPostRepository,
     @Inject(POST_STATS_REPOSITORY)
     private readonly statsRepository: IPostStatsRepository,
-  ) { }
+  ) {}
 
   async getPostStats(postId: any) {
     const post = await this.postRepository.findById(postId);
@@ -23,6 +29,3 @@ export class PostStatsService {
     };
   }
 }
-
-
-

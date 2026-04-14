@@ -23,17 +23,16 @@ async function createDatabaseIfNotExists() {
     database: 'postgres',
     password: config.password,
     port: config.port ? parseInt(config.port, 10) : 5432,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
   });
-
 
   try {
     await client.connect();
 
     // Check if database exists
     const res = await client.query(
-      "SELECT 1 FROM pg_database WHERE datname = $1",
-      [dbName]
+      'SELECT 1 FROM pg_database WHERE datname = $1',
+      [dbName],
     );
 
     if (res.rowCount === 0) {
@@ -48,6 +47,4 @@ async function createDatabaseIfNotExists() {
   }
 }
 
-
 createDatabaseIfNotExists();
-

@@ -38,5 +38,3 @@ export class UpdateProfileDto {
   @IsString()
   about?: string;
 }
-
-

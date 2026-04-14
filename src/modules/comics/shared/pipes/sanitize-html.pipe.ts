@@ -20,20 +20,22 @@ export class SanitizeHtmlPipe implements PipeTransform {
     if (typeof value === 'string') {
       return this.sanitizeString(value);
     }
-    
+
     if (typeof value === 'object' && value !== null) {
       const sanitized = { ...value };
       for (const key in sanitized) {
         if (typeof sanitized[key] === 'string') {
           sanitized[key] = this.sanitizeString(sanitized[key]);
-        } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+        } else if (
+          typeof sanitized[key] === 'object' &&
+          sanitized[key] !== null
+        ) {
           sanitized[key] = this.transform(sanitized[key]);
         }
       }
       return sanitized;
     }
-    
+
     return value;
   }
 }
-

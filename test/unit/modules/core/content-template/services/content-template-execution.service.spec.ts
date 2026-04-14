@@ -9,76 +9,80 @@ import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('ContentTemplateExecutionService', () => {
-    let service: ContentTemplateExecutionService;
-    let repository: any;
-    let renderer: any;
-    let mailService: any;
+  let service: ContentTemplateExecutionService;
+  let repository: any;
+  let renderer: any;
+  let mailService: any;
 
-    beforeEach(async () => {
-        repository = {
-            findByCode: jest.fn(),
-        };
-        renderer = {
-            render: jest.fn((text) => text),
-        };
-        mailService = {
-            send: jest.fn(),
-        };
+  beforeEach(async () => {
+    repository = {
+      findByCode: jest.fn(),
+    };
+    renderer = {
+      render: jest.fn((text) => text),
+    };
+    mailService = {
+      send: jest.fn(),
+    };
 
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                ContentTemplateExecutionService,
-                { provide: CONTENT_TEMPLATE_REPOSITORY, useValue: repository },
-                { provide: ContentRendererService, useValue: renderer },
-                { provide: MailService, useValue: mailService },
-            ],
-        }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ContentTemplateExecutionService,
+        { provide: CONTENT_TEMPLATE_REPOSITORY, useValue: repository },
+        { provide: ContentRendererService, useValue: renderer },
+        { provide: MailService, useValue: mailService },
+      ],
+    }).compile();
 
-        service = module.get<ContentTemplateExecutionService>(ContentTemplateExecutionService);
+    service = module.get<ContentTemplateExecutionService>(
+      ContentTemplateExecutionService,
+    );
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('execute', () => {
+    it('should throw NotFoundException if template missing', async () => {
+      repository.findByCode.mockResolvedValue(null);
+      await expect(
+        service.execute('CODE', { to: 't', variables: {} }),
+      ).rejects.toThrow(NotFoundException);
     });
 
-    it('should be defined', () => {
-        expect(service).toBeDefined();
+    it('should throw BadRequestException if template inactive', async () => {
+      repository.findByCode.mockResolvedValue({ status: BasicStatus.inactive });
+      await expect(
+        service.execute('CODE', { to: 't', variables: {} }),
+      ).rejects.toThrow(BadRequestException);
     });
 
-    describe('execute', () => {
-        it('should throw NotFoundException if template missing', async () => {
-            repository.findByCode.mockResolvedValue(null);
-            await expect(service.execute('CODE', { to: 't', variables: {} })).rejects.toThrow(NotFoundException);
-        });
+    it('should call handleEmail for email type', async () => {
+      repository.findByCode.mockResolvedValue({
+        status: BasicStatus.active,
+        category: TemplateCategory.render,
+        type: TemplateType.email,
+        content: 'Hello',
+        name: 'Welcome',
+      });
 
-        it('should throw BadRequestException if template inactive', async () => {
-            repository.findByCode.mockResolvedValue({ status: BasicStatus.inactive });
-            await expect(service.execute('CODE', { to: 't', variables: {} })).rejects.toThrow(BadRequestException);
-        });
+      const options = { to: 'user@test.com', variables: { name: 'User' } };
+      const result = await service.execute('CODE', options);
 
-        it('should call handleEmail for email type', async () => {
-            repository.findByCode.mockResolvedValue({
-                status: BasicStatus.active,
-                category: TemplateCategory.render,
-                type: TemplateType.email,
-                content: 'Hello',
-                name: 'Welcome',
-            });
-
-            const options = { to: 'user@test.com', variables: { name: 'User' } };
-            const result = await service.execute('CODE', options);
-
-            expect(mailService.send).toHaveBeenCalled();
-            expect(result.channel).toBe('email');
-        });
-
-        it('should throw implementation error for unimplemented types', async () => {
-            repository.findByCode.mockResolvedValue({
-                status: BasicStatus.active,
-                category: TemplateCategory.render,
-                type: 'invalid' as any,
-            });
-            await expect(service.execute('CODE', { to: 't', variables: {} })).rejects.toThrow('is not yet implemented');
-        });
+      expect(mailService.send).toHaveBeenCalled();
+      expect(result.channel).toBe('email');
     });
+
+    it('should throw implementation error for unimplemented types', async () => {
+      repository.findByCode.mockResolvedValue({
+        status: BasicStatus.active,
+        category: TemplateCategory.render,
+        type: 'invalid' as any,
+      });
+      await expect(
+        service.execute('CODE', { to: 't', variables: {} }),
+      ).rejects.toThrow('is not yet implemented');
+    });
+  });
 });
-
-
-
-

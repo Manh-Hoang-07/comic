@@ -5,14 +5,25 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedPermissions {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'systemadmin' },
+    });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'core');
-    const permissions: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'permissions.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'core',
+    );
+    const permissions: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'permissions.json'), 'utf8'),
+    );
 
     const createdPermissions: Map<string, any> = new Map();
     const sortedPermissions = this.sortPermissionsByParent(permissions);
@@ -22,7 +33,9 @@ export class SeedPermissions {
       if (permData.parent_code) {
         parentPermission = createdPermissions.get(permData.parent_code) || null;
         if (!parentPermission) {
-          parentPermission = await this.prisma.permission.findFirst({ where: { code: permData.parent_code } });
+          parentPermission = await this.prisma.permission.findFirst({
+            where: { code: permData.parent_code },
+          });
         }
       }
 
@@ -82,4 +95,3 @@ export class SeedPermissions {
     await this.prisma.permission.deleteMany({});
   }
 }
-

@@ -2,7 +2,10 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as path from 'path';
-import { IUploadStrategy, UploadResult } from '../interfaces/upload-strategy.interface';
+import {
+  IUploadStrategy,
+  UploadResult,
+} from '../interfaces/upload-strategy.interface';
 
 @Injectable()
 export class S3StorageStrategy implements IUploadStrategy {
@@ -56,19 +59,26 @@ export class S3StorageStrategy implements IUploadStrategy {
       await this.s3Client.send(command);
     } catch (error) {
       // Bắt các lỗi cụ thể từ AWS SDK để trả về message dễ hiểu hơn
-      if (error.name === 'DeserializationError' || error.message?.includes('Deserialization error')) {
+      if (
+        error.name === 'DeserializationError' ||
+        error.message?.includes('Deserialization error')
+      ) {
         const response = (error as any).$response;
         let details = '';
         if (response) {
           details = ` (Status: ${response.statusCode})`;
         }
-        throw new BadRequestException(`S3 Storage Error: Failed to parse response from storage provider${details}. Please check your S3/MinIO endpoint and credentials. Original error: ${error.message}`);
+        throw new BadRequestException(
+          `S3 Storage Error: Failed to parse response from storage provider${details}. Please check your S3/MinIO endpoint and credentials. Original error: ${error.message}`,
+        );
       }
       throw error;
     }
 
     // Tạo URL để truy cập file (đảm bảo baseUrl không có trailing slash)
-    const baseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const baseUrl = this.baseUrl.endsWith('/')
+      ? this.baseUrl.slice(0, -1)
+      : this.baseUrl;
     const url = `${baseUrl}/${filename}`;
 
     return {
@@ -80,4 +90,3 @@ export class S3StorageStrategy implements IUploadStrategy {
     };
   }
 }
-

@@ -20,5 +20,4 @@ import { GalleryRepositoryModule } from './gallery.repository.module';
   ],
   exports: [GalleryRepositoryModule],
 })
-export class GalleryModule { }
-
+export class GalleryModule {}

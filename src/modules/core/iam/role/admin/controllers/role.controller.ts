@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { LogRequest } from '@/common/shared/decorators';
 import { AuthService } from '@/common/auth/services';
@@ -9,7 +18,7 @@ export class RoleController {
   constructor(
     private readonly service: RoleService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   @Permission('role.manage')
   @Get()
@@ -44,10 +53,7 @@ export class RoleController {
   @LogRequest()
   @Permission('role.manage')
   @Put(':id')
-  async update(
-    @Param('id') id: any,
-    @Body() dto: any
-  ) {
+  async update(@Param('id') id: any, @Body() dto: any) {
     // Sử dụng AuthService trong hàm
     if (!this.auth.isLogin()) {
       throw new Error('User not logged in');
@@ -67,13 +73,8 @@ export class RoleController {
   @Post(':id/permissions')
   async assignPermissions(
     @Param('id') roleId: any,
-    @Body() body: { permission_ids: any[] }
+    @Body() body: { permission_ids: any[] },
   ) {
     return this.service.assignPermissions(roleId, body.permission_ids || []);
   }
 }
-
-
-
-
-

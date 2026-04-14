@@ -1,11 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PostTag } from '@prisma/client';
-import { IPostTagRepository, POST_TAG_REPOSITORY } from '@/modules/post/post-tag/domain/post-tag.repository';
+import {
+  IPostTagRepository,
+  POST_TAG_REPOSITORY,
+} from '@/modules/post/post-tag/domain/post-tag.repository';
 import { BaseContentService } from '@/common/core/services';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
 
 @Injectable()
-export class PostTagService extends BaseContentService<PostTag, IPostTagRepository> {
+export class PostTagService extends BaseContentService<
+  PostTag,
+  IPostTagRepository
+> {
   constructor(
     @Inject(POST_TAG_REPOSITORY)
     private readonly tagRepo: IPostTagRepository,
@@ -38,12 +44,10 @@ export class PostTagService extends BaseContentService<PostTag, IPostTagReposito
       payload.slug = await SlugHelper.uniqueSlug(
         payload.slug || payload.name || '',
         this.tagRepo,
-        id
+        id,
       );
     }
 
     return payload;
   }
 }
-
-

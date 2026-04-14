@@ -32,13 +32,15 @@ export class EnumService {
   /**
    * Lấy enum theo tên với value và label
    */
-  getEnumByName(name: string): { name: string; values: { value: string; label: string }[] } | null {
+  getEnumByName(
+    name: string,
+  ): { name: string; values: { value: string; label: string }[] } | null {
     const config = this.enumConfigs[name.toLowerCase()];
     if (!config) return null;
 
     return {
       name: this.getEnumName(name),
-      values: this.buildEnumValues(config)
+      values: this.buildEnumValues(config),
     };
   }
 
@@ -51,8 +53,10 @@ export class EnumService {
       return {
         id: stringValue,
         value: stringValue,
-        name: config.labels?.[value as keyof typeof config.labels] || stringValue,
-        label: config.labels?.[value as keyof typeof config.labels] || stringValue
+        name:
+          config.labels?.[value as keyof typeof config.labels] || stringValue,
+        label:
+          config.labels?.[value as keyof typeof config.labels] || stringValue,
       };
     });
   }

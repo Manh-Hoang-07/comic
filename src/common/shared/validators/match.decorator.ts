@@ -1,4 +1,8 @@
-import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+} from 'class-validator';
 
 export function Match(property: string, validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {

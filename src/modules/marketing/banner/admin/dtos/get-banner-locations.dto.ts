@@ -3,22 +3,22 @@ import { Type } from 'class-transformer';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
 export class GetBannerLocationsDto {
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Min(1)
-    page?: number = 1;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
 
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Min(1)
-    @Max(100)
-    limit?: number = 10;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 10;
 
-    @IsOptional()
-    search?: string;
+  @IsOptional()
+  search?: string;
 
-    @IsOptional()
-    status?: BasicStatus;
+  @IsOptional()
+  status?: BasicStatus;
 }

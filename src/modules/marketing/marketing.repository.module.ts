@@ -6,16 +6,16 @@ import { BannerLocationRepositoryImpl } from './banner-location/infrastructure/r
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: BANNER_REPOSITORY,
-            useClass: BannerRepositoryImpl,
-        },
-        {
-            provide: BANNER_LOCATION_REPOSITORY,
-            useClass: BannerLocationRepositoryImpl,
-        },
-    ],
-    exports: [BANNER_REPOSITORY, BANNER_LOCATION_REPOSITORY],
+  providers: [
+    {
+      provide: BANNER_REPOSITORY,
+      useClass: BannerRepositoryImpl,
+    },
+    {
+      provide: BANNER_LOCATION_REPOSITORY,
+      useClass: BannerLocationRepositoryImpl,
+    },
+  ],
+  exports: [BANNER_REPOSITORY, BANNER_LOCATION_REPOSITORY],
 })
-export class MarketingRepositoryModule { }
+export class MarketingRepositoryModule {}

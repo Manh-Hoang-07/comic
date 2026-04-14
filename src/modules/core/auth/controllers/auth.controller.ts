@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
@@ -13,7 +24,17 @@ import { Auth } from '@/common/auth/utils';
 import { Permission } from '@/common/auth/decorators';
 import { LogRequest } from '@/common/shared/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiOperation, ApiTags, ApiBody, ApiOkResponse, ApiCreatedResponse, ApiBearerAuth, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiTooManyRequestsResponse } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiTags,
+  ApiBody,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiBearerAuth,
+  ApiUnauthorizedResponse,
+  ApiBadRequestResponse,
+  ApiTooManyRequestsResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Auth')
 @Controller()
@@ -21,12 +42,16 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   @LogRequest({ fileBaseName: 'auth_login' })
   @Permission('public')
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
-  @ApiOperation({ summary: 'Đăng nhập', description: 'Đăng nhập bằng email và mật khẩu, trả về access token và refresh token.' })
+  @ApiOperation({
+    summary: 'Đăng nhập',
+    description:
+      'Đăng nhập bằng email và mật khẩu, trả về access token và refresh token.',
+  })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({
     description: 'Đăng nhập thành công',
@@ -47,7 +72,8 @@ export class AuthController {
     },
   })
   @ApiUnauthorizedResponse({
-    description: 'Email hoặc mật khẩu không đúng, hoặc tài khoản bị khóa. Trả về format lỗi chuẩn.',
+    description:
+      'Email hoặc mật khẩu không đúng, hoặc tài khoản bị khóa. Trả về format lỗi chuẩn.',
     schema: {
       example: {
         success: false,
@@ -65,7 +91,8 @@ export class AuthController {
     schema: {
       example: {
         success: false,
-        message: 'Tài khoản đã bị khóa tạm thời do quá nhiều lần đăng nhập sai. Vui lòng thử lại sau 15 phút.',
+        message:
+          'Tài khoản đã bị khóa tạm thời do quá nhiều lần đăng nhập sai. Vui lòng thử lại sau 15 phút.',
         code: 'TOO_MANY_REQUESTS',
         httpStatus: 429,
         data: null,
@@ -76,11 +103,20 @@ export class AuthController {
   })
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.login(dto);
     if (result?.token) {
-      const domain = (res.req.hostname === 'localhost') ? 'localhost' : undefined;
-      res.cookie('auth_token', result.token, { maxAge: 60 * 60 * 1000, httpOnly: false, secure: false, domain, path: '/' });
+      const domain = res.req.hostname === 'localhost' ? 'localhost' : undefined;
+      res.cookie('auth_token', result.token, {
+        maxAge: 60 * 60 * 1000,
+        httpOnly: false,
+        secure: false,
+        domain,
+        path: '/',
+      });
     }
     return result;
   }
@@ -88,10 +124,14 @@ export class AuthController {
   @LogRequest({ fileBaseName: 'auth_register' })
   @Permission('public')
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
-  @ApiOperation({ summary: 'Đăng ký tài khoản', description: 'Đăng ký tài khoản mới bằng email, mật khẩu và OTP xác thực.' })
+  @ApiOperation({
+    summary: 'Đăng ký tài khoản',
+    description: 'Đăng ký tài khoản mới bằng email, mật khẩu và OTP xác thực.',
+  })
   @ApiBody({ type: RegisterDto })
   @ApiCreatedResponse({
-    description: 'Đăng ký thành công, trả về thông tin user an toàn (không chứa password).',
+    description:
+      'Đăng ký thành công, trả về thông tin user an toàn (không chứa password).',
     schema: {
       example: {
         success: true,
@@ -116,7 +156,8 @@ export class AuthController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Dữ liệu không hợp lệ hoặc email/tên đăng nhập/số điện thoại đã tồn tại. Trả về format lỗi chuẩn.',
+    description:
+      'Dữ liệu không hợp lệ hoặc email/tên đăng nhập/số điện thoại đã tồn tại. Trả về format lỗi chuẩn.',
     schema: {
       example: {
         success: false,
@@ -136,9 +177,15 @@ export class AuthController {
 
   @Permission('public')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Đăng xuất', description: 'Đăng xuất và đưa access token hiện tại vào blacklist.' })
+  @ApiOperation({
+    summary: 'Đăng xuất',
+    description: 'Đăng xuất và đưa access token hiện tại vào blacklist.',
+  })
   @Post('logout')
-  async logout(@Headers('authorization') authHeader: string, @Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Headers('authorization') authHeader: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const userId = Auth.id(undefined);
     // Extract token from authorization header
     let token: string | null = null;
@@ -147,13 +194,16 @@ export class AuthController {
     }
 
     await this.authService.logout(userId, token || undefined);
-    const domain = (res.req.hostname === 'localhost') ? 'localhost' : undefined;
+    const domain = res.req.hostname === 'localhost' ? 'localhost' : undefined;
     res.clearCookie('auth_token', { domain, path: '/' });
     return null;
   }
 
   @Permission('public')
-  @ApiOperation({ summary: 'Làm mới access token', description: 'Nhận access token mới từ refresh token hợp lệ.' })
+  @ApiOperation({
+    summary: 'Làm mới access token',
+    description: 'Nhận access token mới từ refresh token hợp lệ.',
+  })
   @ApiBody({ type: RefreshTokenDto })
   @ApiOkResponse({
     description: 'Làm mới token thành công.',
@@ -188,12 +238,21 @@ export class AuthController {
     },
   })
   @Post('refresh')
-  async refresh(@Body() dto: RefreshTokenDto, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.refreshTokenByValue(dto.refreshToken);
 
     if (result?.token) {
-      const domain = (res.req.hostname === 'localhost') ? 'localhost' : undefined;
-      res.cookie('auth_token', result.token, { maxAge: 60 * 60 * 1000, httpOnly: false, secure: false, domain, path: '/' });
+      const domain = res.req.hostname === 'localhost' ? 'localhost' : undefined;
+      res.cookie('auth_token', result.token, {
+        maxAge: 60 * 60 * 1000,
+        httpOnly: false,
+        secure: false,
+        domain,
+        path: '/',
+      });
     }
     return result;
   }
@@ -201,7 +260,10 @@ export class AuthController {
   @LogRequest({ fileBaseName: 'auth_forgot_password' })
   @Permission('public')
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 attempts per minute (more restrictive for password reset)
-  @ApiOperation({ summary: 'Yêu cầu quên mật khẩu', description: 'Gửi email chứa mã OTP để khôi phục mật khẩu.' })
+  @ApiOperation({
+    summary: 'Yêu cầu quên mật khẩu',
+    description: 'Gửi email chứa mã OTP để khôi phục mật khẩu.',
+  })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiOkResponse({
     description: 'Yêu cầu quên mật khẩu thành công, OTP sẽ được gửi đến email.',
@@ -227,7 +289,10 @@ export class AuthController {
   @LogRequest({ fileBaseName: 'auth_reset_password' })
   @Permission('public')
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 attempts per minute (more restrictive for password reset)
-  @ApiOperation({ summary: 'Đặt lại mật khẩu', description: 'Đổi mật khẩu bằng mã OTP đã gửi qua email.' })
+  @ApiOperation({
+    summary: 'Đặt lại mật khẩu',
+    description: 'Đổi mật khẩu bằng mã OTP đã gửi qua email.',
+  })
   @ApiBody({ type: ResetPasswordDto })
   @ApiOkResponse({
     description: 'Đổi mật khẩu thành công.',
@@ -253,7 +318,10 @@ export class AuthController {
   @LogRequest({ fileBaseName: 'auth_register_send_otp' })
   @Permission('public')
   @Throttle({ default: { limit: 2, ttl: 60000 } }) // Max 2 emails per minute
-  @ApiOperation({ summary: 'Gửi OTP đăng ký', description: 'Gửi mã OTP đến email để xác thực đăng ký tài khoản.' })
+  @ApiOperation({
+    summary: 'Gửi OTP đăng ký',
+    description: 'Gửi mã OTP đến email để xác thực đăng ký tài khoản.',
+  })
   @ApiBody({ type: SendOtpDto })
   @ApiOkResponse({
     description: 'OTP gửi cho đăng ký tài khoản thành công.',
@@ -279,7 +347,10 @@ export class AuthController {
   @LogRequest({ fileBaseName: 'auth_forgot_password_send_otp' })
   @Permission('public')
   @Throttle({ default: { limit: 2, ttl: 60000 } }) // Max 2 emails per minute
-  @ApiOperation({ summary: 'Gửi OTP quên mật khẩu', description: 'Gửi mã OTP đến email để xác thực đặt lại mật khẩu.' })
+  @ApiOperation({
+    summary: 'Gửi OTP quên mật khẩu',
+    description: 'Gửi mã OTP đến email để xác thực đặt lại mật khẩu.',
+  })
   @ApiBody({ type: SendOtpDto })
   @ApiOkResponse({
     description: 'OTP cho quên mật khẩu được gửi thành công.',
@@ -306,7 +377,10 @@ export class AuthController {
   @Permission('public')
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  @ApiOperation({ summary: 'Đăng nhập bằng Google', description: 'Chuyển hướng người dùng đến trang đăng nhập Google.' })
+  @ApiOperation({
+    summary: 'Đăng nhập bằng Google',
+    description: 'Chuyển hướng người dùng đến trang đăng nhập Google.',
+  })
   async googleAuth() {
     // Guard redirects to Google
   }
@@ -315,18 +389,25 @@ export class AuthController {
   @Permission('public')
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  @ApiOperation({ summary: 'Callback đăng nhập Google', description: 'Xử lý callback từ Google và redirect về frontend với token.' })
+  @ApiOperation({
+    summary: 'Callback đăng nhập Google',
+    description: 'Xử lý callback từ Google và redirect về frontend với token.',
+  })
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const user = req.user as any;
     const result = await this.authService.handleGoogleAuth(user);
 
     if (result?.token) {
-      const frontendUrl = this.configService.get<string>('googleOAuth.frontendUrl') || 'http://localhost:3000';
+      const frontendUrl =
+        this.configService.get<string>('googleOAuth.frontendUrl') ||
+        'http://localhost:3000';
       const redirectUrl = `${frontendUrl}/auth/google/callback?token=${result.token}&refreshToken=${result.refreshToken}&expiresIn=${result.expiresIn}`;
       return res.redirect(redirectUrl);
     }
 
-    return res.redirect(this.configService.get<string>('googleOAuth.frontendUrl') + '/login?error=auth_failed');
+    return res.redirect(
+      this.configService.get<string>('googleOAuth.frontendUrl') +
+        '/login?error=auth_failed',
+    );
   }
 }
-

@@ -9,25 +9,25 @@ import { CertificateModule } from './certificate/certificate.module';
 import { FaqModule } from './faq/faq.module';
 
 @Module({
-    imports: [
-        ProjectModule,
-        AboutModule,
-        StaffModule,
-        TestimonialModule,
-        PartnerModule,
-        GalleryModule,
-        CertificateModule,
-        FaqModule,
-    ],
-    exports: [
-        ProjectModule,
-        AboutModule,
-        StaffModule,
-        TestimonialModule,
-        PartnerModule,
-        GalleryModule,
-        CertificateModule,
-        FaqModule,
-    ],
+  imports: [
+    ProjectModule,
+    AboutModule,
+    StaffModule,
+    TestimonialModule,
+    PartnerModule,
+    GalleryModule,
+    CertificateModule,
+    FaqModule,
+  ],
+  exports: [
+    ProjectModule,
+    AboutModule,
+    StaffModule,
+    TestimonialModule,
+    PartnerModule,
+    GalleryModule,
+    CertificateModule,
+    FaqModule,
+  ],
 })
-export class IntroductionModule { }
+export class IntroductionModule {}

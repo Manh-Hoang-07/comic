@@ -8,24 +8,24 @@ import { PermissionRepositoryImpl } from './permission/infrastructure/repositori
 import { PERMISSION_REPOSITORY } from './permission/domain/permission.repository';
 
 const repositories: Provider[] = [
-    {
-        provide: USER_REPOSITORY,
-        useClass: UserRepositoryImpl,
-    },
-    {
-        provide: ROLE_REPOSITORY,
-        useClass: RoleRepositoryImpl,
-    },
-    {
-        provide: PERMISSION_REPOSITORY,
-        useClass: PermissionRepositoryImpl,
-    },
+  {
+    provide: USER_REPOSITORY,
+    useClass: UserRepositoryImpl,
+  },
+  {
+    provide: ROLE_REPOSITORY,
+    useClass: RoleRepositoryImpl,
+  },
+  {
+    provide: PERMISSION_REPOSITORY,
+    useClass: PermissionRepositoryImpl,
+  },
 ];
 
 @Global()
 @Module({
-    imports: [PrismaModule],
-    providers: [...repositories],
-    exports: [...repositories],
+  imports: [PrismaModule],
+  providers: [...repositories],
+  exports: [...repositories],
 })
-export class UserRepositoryModule { }
+export class UserRepositoryModule {}

@@ -66,4 +66,3 @@ export function createPaginatedResult<T>(
     meta: createPaginationMeta(page, limit, total),
   };
 }
-

@@ -16,4 +16,4 @@ import { ComicRepositoryModule } from '@/modules/comics/comic/comic.repository.m
   providers: [PublicChaptersService, ViewTrackingService],
   exports: [PublicChaptersService, ViewTrackingService],
 })
-export class PublicChaptersModule { }
+export class PublicChaptersModule {}

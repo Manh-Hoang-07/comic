@@ -1,8 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { NotificationType } from '@/shared/enums/types/notification-type.enum';
-import { IFollowRepository, FOLLOW_REPOSITORY } from '../../follow/domain/follow.repository';
-import { ICommentRepository, COMMENT_REPOSITORY } from '../../comment/domain/comment.repository';
-import { INotificationRepository, NOTIFICATION_REPOSITORY } from '@/modules/core/notification/domain/notification.repository';
+import {
+  IFollowRepository,
+  FOLLOW_REPOSITORY,
+} from '../../follow/domain/follow.repository';
+import {
+  ICommentRepository,
+  COMMENT_REPOSITORY,
+} from '../../comment/domain/comment.repository';
+import {
+  INotificationRepository,
+  NOTIFICATION_REPOSITORY,
+} from '@/modules/core/notification/domain/notification.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
@@ -14,7 +23,7 @@ export class ComicNotificationService {
     private readonly commentRepository: ICommentRepository,
     @Inject(NOTIFICATION_REPOSITORY)
     private readonly notificationRepository: INotificationRepository,
-  ) { }
+  ) {}
 
   /**
    * Notify followers khi có chapter mới được publish
@@ -27,9 +36,12 @@ export class ComicNotificationService {
     const comicId = toPrimaryKey(chapter.comic_id);
 
     // Lấy tất cả followers của comic qua repository
-    const followers = await this.followRepository.findMany({ comic_id: comicId }, {
-      include: { comic: true }
-    } as any);
+    const followers = await this.followRepository.findMany(
+      { comic_id: comicId },
+      {
+        include: { comic: true },
+      } as any,
+    );
 
     if (followers.length === 0) {
       return;
@@ -56,7 +68,7 @@ export class ComicNotificationService {
           chapter_label: chapter.chapter_label,
         } as any,
         is_read: false,
-      } as any)
+      } as any),
     );
 
     await Promise.all(notifications);
@@ -69,7 +81,8 @@ export class ComicNotificationService {
    */
   async notifyCommentReply(commentId: any, parentCommentId: any, userId: any) {
     // Lấy parent comment để biết user cần notify qua repository
-    const parentComment = await this.commentRepository.findById(parentCommentId);
+    const parentComment =
+      await this.commentRepository.findById(parentCommentId);
 
     if (!parentComment || String(parentComment.user_id) === String(userId)) {
       return; // Không notify chính mình
@@ -90,5 +103,3 @@ export class ComicNotificationService {
     return notification;
   }
 }
-
-

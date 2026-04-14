@@ -1,13 +1,25 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { ComicComment } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { ICommentRepository, COMMENT_REPOSITORY } from '../../domain/comment.repository';
+import {
+  ICommentRepository,
+  COMMENT_REPOSITORY,
+} from '../../domain/comment.repository';
 import { IPaginationOptions } from '@/common/core/repositories';
-import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
-import { COMMENT_TREE_INCLUDE, normalizeCommentFilters } from '../../utils/comment-query.helper';
+import {
+  verifyGroupOwnership,
+  getGroupFilter,
+} from '@/common/shared/utils/group-ownership.util';
+import {
+  COMMENT_TREE_INCLUDE,
+  normalizeCommentFilters,
+} from '../../utils/comment-query.helper';
 
 @Injectable()
-export class CommentsService extends BaseService<ComicComment, ICommentRepository> {
+export class CommentsService extends BaseService<
+  ComicComment,
+  ICommentRepository
+> {
   constructor(
     @Inject(COMMENT_REPOSITORY)
     protected readonly commentRepository: ICommentRepository,
@@ -20,7 +32,9 @@ export class CommentsService extends BaseService<ComicComment, ICommentRepositor
     return { ...prepared, ...getGroupFilter(prepared) };
   }
 
-  protected override async prepareOptions(options: IPaginationOptions): Promise<IPaginationOptions> {
+  protected override async prepareOptions(
+    options: IPaginationOptions,
+  ): Promise<IPaginationOptions> {
     const normalized = await super.prepareOptions(options);
     (normalized as any).include = COMMENT_TREE_INCLUDE;
     return normalized;
@@ -35,16 +49,24 @@ export class CommentsService extends BaseService<ComicComment, ICommentRepositor
     startOfWeek.setDate(today.getDate() - today.getDay());
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const [total, visible, hidden, todayCount, thisWeekCount, thisMonthCount] = await Promise.all([
-      this.repository.count({}),
-      this.repository.count({ status: 'visible' }),
-      this.repository.count({ status: 'hidden' }),
-      this.repository.count({ date_from: today }),
-      this.repository.count({ date_from: startOfWeek }),
-      this.repository.count({ date_from: startOfMonth }),
-    ]);
+    const [total, visible, hidden, todayCount, thisWeekCount, thisMonthCount] =
+      await Promise.all([
+        this.repository.count({}),
+        this.repository.count({ status: 'visible' }),
+        this.repository.count({ status: 'hidden' }),
+        this.repository.count({ date_from: today }),
+        this.repository.count({ date_from: startOfWeek }),
+        this.repository.count({ date_from: startOfMonth }),
+      ]);
 
-    return { total, visible, hidden, today: todayCount, this_week: thisWeekCount, this_month: thisMonthCount };
+    return {
+      total,
+      visible,
+      hidden,
+      today: todayCount,
+      this_week: thisWeekCount,
+      this_month: thisMonthCount,
+    };
   }
 
   // ── CRUD Overrides ────────────────────────────────────────────────────────
@@ -92,7 +114,4 @@ export class CommentsService extends BaseService<ComicComment, ICommentRepositor
       verifyGroupOwnership(comment.comic as any);
     }
   }
-
 }
-
-

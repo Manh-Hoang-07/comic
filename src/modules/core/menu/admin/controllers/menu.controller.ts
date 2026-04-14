@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { MenuService } from '@/modules/core/menu/admin/services/menu.service';
@@ -13,7 +23,7 @@ export class AdminMenuController {
   constructor(
     private readonly service: MenuService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   @Permission('menu.manage')
   @Get()
@@ -50,10 +60,7 @@ export class AdminMenuController {
   @LogRequest()
   @Permission('menu.manage')
   @Put(':id')
-  async update(
-    @Param('id') id: any,
-    @Body() dto: UpdateMenuDto
-  ) {
+  async update(@Param('id') id: any, @Body() dto: UpdateMenuDto) {
     const userId = this.auth.id();
     return this.service.updateById(id, dto, userId ?? undefined);
   }
@@ -65,6 +72,3 @@ export class AdminMenuController {
     return this.service.deleteById(id);
   }
 }
-
-
-

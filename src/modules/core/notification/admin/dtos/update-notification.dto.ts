@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsEnum, IsObject, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsBoolean,
+} from 'class-validator';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 import { NotificationType } from '@/shared/enums/types/notification-type.enum';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';

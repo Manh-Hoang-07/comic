@@ -1,6 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PostTag } from '@prisma/client';
-import { IPostTagRepository, POST_TAG_REPOSITORY, PostTagFilter } from '@/modules/post/post-tag/domain/post-tag.repository';
+import {
+  IPostTagRepository,
+  POST_TAG_REPOSITORY,
+  PostTagFilter,
+} from '@/modules/post/post-tag/domain/post-tag.repository';
 import { BaseService } from '@/common/core/services';
 
 @Injectable()
@@ -32,7 +36,3 @@ export class PostTagService extends BaseService<PostTag, IPostTagRepository> {
     return this.transform(tag);
   }
 }
-
-
-
-

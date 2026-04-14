@@ -8,7 +8,9 @@ export class UserQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Lọc theo nhóm (Chỉ có tác dụng với System Context)' })
+  @ApiPropertyOptional({
+    description: 'Lọc theo nhóm (Chỉ có tác dụng với System Context)',
+  })
   @IsOptional()
   @IsString()
   groupId?: string;
@@ -23,7 +25,10 @@ export class UserQueryDto {
   @IsString()
   phone?: string;
 
-  @ApiPropertyOptional({ description: 'Lọc theo trạng thái', example: 'active' })
+  @ApiPropertyOptional({
+    description: 'Lọc theo trạng thái',
+    example: 'active',
+  })
   @IsOptional()
   @IsString()
   status?: string;

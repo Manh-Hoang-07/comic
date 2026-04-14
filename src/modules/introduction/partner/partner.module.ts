@@ -17,5 +17,4 @@ import { PartnerRepositoryModule } from './partner.repository.module';
   ],
   exports: [],
 })
-export class PartnerModule { }
-
+export class PartnerModule {}

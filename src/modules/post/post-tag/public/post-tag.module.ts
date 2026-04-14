@@ -10,4 +10,4 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
   providers: [PostTagService],
   exports: [PostTagService],
 })
-export class PublicPostTagModule { }
+export class PublicPostTagModule {}

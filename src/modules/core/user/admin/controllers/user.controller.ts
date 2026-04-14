@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Put, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Put,
+  Post,
+  Query,
+} from '@nestjs/common';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../services/user.service';
@@ -47,16 +57,25 @@ export class UserController {
   @ApiOperation({ summary: 'Cây group → role (catalog + trạng thái đã gán)' })
   @Permission(PERM.USER.VIEW)
   @Get(':id/roles/tree')
-  getRolesTree(@Param('id') id: PrimaryKey, @Query('groupIds') groupIds?: string) {
+  getRolesTree(
+    @Param('id') id: PrimaryKey,
+    @Query('groupIds') groupIds?: string,
+  ) {
     return this.userRoles.getUserRolesTree(id, groupIds);
   }
 
-  @ApiOperation({ summary: 'Đồng bộ vai trò theo nhiều group (body: mảng { group_id, role_ids })' })
+  @ApiOperation({
+    summary:
+      'Đồng bộ vai trò theo nhiều group (body: mảng { group_id, role_ids })',
+  })
   @ApiBody({ type: [UserRolesBatchItemDto] })
   @Permission(PERM.ASSIGNMENT.MANAGE)
   @LogRequest({ fileBaseName: 'user_roles_batch' })
   @Put(':id/roles/batch')
-  putRolesBatch(@Param('id') id: PrimaryKey, @Body() body: UserRolesBatchItemDto[]) {
+  putRolesBatch(
+    @Param('id') id: PrimaryKey,
+    @Body() body: UserRolesBatchItemDto[],
+  ) {
     return this.userRoles.batchSyncUserRoles(id, body);
   }
 
@@ -107,4 +126,3 @@ export class UserController {
     return this.service.update(id, { status: body.status });
   }
 }
-

@@ -1,10 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Certificate } from '@prisma/client';
-import { ICertificateRepository, CERTIFICATE_REPOSITORY, CertificateFilter } from '@/modules/introduction/certificate/domain/certificate.repository';
+import {
+  ICertificateRepository,
+  CERTIFICATE_REPOSITORY,
+  CertificateFilter,
+} from '@/modules/introduction/certificate/domain/certificate.repository';
 import { BaseContentService } from '@/common/core/services';
 
 @Injectable()
-export class CertificateService extends BaseContentService<Certificate, ICertificateRepository> {
+export class CertificateService extends BaseContentService<
+  Certificate,
+  ICertificateRepository
+> {
   constructor(
     @Inject(CERTIFICATE_REPOSITORY)
     private readonly certificateRepo: ICertificateRepository,
@@ -27,7 +34,3 @@ export class CertificateService extends BaseContentService<Certificate, ICertifi
     });
   }
 }
-
-
-
-

@@ -5,19 +5,32 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedComicCategories {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
     const existingCategories = await this.prisma.comicCategory.count();
     if (existingCategories > 0) return;
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'admin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'admin' },
+    });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'comic');
-    const categoriesData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'comic-categories.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'comic',
+    );
+    const categoriesData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'comic-categories.json'), 'utf8'),
+    );
 
-    const systemGroup = await this.prisma.group.findFirst({ where: { code: 'system' } });
+    const systemGroup = await this.prisma.group.findFirst({
+      where: { code: 'system' },
+    });
     const groupId = systemGroup ? systemGroup.id : null;
 
     for (const categoryData of categoriesData) {
@@ -38,7 +51,3 @@ export class SeedComicCategories {
     await this.prisma.comicCategory.deleteMany({});
   }
 }
-
-
-
-

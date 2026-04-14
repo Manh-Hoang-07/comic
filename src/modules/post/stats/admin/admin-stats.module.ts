@@ -6,14 +6,9 @@ import { AdminPostStatsController } from './controllers/admin-stats.controller';
 import { AdminPostStatsService } from './services/admin-stats.service';
 
 @Module({
-  imports: [
-    RbacModule,
-    PostRepositoryModule,
-    PostStatsRepositoryModule,
-  ],
+  imports: [RbacModule, PostRepositoryModule, PostStatsRepositoryModule],
   controllers: [AdminPostStatsController],
   providers: [AdminPostStatsService],
   exports: [AdminPostStatsService],
 })
-export class AdminPostStatsModule { }
-
+export class AdminPostStatsModule {}

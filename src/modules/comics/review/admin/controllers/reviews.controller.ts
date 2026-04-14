@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
 } from '@nestjs/common';
 import { ReviewsService } from '../services/reviews.service';
@@ -16,7 +15,7 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('admin/comic-reviews')
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) { }
+  constructor(private readonly reviewsService: ReviewsService) {}
 
   @Permission('comic.manage')
   @Get()
@@ -59,5 +58,3 @@ export class ReviewsController {
     return this.reviewsService.delete(id);
   }
 }
-
-

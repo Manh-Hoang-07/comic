@@ -17,7 +17,4 @@ import { BookmarkRepositoryModule } from '../../bookmark/bookmark.repository.mod
   providers: [UserStatsService],
   exports: [UserStatsService],
 })
-export class UserStatsModule { }
-
-
-
+export class UserStatsModule {}

@@ -5,15 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { ReadingHistoryRepositoryModule } from '../reading-history.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    ReadingHistoryRepositoryModule,
-  ],
+  imports: [RbacModule, ReadingHistoryRepositoryModule],
   controllers: [ReadingHistoryController],
   providers: [ReadingHistoryService],
   exports: [ReadingHistoryService],
 })
-export class UserReadingHistoryModule { }
-
-
-
+export class UserReadingHistoryModule {}

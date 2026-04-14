@@ -4,10 +4,7 @@ import { AdminMenuModule } from '@/modules/core/menu/admin/menu.module';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    AdminMenuModule,
-  ],
+  imports: [RbacModule, AdminMenuModule],
   controllers: [UserMenuController],
 })
-export class UserMenuModule { }
+export class UserMenuModule {}

@@ -1,11 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IProjectRepository, PROJECT_REPOSITORY } from '@/modules/introduction/project/domain/project.repository';
+import {
+  IProjectRepository,
+  PROJECT_REPOSITORY,
+} from '@/modules/introduction/project/domain/project.repository';
 import { BaseContentService } from '@/common/core/services';
 import { Project } from '@prisma/client';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
 
 @Injectable()
-export class ProjectService extends BaseContentService<Project, IProjectRepository> {
+export class ProjectService extends BaseContentService<
+  Project,
+  IProjectRepository
+> {
   constructor(
     @Inject(PROJECT_REPOSITORY)
     private readonly projectRepo: IProjectRepository,
@@ -27,7 +33,10 @@ export class ProjectService extends BaseContentService<Project, IProjectReposito
 
     // Handle Slug
     if (!payload.slug) {
-      payload.slug = await SlugHelper.uniqueSlug(payload.name, this.projectRepo);
+      payload.slug = await SlugHelper.uniqueSlug(
+        payload.name,
+        this.projectRepo,
+      );
     }
 
     return payload;
@@ -41,7 +50,7 @@ export class ProjectService extends BaseContentService<Project, IProjectReposito
       payload.slug = await SlugHelper.uniqueSlug(
         payload.slug || payload.name || '',
         this.projectRepo,
-        id
+        id,
       );
     }
 
@@ -54,5 +63,3 @@ export class ProjectService extends BaseContentService<Project, IProjectReposito
     return this.projectRepo.incrementViewCount(id);
   }
 }
-
-

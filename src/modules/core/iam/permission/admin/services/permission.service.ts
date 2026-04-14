@@ -1,5 +1,13 @@
-import { Injectable, BadRequestException, Inject, NotFoundException } from '@nestjs/common';
-import { IPermissionRepository, PERMISSION_REPOSITORY } from '@/modules/core/iam/permission/domain/permission.repository';
+import {
+  Injectable,
+  BadRequestException,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  IPermissionRepository,
+  PERMISSION_REPOSITORY,
+} from '@/modules/core/iam/permission/domain/permission.repository';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
 import { BaseService } from '@/common/core/services';
 import { transformPermission } from '@/modules/core/iam/utils/iam-transform.helper';
@@ -58,8 +66,11 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
   }
 
   protected override async beforeDelete(id: any): Promise<boolean> {
-    const childrenCount = await this.permissionRepo.count({ parent_id: toPrimaryKey(id) });
-    if (childrenCount > 0) throw new BadRequestException('Cannot delete permission with children');
+    const childrenCount = await this.permissionRepo.count({
+      parent_id: toPrimaryKey(id),
+    });
+    if (childrenCount > 0)
+      throw new BadRequestException('Cannot delete permission with children');
     return true;
   }
 
@@ -84,5 +95,3 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
     return item;
   }
 }
-
-

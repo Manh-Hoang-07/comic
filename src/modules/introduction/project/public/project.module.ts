@@ -10,5 +10,4 @@ import { ProjectRepositoryModule } from '@/modules/introduction/project/project.
   providers: [PublicProjectService],
   exports: [PublicProjectService],
 })
-export class PublicProjectModule { }
-
+export class PublicProjectModule {}

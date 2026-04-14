@@ -11,11 +11,10 @@ export interface LogRequestOptions {
 
 /**
  * Decorator để đánh dấu API cần lưu log
- * 
+ *
  * Mặc định tất cả API không lưu log để tiết kiệm bộ nhớ.
  * Chỉ những API được đánh dấu bằng @LogRequest() mới được lưu log.
  * File log sẽ tự động được tổ chức theo ngày: logs/YYYY-MM-DD/
  */
 export const LogRequest = (options?: LogRequestOptions) =>
   SetMetadata(LOG_REQUEST_KEY, options || { fileBaseName: 'api-requests' });
-

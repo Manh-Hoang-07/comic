@@ -6,7 +6,10 @@ import { RedisUtil } from '@/core/utils/redis.util';
 import { RequestContext } from '@/common/shared/utils';
 import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
 
 /** Payload access JWT sau khi verify (field dùng trong validate). */
 type JwtAccessPayload = {
@@ -17,7 +20,9 @@ type JwtAccessPayload = {
 };
 
 /** Chuẩn hóa Prisma (bigint/date) để JSON.stringify/cache + gắn req.user */
-function userEntityToJwtPayload(user: Record<string, unknown>): Record<string, unknown> {
+function userEntityToJwtPayload(
+  user: Record<string, unknown>,
+): Record<string, unknown> {
   return JSON.parse(
     JSON.stringify(user, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
   );
@@ -69,12 +74,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return null;
     }
 
-    const userPayload = userEntityToJwtPayload(user as unknown as Record<string, unknown>);
+    const userPayload = userEntityToJwtPayload(
+      user as unknown as Record<string, unknown>,
+    );
 
     await this.redis.set(cacheKey, JSON.stringify(userPayload), 3600);
 
     return userPayload;
   }
 }
-
-

@@ -8,12 +8,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { NotificationRepositoryModule } from '@/modules/core/notification/notification.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    NotificationRepositoryModule,
-  ],
+  imports: [RbacModule, NotificationRepositoryModule],
   controllers: [AdminNotificationController, UserNotificationController],
   providers: [NotificationService],
   exports: [NotificationService, NotificationRepositoryModule],
 })
-export class NotificationModule { }
+export class NotificationModule {}

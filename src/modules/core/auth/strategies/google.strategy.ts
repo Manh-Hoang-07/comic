@@ -11,7 +11,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     private authService: AuthService,
   ) {
     const clientId = configService.get<string>('googleOAuth.clientId') || '';
-    const clientSecret = configService.get<string>('googleOAuth.clientSecret') || '';
+    const clientSecret =
+      configService.get<string>('googleOAuth.clientSecret') || '';
     const callbackURL = configService.get<string>('googleOAuth.callbackURL');
 
     super({
@@ -42,4 +43,3 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done(null, user);
   }
 }
-

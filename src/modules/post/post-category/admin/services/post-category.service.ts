@@ -1,12 +1,18 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PostCategory } from '@prisma/client';
-import { IPostCategoryRepository, POST_CATEGORY_REPOSITORY } from '@/modules/post/post-category/domain/post-category.repository';
+import {
+  IPostCategoryRepository,
+  POST_CATEGORY_REPOSITORY,
+} from '@/modules/post/post-category/domain/post-category.repository';
 import { BaseContentService } from '@/common/core/services';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
 import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 
 @Injectable()
-export class PostCategoryService extends BaseContentService<PostCategory, IPostCategoryRepository> {
+export class PostCategoryService extends BaseContentService<
+  PostCategory,
+  IPostCategoryRepository
+> {
   constructor(
     @Inject(POST_CATEGORY_REPOSITORY)
     private readonly categoryRepo: IPostCategoryRepository,
@@ -18,7 +24,7 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
     return this.getList({
       ...query,
       limit: 1000,
-      sort: query.sort ?? 'sort_order:ASC'
+      sort: query.sort ?? 'sort_order:ASC',
     });
   }
 
@@ -29,7 +35,10 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
 
     // Handle Slug
     if (!payload.slug) {
-      payload.slug = await SlugHelper.uniqueSlug(payload.name, this.categoryRepo);
+      payload.slug = await SlugHelper.uniqueSlug(
+        payload.name,
+        this.categoryRepo,
+      );
     }
 
     payload.parent_id = toPrimaryKey(payload.parent_id);
@@ -44,7 +53,7 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
       payload.slug = await SlugHelper.uniqueSlug(
         payload.slug || payload.name || '',
         this.categoryRepo,
-        id
+        id,
       );
     }
 
@@ -67,12 +76,10 @@ export class PostCategoryService extends BaseContentService<PostCategory, IPostC
       item.children = item.children.map((child: any) => ({
         id: child.id,
         name: child.name,
-        slug: child.slug
+        slug: child.slug,
       }));
     }
 
     return item;
   }
 }
-
-

@@ -1,13 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { toPlain } from '@/common/shared/utils';
-import { ICommentRepository, COMMENT_REPOSITORY } from '../../domain/comment.repository';
+import {
+  ICommentRepository,
+  COMMENT_REPOSITORY,
+} from '../../domain/comment.repository';
 
 @Injectable()
 export class PublicCommentsService {
   constructor(
     @Inject(COMMENT_REPOSITORY)
     private readonly commentRepository: ICommentRepository,
-  ) { }
+  ) {}
 
   /**
    * Lấy comments của comic (tree structure)
@@ -27,7 +30,7 @@ export class PublicCommentsService {
             name: true,
             username: true,
             image: true,
-          }
+          },
         },
         replies: {
           where: { status: 'visible' },
@@ -38,8 +41,8 @@ export class PublicCommentsService {
                 name: true,
                 username: true,
                 image: true,
-              }
-            }
+              },
+            },
           },
           orderBy: { created_at: 'asc' },
         },
@@ -72,7 +75,7 @@ export class PublicCommentsService {
             name: true,
             username: true,
             image: true,
-          }
+          },
         },
         replies: {
           where: { status: 'visible' },
@@ -83,8 +86,8 @@ export class PublicCommentsService {
                 name: true,
                 username: true,
                 image: true,
-              }
-            }
+              },
+            },
           },
           orderBy: { created_at: 'asc' },
         },
@@ -100,5 +103,3 @@ export class PublicCommentsService {
     };
   }
 }
-
-

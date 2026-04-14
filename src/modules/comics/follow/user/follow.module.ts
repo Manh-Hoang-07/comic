@@ -5,13 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { FollowRepositoryModule } from '../follow.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    FollowRepositoryModule,
-  ],
+  imports: [RbacModule, FollowRepositoryModule],
   controllers: [FollowsController],
   providers: [FollowsService],
   exports: [FollowsService],
 })
-export class UserFollowsModule { }
-
+export class UserFollowsModule {}

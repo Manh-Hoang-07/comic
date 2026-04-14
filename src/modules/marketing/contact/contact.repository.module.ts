@@ -4,12 +4,12 @@ import { ContactRepositoryImpl } from './infrastructure/repositories/contact.rep
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: CONTACT_REPOSITORY,
-            useClass: ContactRepositoryImpl,
-        },
-    ],
-    exports: [CONTACT_REPOSITORY],
+  providers: [
+    {
+      provide: CONTACT_REPOSITORY,
+      useClass: ContactRepositoryImpl,
+    },
+  ],
+  exports: [CONTACT_REPOSITORY],
 })
-export class ContactRepositoryModule { }
+export class ContactRepositoryModule {}

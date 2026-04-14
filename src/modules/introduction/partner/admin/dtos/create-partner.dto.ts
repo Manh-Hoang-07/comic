@@ -47,4 +47,3 @@ export class CreatePartnerDto {
   @Type(() => Number)
   sort_order?: number = 0;
 }
-

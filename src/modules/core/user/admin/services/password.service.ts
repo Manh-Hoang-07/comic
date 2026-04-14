@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 
 @Injectable()
@@ -9,7 +12,7 @@ export class PasswordService {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
-  ) { }
+  ) {}
 
   // ── Password Operations ────────────────────────────────────────────────────
 
@@ -27,5 +30,3 @@ export class PasswordService {
     return { success: true, message: 'Đổi mật khẩu thành công' };
   }
 }
-
-

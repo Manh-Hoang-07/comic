@@ -1,7 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IContextRepository, CONTEXT_REPOSITORY } from '@/modules/core/context/context/domain/context.repository';
-import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
+import {
+  IContextRepository,
+  CONTEXT_REPOSITORY,
+} from '@/modules/core/context/context/domain/context.repository';
+import {
+  IGroupRepository,
+  GROUP_REPOSITORY,
+} from '@/modules/core/context/group/domain/group.repository';
+import {
+  IUserGroupRepository,
+  USER_GROUP_REPOSITORY,
+} from '@/modules/core/rbac/user-group/domain/user-group.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
 
@@ -14,7 +23,7 @@ export class UserContextService {
     private readonly groupRepo: IGroupRepository,
     @Inject(USER_GROUP_REPOSITORY)
     private readonly userGroupRepo: IUserGroupRepository,
-  ) { }
+  ) {}
 
   async getUserContexts(userId: any) {
     const userGroups = await this.userGroupRepo.findByUserId(userId);
@@ -30,12 +39,13 @@ export class UserContextService {
 
     const contexts = await this.contextRepo.findActiveByIds(contextIds);
 
-    return contexts.map(ctx => this.transform(ctx));
+    return contexts.map((ctx) => this.transform(ctx));
   }
 
   async getUserContextsForTransfer(userId: any) {
     // Look up system context by its code to remain DB agnostic (avoiding hardcoded ID 1)
-    const systemContext = await this.contextRepo.findByCode(SYSTEM_CONTEXT_CODE);
+    const systemContext =
+      await this.contextRepo.findByCode(SYSTEM_CONTEXT_CODE);
 
     const userContexts = await this.getUserContexts(userId);
 
@@ -47,7 +57,8 @@ export class UserContextService {
 
     // Filter unique by ID
     const uniqueContexts = allContexts.filter(
-      (ctx, index, self) => index === self.findIndex((c) => String(c.id) === String(ctx.id)),
+      (ctx, index, self) =>
+        index === self.findIndex((c) => String(c.id) === String(ctx.id)),
     );
 
     return uniqueContexts;
@@ -62,6 +73,3 @@ export class UserContextService {
     };
   }
 }
-
-
-

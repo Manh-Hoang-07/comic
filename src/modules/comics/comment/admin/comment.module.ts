@@ -5,15 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { CommentRepositoryModule } from '../comment.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    CommentRepositoryModule,
-  ],
+  imports: [RbacModule, CommentRepositoryModule],
   controllers: [CommentsController],
   providers: [CommentsService],
   exports: [CommentsService],
 })
-export class AdminCommentsModule { }
-
-
-
+export class AdminCommentsModule {}

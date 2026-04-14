@@ -11,7 +11,17 @@ export interface SortOptions {
  */
 export interface FilterOptions {
   field: string;
-  operator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'nin' | 'like' | 'between';
+  operator:
+    | 'eq'
+    | 'ne'
+    | 'gt'
+    | 'gte'
+    | 'lt'
+    | 'lte'
+    | 'in'
+    | 'nin'
+    | 'like'
+    | 'between';
   value: any;
 }
 
@@ -19,9 +29,7 @@ export interface FilterOptions {
  * Filters - Điều kiện tìm kiếm (conditions)
  * Có thể dùng object key-value đơn giản hoặc FilterOptions[] nâng cao
  */
-export type Filters<T> = 
-  | Partial<Record<keyof T, any>>
-  | FilterOptions[];
+export type Filters<T> = Partial<Record<keyof T, any>> | FilterOptions[];
 
 /**
  * Relation Options Interface
@@ -48,7 +56,7 @@ export interface Options {
   // Other
   select?: string[];
   includeDeleted?: boolean;
-  
+
   // Performance & Optimization Options
   // Maximum limit to prevent memory issues (default: 1000)
   maxLimit?: number;
@@ -81,4 +89,3 @@ export interface PaginatedListResult<T> {
     previousPage?: number;
   };
 }
-

@@ -3,7 +3,11 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { serializeForCache, deserializeFromCache, isCacheMiss } from '../cache-serializer';
+import {
+  serializeForCache,
+  deserializeFromCache,
+  isCacheMiss,
+} from '../cache-serializer';
 
 @Injectable()
 export class CacheService {
@@ -14,7 +18,7 @@ export class CacheService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly redis: RedisUtil,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   // ── Driver selection ──────────────────────────────────────────────────────
 

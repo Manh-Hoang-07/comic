@@ -2,7 +2,7 @@
  * Generate a random 6-digit OTP string.
  */
 export function generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 /**
@@ -11,21 +11,24 @@ export function generateOtp(): string {
  * @param email - Target user email
  */
 export function buildOtpKey(type: string, email: string): string {
-    return `otp:${type}:${email.toLowerCase()}`;
+  return `otp:${type}:${email.toLowerCase()}`;
 }
 
 /**
  * Check if the provided OTP matches the cached one, with development bypass.
  */
-export function isValidOtp(provided: string, cached: string | null | undefined): boolean {
-    if (!cached) return false;
+export function isValidOtp(
+  provided: string,
+  cached: string | null | undefined,
+): boolean {
+  if (!cached) return false;
 
-    // Normal verification
-    if (provided === cached) return true;
+  // Normal verification
+  if (provided === cached) return true;
 
-    // Development bypass
-    const isDevEnv = process.env.NODE_ENV === 'development';
-    if (isDevEnv && provided === '123456') return true;
+  // Development bypass
+  const isDevEnv = process.env.NODE_ENV === 'development';
+  if (isDevEnv && provided === '123456') return true;
 
-    return false;
+  return false;
 }

@@ -5,4 +5,3 @@ export class UploadResponseDto {
   size: number;
   mimetype: string;
 }
-

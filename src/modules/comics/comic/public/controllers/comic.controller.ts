@@ -5,7 +5,7 @@ import { PublicComicsService } from '../services/comic.service';
 
 @Controller('public/comics')
 export class PublicComicsController {
-  constructor(private readonly comicsService: PublicComicsService) { }
+  constructor(private readonly comicsService: PublicComicsService) {}
 
   @SkipThrottle()
   @Permission('public')
@@ -26,5 +26,3 @@ export class PublicComicsController {
     return this.comicsService.getChaptersBySlug(slug);
   }
 }
-
-

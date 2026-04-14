@@ -1,13 +1,12 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Put,
-    Param,
-    Delete,
-    Query,
-    
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Query,
 } from '@nestjs/common';
 import { ContentTemplateService } from '../services/content-template.service';
 import { ContentTemplateExecutionService } from '../../services/content-template-execution.service';
@@ -18,61 +17,56 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('admin/content-templates')
 export class ContentTemplateController {
-    constructor(
-        private readonly service: ContentTemplateService,
-        private readonly executionService: ContentTemplateExecutionService,
-    ) { }
+  constructor(
+    private readonly service: ContentTemplateService,
+    private readonly executionService: ContentTemplateExecutionService,
+  ) {}
 
-    @Permission('content_template.manage')
-    @Post()
-    create(@Body() dto: CreateContentTemplateDto) {
-        return this.service.create(dto);
-    }
+  @Permission('content_template.manage')
+  @Post()
+  create(@Body() dto: CreateContentTemplateDto) {
+    return this.service.create(dto);
+  }
 
-    @Permission('content_template.manage')
-    @Get()
-    findAll(@Query() query: ContentTemplateQueryDto) {
-        return this.service.getList(query);
-    }
+  @Permission('content_template.manage')
+  @Get()
+  findAll(@Query() query: ContentTemplateQueryDto) {
+    return this.service.getList(query);
+  }
 
-    @Permission('content_template.manage')
-    @Get('simple')
-    getSimpleList(@Query() query: any) {
-        return this.service.getSimpleList(query);
-    }
+  @Permission('content_template.manage')
+  @Get('simple')
+  getSimpleList(@Query() query: any) {
+    return this.service.getSimpleList(query);
+  }
 
-    @Permission('content_template.manage')
-    @Get(':id')
-    findOne(@Param('id') id: any) {
-        return this.service.getOne(id);
-    }
+  @Permission('content_template.manage')
+  @Get(':id')
+  findOne(@Param('id') id: any) {
+    return this.service.getOne(id);
+  }
 
-    @Permission('content_template.manage')
-    @Put(':id')
-    update(
-        @Param('id') id: any,
-        @Body() dto: UpdateContentTemplateDto,
-    ) {
-        return this.service.update(id, dto);
-    }
+  @Permission('content_template.manage')
+  @Put(':id')
+  update(@Param('id') id: any, @Body() dto: UpdateContentTemplateDto) {
+    return this.service.update(id, dto);
+  }
 
-    @Permission('content_template.manage')
-    @Delete(':id')
-    remove(@Param('id') id: any) {
-        return this.service.delete(id);
-    }
+  @Permission('content_template.manage')
+  @Delete(':id')
+  remove(@Param('id') id: any) {
+    return this.service.delete(id);
+  }
 
-    @Permission('content_template.manage')
-    @Post(':code/test')
-    testExecute(
-        @Param('code') code: string,
-        @Body() body: { to: string; variables: Record<string, any> },
-    ) {
-        return this.executionService.execute(code, {
-            to: body.to,
-            variables: body.variables,
-        });
-    }
+  @Permission('content_template.manage')
+  @Post(':code/test')
+  testExecute(
+    @Param('code') code: string,
+    @Body() body: { to: string; variables: Record<string, any> },
+  ) {
+    return this.executionService.execute(code, {
+      to: body.to,
+      variables: body.variables,
+    });
+  }
 }
-
-

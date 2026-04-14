@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ForbiddenException, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  ForbiddenException,
+  Query,
+} from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { AdminContextService } from '../services/context.service';
@@ -12,20 +22,23 @@ export class AdminContextController {
   constructor(
     private readonly contextService: AdminContextService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   /**
    * Tạo context mới (chỉ system admin)
    */
   @Permission('group.manage')
   @Post()
-  async create(@Body() body: {
-    type: string;
-    ref_id?: any | null;
-    name: string;
-    code?: string;
-    status?: string;
-  }) {
+  async create(
+    @Body()
+    body: {
+      type: string;
+      ref_id?: any | null;
+      name: string;
+      code?: string;
+      status?: string;
+    },
+  ) {
     const userId = this.auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
@@ -94,6 +107,3 @@ export class AdminContextController {
     return { message: 'Context deleted successfully' };
   }
 }
-
-
-

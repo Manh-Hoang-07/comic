@@ -19,5 +19,4 @@ import { UserRepositoryModule } from '@/modules/core/iam/user.repository.module'
   providers: [UserGroupService],
   exports: [UserGroupService],
 })
-export class UserGroupModule { }
-
+export class UserGroupModule {}

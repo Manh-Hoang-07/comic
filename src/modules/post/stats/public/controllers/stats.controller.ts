@@ -4,7 +4,7 @@ import { PostStatsService } from '../services/stats.service';
 
 @Controller('public/posts')
 export class PublicPostStatsController {
-  constructor(private readonly statsService: PostStatsService) { }
+  constructor(private readonly statsService: PostStatsService) {}
 
   @Permission('public')
   @Get(':id/stats')
@@ -12,6 +12,3 @@ export class PublicPostStatsController {
     return this.statsService.getPostStats(id);
   }
 }
-
-
-

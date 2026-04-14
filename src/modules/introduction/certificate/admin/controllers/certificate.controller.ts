@@ -22,7 +22,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/certificates')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class CertificateController {
-  constructor(private readonly certificateService: CertificateService) { }
+  constructor(private readonly certificateService: CertificateService) {}
 
   @LogRequest()
   @Post()
@@ -51,7 +51,10 @@ export class CertificateController {
 
   @Put(':id')
   @Permission('certificate.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateCertificateDto: UpdateCertificateDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateCertificateDto: UpdateCertificateDto,
+  ) {
     return this.certificateService.update(id, updateCertificateDto);
   }
 
@@ -61,5 +64,3 @@ export class CertificateController {
     return this.certificateService.delete(id);
   }
 }
-
-

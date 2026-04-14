@@ -7,4 +7,4 @@ import { SystemConfigRepositoryModule } from '@/modules/core/system-config/syste
   providers: [MailService],
   exports: [MailService],
 })
-export class AppMailModule { }
+export class AppMailModule {}

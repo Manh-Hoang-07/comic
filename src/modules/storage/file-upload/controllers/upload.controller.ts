@@ -18,8 +18,7 @@ export class UploadController {
   constructor(
     private readonly uploadService: UploadService,
     private readonly fileValidationService: FileValidationService,
-  ) {
-  }
+  ) {}
 
   @Permission('public')
   @Post('file')
@@ -33,13 +32,16 @@ export class UploadController {
       },
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File): Promise<UploadResponseDto> {
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<UploadResponseDto> {
     if (!file) {
       throw new BadRequestException('File is required');
     }
 
     // Validate type + content + size, and sanitize name
-    const { sanitizedOriginalName } = this.fileValidationService.validateFile(file);
+    const { sanitizedOriginalName } =
+      this.fileValidationService.validateFile(file);
     file.originalname = sanitizedOriginalName;
 
     return this.uploadService.uploadFile(file);
@@ -57,19 +59,20 @@ export class UploadController {
       },
     }),
   )
-  async uploadFiles(@UploadedFiles() files: Express.Multer.File[]): Promise<UploadResponseDto[]> {
+  async uploadFiles(
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<UploadResponseDto[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('Files are required');
     }
 
     // Validate each file (type + content + size) and sanitize names
     for (const file of files) {
-      const { sanitizedOriginalName } = this.fileValidationService.validateFile(file);
+      const { sanitizedOriginalName } =
+        this.fileValidationService.validateFile(file);
       file.originalname = sanitizedOriginalName;
     }
 
     return this.uploadService.uploadFiles(files);
   }
 }
-
-

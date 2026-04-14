@@ -17,11 +17,11 @@ export class HomepageService {
 
   // Cache TTL theo từng block (giây)
   private readonly CACHE_TTL = {
-    TOP_VIEWED: 420,        // 7 phút - Top viewed thay đổi không quá nhanh
-    TRENDING: 420,          // 7 phút - Truyện hot
-    POPULAR: 1200,          // 20 phút - Truyện nổi bật (10-30 phút)
-    NEWEST: 120,            // 2 phút - Truyện mới (1-3 phút)
-    LATEST_CHAPTERS: 120,   // 2 phút - Chapters mới nhất (1-3 phút)
+    TOP_VIEWED: 420, // 7 phút - Top viewed thay đổi không quá nhanh
+    TRENDING: 420, // 7 phút - Truyện hot
+    POPULAR: 1200, // 20 phút - Truyện nổi bật (10-30 phút)
+    NEWEST: 120, // 2 phút - Truyện mới (1-3 phút)
+    LATEST_CHAPTERS: 120, // 2 phút - Chapters mới nhất (1-3 phút)
     COMIC_CATEGORIES: 43200, // 12 giờ - Danh mục (1-24 giờ)
   };
 
@@ -29,7 +29,7 @@ export class HomepageService {
     private readonly cacheService: CacheService,
     private readonly comicsService: PublicComicsService,
     private readonly comicCategoriesService: PublicComicCategoriesService,
-  ) { }
+  ) {}
 
   /**
    * Lấy tất cả dữ liệu cần thiết cho trang chủ
@@ -132,9 +132,7 @@ export class HomepageService {
    */
   async clearAllCache(): Promise<void> {
     await Promise.all(
-      Object.values(this.CACHE_KEYS).map((key) =>
-        this.cacheService.del(key),
-      ),
+      Object.values(this.CACHE_KEYS).map((key) => this.cacheService.del(key)),
     );
   }
 
@@ -164,5 +162,3 @@ export class HomepageService {
     await this.cacheService.del(this.CACHE_KEYS.COMIC_CATEGORIES);
   }
 }
-
-

@@ -1,11 +1,22 @@
-import { Injectable, Inject, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ComicReview } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IReviewRepository, REVIEW_REPOSITORY } from '../../domain/review.repository';
+import {
+  IReviewRepository,
+  REVIEW_REPOSITORY,
+} from '../../domain/review.repository';
 import { RequestContext } from '@/common/shared/utils';
 
 @Injectable()
-export class ReviewsService extends BaseService<ComicReview, IReviewRepository> {
+export class ReviewsService extends BaseService<
+  ComicReview,
+  IReviewRepository
+> {
   constructor(
     @Inject(REVIEW_REPOSITORY)
     protected readonly reviewRepository: IReviewRepository,
@@ -29,7 +40,7 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
             name: true,
             username: true,
             image: true,
-          }
+          },
         },
       },
       sort: options?.sort ?? 'created_at:desc',
@@ -86,12 +97,4 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
 
     return { success: true };
   }
-
 }
-
-
-
-
-
-
-

@@ -5,12 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { MarketingRepositoryModule } from '@/modules/marketing/marketing.repository.module';
 
 @Module({
-    imports: [
-        RbacModule,
-        MarketingRepositoryModule,
-    ],
-    controllers: [BannerLocationController],
-    providers: [BannerLocationService],
-    exports: [BannerLocationService],
+  imports: [RbacModule, MarketingRepositoryModule],
+  controllers: [BannerLocationController],
+  providers: [BannerLocationService],
+  exports: [BannerLocationService],
 })
-export class AdminBannerLocationModule { }
+export class AdminBannerLocationModule {}

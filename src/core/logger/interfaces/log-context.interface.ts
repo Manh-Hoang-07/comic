@@ -11,5 +11,3 @@ export interface LogContext {
   extra?: Record<string, any>;
   [key: string]: any;
 }
-
-

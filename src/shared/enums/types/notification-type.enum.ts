@@ -16,6 +16,3 @@ export const NotificationTypeLabels: Record<NotificationType, string> = {
   [NotificationType.error]: 'Lỗi',
   [NotificationType.promotion]: 'Khuyến mãi',
 };
-
-
-

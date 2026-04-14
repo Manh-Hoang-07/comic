@@ -1,10 +1,14 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('googleOAuth', () => {
-  const appUrl = (process.env.APP_URL || 'http://localhost:8000').replace(/\/$/, '');
+  const appUrl = (process.env.APP_URL || 'http://localhost:8000').replace(
+    /\/$/,
+    '',
+  );
   const apiPrefix = process.env.GLOBAL_PREFIX || 'api';
 
-  let callbackURL = process.env.GOOGLE_CALLBACK_URL || `/${apiPrefix}/google/callback`;
+  let callbackURL =
+    process.env.GOOGLE_CALLBACK_URL || `/${apiPrefix}/google/callback`;
 
   // Prepend appUrl if callbackURL is a relative path
   if (callbackURL.startsWith('/')) {
@@ -18,5 +22,3 @@ export default registerAs('googleOAuth', () => {
     frontendUrl: process.env.GOOGLE_FRONTEND_URL || 'http://localhost:3000',
   };
 });
-
-

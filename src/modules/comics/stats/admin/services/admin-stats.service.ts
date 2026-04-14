@@ -1,12 +1,20 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { IComicRepository, COMIC_REPOSITORY } from '../../../comic/domain/comic.repository';
-import { IComicStatsRepository, COMIC_STATS_REPOSITORY } from '../../domain/comic-stats.repository';
-import { IComicViewRepository, COMIC_VIEW_REPOSITORY } from '../../domain/comic-view.repository';
+import {
+  IComicRepository,
+  COMIC_REPOSITORY,
+} from '../../../comic/domain/comic.repository';
+import {
+  IComicStatsRepository,
+  COMIC_STATS_REPOSITORY,
+} from '../../domain/comic-stats.repository';
+import {
+  IComicViewRepository,
+  COMIC_VIEW_REPOSITORY,
+} from '../../domain/comic-view.repository';
 import { RequestContext } from '@/common/shared/utils';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
-
 
 @Injectable()
 export class AdminStatsService {
@@ -18,7 +26,7 @@ export class AdminStatsService {
     @Inject(COMIC_VIEW_REPOSITORY)
     private readonly viewRepository: IComicViewRepository,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   /**
    * Dashboard analytics
@@ -26,40 +34,44 @@ export class AdminStatsService {
   async getDashboard() {
     const filter = getGroupFilter();
 
-    const [totalComics, totalViews, totalFollows, topComics] = await Promise.all([
-      this.comicRepository.count(filter as any),
-      this.statsRepository.sum('view_count', filter),
-      this.statsRepository.sum('follow_count', filter),
-      this.statsRepository.findMany(filter, {
-        sort: 'view_count:DESC',
-        limit: 10,
-        include: { comic: true }
-      } as any),
-    ]);
+    const [totalComics, totalViews, totalFollows, topComics] =
+      await Promise.all([
+        this.comicRepository.count(filter as any),
+        this.statsRepository.sum('view_count', filter),
+        this.statsRepository.sum('follow_count', filter),
+        this.statsRepository.findMany(filter, {
+          sort: 'view_count:DESC',
+          limit: 10,
+          include: { comic: true },
+        } as any),
+      ]);
 
     return {
       total_comics: totalComics,
       total_views: totalViews,
       total_follows: totalFollows,
-      top_comics: topComics.map(s => ({
+      top_comics: topComics.map((s) => ({
         comic: (s as any).comic,
         stats: s,
       })),
     };
   }
 
-
   /**
    * Top comics
    */
-  async getTopComics(limit: number = 20, sortBy: 'views' | 'follows' | 'rating' = 'views') {
+  async getTopComics(
+    limit: number = 20,
+    sortBy: 'views' | 'follows' | 'rating' = 'views',
+  ) {
     const filter = getGroupFilter();
 
-    const sort = sortBy === 'views'
-      ? 'view_count:DESC'
-      : sortBy === 'follows'
-        ? 'follow_count:DESC'
-        : 'rating_sum:DESC';
+    const sort =
+      sortBy === 'views'
+        ? 'view_count:DESC'
+        : sortBy === 'follows'
+          ? 'follow_count:DESC'
+          : 'rating_sum:DESC';
 
     const stats = await this.statsRepository.findMany(filter, {
       sort,
@@ -67,12 +79,11 @@ export class AdminStatsService {
       include: { comic: true },
     } as any);
 
-    return stats.map(s => ({
+    return stats.map((s) => ({
       comic: (s as any).comic,
       stats: s,
     }));
   }
-
 
   /**
    * Views over time
@@ -85,7 +96,10 @@ export class AdminStatsService {
     end.setHours(0, 0, 0, 0);
 
     // Lấy comic IDs theo group filter (nếu có) để groupBy theo ngày
-    const comics = await this.comicRepository.findMany(filter as any, { select: { id: true } } as any);
+    const comics = await this.comicRepository.findMany(
+      filter as any,
+      { select: { id: true } } as any,
+    );
     const comicIds = (comics as any[]).map((c) => (c as any).id);
 
     if (comicIds.length === 0) return [];
@@ -109,6 +123,3 @@ export class AdminStatsService {
     }));
   }
 }
-
-
-

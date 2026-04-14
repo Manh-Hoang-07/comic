@@ -1,8 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Chapter } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IChapterRepository, CHAPTER_REPOSITORY } from '../../domain/chapter.repository';
-import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
+import {
+  IChapterRepository,
+  CHAPTER_REPOSITORY,
+} from '../../domain/chapter.repository';
+import {
+  verifyGroupOwnership,
+  getGroupFilter,
+} from '@/common/shared/utils/group-ownership.util';
 import { ChapterActionService } from './chapter-action.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
@@ -66,7 +72,10 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     const payload = await super.beforeCreate(data);
 
     if (payload.comic_id && payload.chapter_index !== undefined) {
-      await this.actionService.validateUniqueIndex(toPrimaryKey(payload.comic_id), payload.chapter_index);
+      await this.actionService.validateUniqueIndex(
+        toPrimaryKey(payload.comic_id),
+        payload.chapter_index,
+      );
     }
 
     delete payload.pages;
@@ -77,8 +86,15 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     const entity = await this.getOne(id); // Already includes ownership check
     const payload = { ...data };
 
-    if (payload.chapter_index !== undefined && payload.chapter_index !== entity.chapter_index) {
-      await this.actionService.validateUniqueIndex(toPrimaryKey(entity.comic_id), payload.chapter_index, toPrimaryKey(id));
+    if (
+      payload.chapter_index !== undefined &&
+      payload.chapter_index !== entity.chapter_index
+    ) {
+      await this.actionService.validateUniqueIndex(
+        toPrimaryKey(entity.comic_id),
+        payload.chapter_index,
+        toPrimaryKey(id),
+      );
     }
 
     return payload;
@@ -89,14 +105,16 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
     return true;
   }
 
-  protected override async afterDelete(id: any, entity: Chapter): Promise<void> {
+  protected override async afterDelete(
+    id: any,
+    entity: Chapter,
+  ): Promise<void> {
     if (entity && entity.comic_id) {
-      await this.actionService.updateComicTimeline(toPrimaryKey(entity.comic_id));
+      await this.actionService.updateComicTimeline(
+        toPrimaryKey(entity.comic_id),
+      );
     }
   }
 
   // ── Transformation ─────────────────────────────────────────────────────────
-
 }
-
-

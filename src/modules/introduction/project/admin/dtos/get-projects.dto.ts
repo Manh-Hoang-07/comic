@@ -1,4 +1,12 @@
-import { IsOptional, IsInt, Min, Max, IsString, IsBoolean, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsString,
+  IsBoolean,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProjectStatus } from '@/shared/enums/types/project-status.enum';
 
@@ -37,4 +45,3 @@ export class GetProjectsDto {
   @IsString()
   sort_order?: 'asc' | 'desc' = 'desc';
 }
-

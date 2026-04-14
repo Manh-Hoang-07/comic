@@ -105,4 +105,3 @@ export class CreateProjectDto {
   @MaxLength(500)
   og_image?: string;
 }
-

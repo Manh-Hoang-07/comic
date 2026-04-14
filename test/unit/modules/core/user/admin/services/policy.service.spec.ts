@@ -15,7 +15,10 @@ describe('PolicyService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PolicyService, { provide: USER_REPOSITORY, useValue: userRepo }],
+      providers: [
+        PolicyService,
+        { provide: USER_REPOSITORY, useValue: userRepo },
+      ],
     }).compile();
 
     policy = module.get(PolicyService);
@@ -28,9 +31,11 @@ describe('PolicyService', () => {
 
   describe('assertAccess', () => {
     it('allows when context is system', async () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) =>
-        key === 'context' ? { type: 'system' } : undefined,
-      );
+      jest
+        .spyOn(RequestContext, 'get')
+        .mockImplementation((key: string) =>
+          key === 'context' ? { type: 'system' } : undefined,
+        );
 
       await expect(policy.assertAccess(1)).resolves.toBeUndefined();
       expect(userRepo.exists).not.toHaveBeenCalled();
@@ -39,7 +44,9 @@ describe('PolicyService', () => {
     it('throws when not system and missing context or groupId', async () => {
       jest.spyOn(RequestContext, 'get').mockReturnValue(undefined);
 
-      await expect(policy.assertAccess(1)).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(policy.assertAccess(1)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
       expect(userRepo.exists).not.toHaveBeenCalled();
     });
 
@@ -51,7 +58,9 @@ describe('PolicyService', () => {
       });
       userRepo.exists.mockResolvedValue(false);
 
-      await expect(policy.assertAccess(5)).rejects.toThrow(/không có quyền truy cập/);
+      await expect(policy.assertAccess(5)).rejects.toThrow(
+        /không có quyền truy cập/,
+      );
       expect(userRepo.exists).toHaveBeenCalled();
     });
 
@@ -69,19 +78,26 @@ describe('PolicyService', () => {
 
   describe('roleScope', () => {
     it('returns all when system and no groupIds filter', () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) =>
-        key === 'context' ? { type: 'system' } : undefined,
-      );
+      jest
+        .spyOn(RequestContext, 'get')
+        .mockImplementation((key: string) =>
+          key === 'context' ? { type: 'system' } : undefined,
+        );
 
       expect(policy.roleScope()).toEqual({ kind: 'all' });
     });
 
     it('returns scoped list when system and groupIds provided', () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) =>
-        key === 'context' ? { type: 'system' } : undefined,
-      );
+      jest
+        .spyOn(RequestContext, 'get')
+        .mockImplementation((key: string) =>
+          key === 'context' ? { type: 'system' } : undefined,
+        );
 
-      expect(policy.roleScope('1,2')).toEqual({ kind: 'scoped', groupIds: ['1', '2'] });
+      expect(policy.roleScope('1,2')).toEqual({
+        kind: 'scoped',
+        groupIds: ['1', '2'],
+      });
     });
 
     it('returns none when group admin requests only other groups', () => {

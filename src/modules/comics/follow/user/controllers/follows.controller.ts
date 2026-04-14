@@ -1,17 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
-  
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param } from '@nestjs/common';
 import { FollowsService } from '../services/follows.service';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('user/follows')
 export class FollowsController {
-  constructor(private readonly followsService: FollowsService) { }
+  constructor(private readonly followsService: FollowsService) {}
 
   @Permission('user')
   @Get()
@@ -37,7 +30,3 @@ export class FollowsController {
     return { is_following: await this.followsService.isFollowing(comicId) };
   }
 }
-
-
-
-

@@ -1,11 +1,18 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ITestimonialRepository, TESTIMONIAL_REPOSITORY, TestimonialFilter } from '@/modules/introduction/testimonial/domain/testimonial.repository';
+import {
+  ITestimonialRepository,
+  TESTIMONIAL_REPOSITORY,
+  TestimonialFilter,
+} from '@/modules/introduction/testimonial/domain/testimonial.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { BaseService } from '@/common/core/services';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
-export class PublicTestimonialService extends BaseService<any, ITestimonialRepository> {
+export class PublicTestimonialService extends BaseService<
+  any,
+  ITestimonialRepository
+> {
   constructor(
     @Inject(TESTIMONIAL_REPOSITORY)
     private readonly testimonialRepo: ITestimonialRepository,
@@ -15,7 +22,7 @@ export class PublicTestimonialService extends BaseService<any, ITestimonialRepos
 
   async getList(query: any) {
     const filter: TestimonialFilter = {
-      status: BasicStatus.active
+      status: BasicStatus.active,
     };
     if (query.search) filter.search = query.search;
     if (query.projectId) filter.projectId = query.projectId;
@@ -29,12 +36,20 @@ export class PublicTestimonialService extends BaseService<any, ITestimonialRepos
   }
 
   async getFeatured(limit: number = 10) {
-    const result = await this.getList({ featured: true, limit, page: 1 } as any);
+    const result = await this.getList({
+      featured: true,
+      limit,
+      page: 1,
+    } as any);
     return result.data as any[];
   }
 
   async findByProject(projectId: any) {
-    const result = await this.getList({ projectId, limit: 100, page: 1 } as any);
+    const result = await this.getList({
+      projectId,
+      limit: 100,
+      page: 1,
+    } as any);
     return result.data as any[];
   }
 
@@ -52,6 +67,3 @@ export class PublicTestimonialService extends BaseService<any, ITestimonialRepos
     return item;
   }
 }
-
-
-

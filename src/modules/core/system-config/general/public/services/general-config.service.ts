@@ -1,10 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IGeneralConfigRepository, GENERAL_CONFIG_REPOSITORY } from '../../domain/repositories/general-config.repository';
+import {
+  IGeneralConfigRepository,
+  GENERAL_CONFIG_REPOSITORY,
+} from '../../domain/repositories/general-config.repository';
 import { CacheService } from '@/common/cache/services';
 import { BaseService } from '@/common/core/services';
 
 @Injectable()
-export class PublicGeneralConfigService extends BaseService<any, IGeneralConfigRepository> {
+export class PublicGeneralConfigService extends BaseService<
+  any,
+  IGeneralConfigRepository
+> {
   private readonly CACHE_KEY = 'public:general-config';
   private readonly CACHE_TTL = 3600; // 1 hour
 
@@ -61,4 +67,3 @@ export class PublicGeneralConfigService extends BaseService<any, IGeneralConfigR
     return item;
   }
 }
-

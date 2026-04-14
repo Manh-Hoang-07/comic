@@ -8,7 +8,7 @@ export class BusinessException extends HttpException {
   constructor(
     message: string,
     errorCode?: string,
-    statusCode: HttpStatus = HttpStatus.BAD_REQUEST
+    statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
   ) {
     super(
       {
@@ -17,7 +17,7 @@ export class BusinessException extends HttpException {
         errorCode: errorCode || 'BUSINESS_ERROR',
         httpStatus: statusCode,
       },
-      statusCode
+      statusCode,
     );
   }
 }
@@ -27,7 +27,7 @@ export class BusinessException extends HttpException {
  */
 export class ResourceNotFoundException extends BusinessException {
   constructor(resource: string, identifier?: string | number) {
-    const message = identifier 
+    const message = identifier
       ? `${resource} with ID ${identifier} not found`
       : `${resource} not found`;
     super(message, 'RESOURCE_NOT_FOUND', HttpStatus.NOT_FOUND);
@@ -42,7 +42,7 @@ export class InsufficientStockException extends BusinessException {
     super(
       `Insufficient stock for ${productName}. Available: ${available}, Requested: ${requested}`,
       'INSUFFICIENT_STOCK',
-      HttpStatus.BAD_REQUEST
+      HttpStatus.BAD_REQUEST,
     );
   }
 }
@@ -64,7 +64,7 @@ export class DuplicateResourceException extends BusinessException {
     super(
       `${resource} with ${field} '${value}' already exists`,
       'DUPLICATE_RESOURCE',
-      HttpStatus.CONFLICT
+      HttpStatus.CONFLICT,
     );
   }
 }
@@ -74,11 +74,7 @@ export class DuplicateResourceException extends BusinessException {
  */
 export class ValidationException extends BusinessException {
   constructor(message: string, errors?: any) {
-    super(
-      message,
-      'VALIDATION_ERROR',
-      HttpStatus.UNPROCESSABLE_ENTITY
-    );
+    super(message, 'VALIDATION_ERROR', HttpStatus.UNPROCESSABLE_ENTITY);
     if (errors) {
       (this.getResponse() as any).errors = errors;
     }
@@ -89,7 +85,9 @@ export class ValidationException extends BusinessException {
  * Unauthorized Access Exception
  */
 export class UnauthorizedAccessException extends BusinessException {
-  constructor(message: string = 'You do not have permission to perform this action') {
+  constructor(
+    message: string = 'You do not have permission to perform this action',
+  ) {
     super(message, 'UNAUTHORIZED_ACCESS', HttpStatus.FORBIDDEN);
   }
 }
@@ -108,7 +106,7 @@ export class PaymentRequiredException extends BusinessException {
  */
 export class ServiceUnavailableException extends BusinessException {
   constructor(service: string, reason?: string) {
-    const message = reason 
+    const message = reason
       ? `${service} is currently unavailable: ${reason}`
       : `${service} is currently unavailable`;
     super(message, 'SERVICE_UNAVAILABLE', HttpStatus.SERVICE_UNAVAILABLE);

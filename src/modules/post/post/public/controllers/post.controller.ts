@@ -17,10 +17,13 @@ import { CacheInterceptor, Cacheable } from '@/common/cache';
 @Controller('public/posts')
 @UseInterceptors(CacheInterceptor)
 export class PostController {
-  constructor(private readonly postService: PostService) { }
+  constructor(private readonly postService: PostService) {}
 
   @Permission('public')
-  @Cacheable({ key: 'posts:list:${query.page}:${query.limit}:${query.category_slug}', ttl: 600 })
+  @Cacheable({
+    key: 'posts:list:${query.page}:${query.limit}:${query.category_slug}',
+    ttl: 600,
+  })
   @Get()
   async getList(@Query(ValidationPipe) query: GetPostsDto) {
     return this.postService.getList(query);
@@ -44,5 +47,3 @@ export class PostController {
     return this.postService.getOne(dto.slug);
   }
 }
-
-

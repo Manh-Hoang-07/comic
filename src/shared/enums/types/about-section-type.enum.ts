@@ -20,6 +20,3 @@ export const AboutSectionTypeLabels: Record<AboutSectionType, string> = {
   [AboutSectionType.achievement]: 'Thành tựu',
   [AboutSectionType.other]: 'Khác',
 };
-
-
-

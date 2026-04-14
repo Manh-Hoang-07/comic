@@ -2,14 +2,16 @@
  * Helper to check if a string is a valid UUID.
  */
 function isUUID(id: string): boolean {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    id,
+  );
 }
 
 /**
  * Helper to check if a string is a valid MongoDB ObjectId.
  */
 function isObjectId(id: string): boolean {
-    return /^[0-9a-fA-F]{24}$/.test(id);
+  return /^[0-9a-fA-F]{24}$/.test(id);
 }
 
 /**
@@ -24,7 +26,7 @@ function isObjectId(id: string): boolean {
 export type DbIdType = 'bigint' | 'uuid' | 'objectid';
 
 export function getDbIdType(): DbIdType {
-    return (process.env.DB_ID_TYPE as DbIdType) || 'bigint';
+  return (process.env.DB_ID_TYPE as DbIdType) || 'bigint';
 }
 
 /**
@@ -38,28 +40,32 @@ export function getDbIdType(): DbIdType {
  * No changes needed here when switching DB — just update DB_ID_TYPE in .env.
  */
 export function toPrimaryKey(id: any): any {
-    if (id === null || id === undefined || id === '') return id;
+  if (id === null || id === undefined || id === '') return id;
 
-    // Unwrap object with 'id' property
-    if (typeof id === 'object' && 'id' in id) {
-        return toPrimaryKey((id as any).id);
+  // Unwrap object with 'id' property
+  if (typeof id === 'object' && 'id' in id) {
+    return toPrimaryKey((id as any).id);
+  }
+
+  const idType = getDbIdType();
+
+  if (idType === 'uuid' || idType === 'objectid') {
+    // String-based IDs — return as string, no conversion
+    return typeof id === 'string' ? id : String(id);
+  }
+
+  // Default: bigint mode
+  if (typeof id === 'bigint') return id;
+  if (typeof id === 'number') return BigInt(id);
+  if (typeof id === 'string' && /^\d+$/.test(id)) {
+    try {
+      return BigInt(id);
+    } catch {
+      return id;
     }
+  }
 
-    const idType = getDbIdType();
-
-    if (idType === 'uuid' || idType === 'objectid') {
-        // String-based IDs — return as string, no conversion
-        return typeof id === 'string' ? id : String(id);
-    }
-
-    // Default: bigint mode
-    if (typeof id === 'bigint') return id;
-    if (typeof id === 'number') return BigInt(id);
-    if (typeof id === 'string' && /^\d+$/.test(id)) {
-        try { return BigInt(id); } catch { return id; }
-    }
-
-    return id;
+  return id;
 }
 
 /**

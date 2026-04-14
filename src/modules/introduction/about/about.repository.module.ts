@@ -4,12 +4,12 @@ import { AboutRepositoryImpl } from './infrastructure/repositories/about.reposit
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: ABOUT_REPOSITORY,
-            useClass: AboutRepositoryImpl,
-        },
-    ],
-    exports: [ABOUT_REPOSITORY],
+  providers: [
+    {
+      provide: ABOUT_REPOSITORY,
+      useClass: AboutRepositoryImpl,
+    },
+  ],
+  exports: [ABOUT_REPOSITORY],
 })
-export class AboutRepositoryModule { }
+export class AboutRepositoryModule {}

@@ -6,7 +6,7 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('certificates')
 export class PublicCertificateController {
-  constructor(private readonly certificateService: PublicCertificateService) { }
+  constructor(private readonly certificateService: PublicCertificateService) {}
 
   @Permission('public')
   @Get()
@@ -26,5 +26,3 @@ export class PublicCertificateController {
     return this.certificateService.getOne(id);
   }
 }
-
-

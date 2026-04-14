@@ -4,12 +4,12 @@ import { MenuRepositoryImpl } from './infrastructure/repositories/menu.repositor
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: MENU_REPOSITORY,
-            useClass: MenuRepositoryImpl,
-        },
-    ],
-    exports: [MENU_REPOSITORY],
+  providers: [
+    {
+      provide: MENU_REPOSITORY,
+      useClass: MenuRepositoryImpl,
+    },
+  ],
+  exports: [MENU_REPOSITORY],
 })
-export class MenuRepositoryModule { }
+export class MenuRepositoryModule {}

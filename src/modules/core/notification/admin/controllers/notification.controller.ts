@@ -22,7 +22,7 @@ import { LogRequest } from '@/common/shared/decorators';
 @Controller('admin/notifications')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   @LogRequest()
   @Post()
@@ -52,10 +52,7 @@ export class NotificationController {
   @LogRequest()
   @Patch(':id')
   @Permission('notification.manage')
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateNotificationDto,
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateNotificationDto) {
     return this.notificationService.update(id, dto);
   }
 
@@ -66,4 +63,3 @@ export class NotificationController {
     return this.notificationService.delete(id);
   }
 }
-

@@ -26,10 +26,18 @@ import { AppQueueModule } from '@/core/queue/queue.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
-      load: [appConfig, jwtConfig, mailConfig, storageConfig, googleOAuthConfig],
+      load: [
+        appConfig,
+        jwtConfig,
+        mailConfig,
+        storageConfig,
+        googleOAuthConfig,
+      ],
       validationSchema: Joi.object({
         // App
-        NODE_ENV: Joi.string().valid('development', 'staging', 'production').default('development'),
+        NODE_ENV: Joi.string()
+          .valid('development', 'staging', 'production')
+          .default('development'),
         PORT: Joi.number().port().default(3000),
         GLOBAL_PREFIX: Joi.string().default('api'),
         APP_TIMEZONE: Joi.string().default('Asia/Ho_Chi_Minh'),
@@ -38,13 +46,14 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         CORS_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
         CORS_ORIGINS: Joi.alternatives(
           Joi.string().allow(''),
-          Joi.array().items(Joi.string())
+          Joi.array().items(Joi.string()),
         ).optional(),
 
         // Redis (optional)
         CACHE_DRIVER: Joi.string().valid('redis', 'memory').default('memory'),
-        REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).optional(),
-
+        REDIS_URL: Joi.string()
+          .uri({ scheme: ['redis', 'rediss'] })
+          .optional(),
 
         // JWT (required)
         JWT_SECRET: Joi.string().min(16).required(),
@@ -55,10 +64,13 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         JWT_AUDIENCE: Joi.string().allow(''),
 
         // Database (Prisma)
-        DATABASE_URL: Joi.string().uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] }).required(),
-        DIRECT_URL: Joi.string().uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] }).optional(),
+        DATABASE_URL: Joi.string()
+          .uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] })
+          .required(),
+        DIRECT_URL: Joi.string()
+          .uri({ scheme: ['mysql', 'mysqls', 'postgresql', 'postgres'] })
+          .optional(),
         DB_CONNECTION_LIMIT: Joi.number().default(50),
-
 
         // Mail (optional but warn if partially provided)
         MAIL_HOST: Joi.string().hostname().default('localhost'),
@@ -67,9 +79,13 @@ import { AppQueueModule } from '@/core/queue/queue.module';
         MAIL_USERNAME: Joi.string().allow(''),
         MAIL_PASSWORD: Joi.string().allow(''),
         MAIL_FROM_NAME: Joi.string().allow(''),
-        MAIL_FROM_ADDRESS: Joi.string().email({ tlds: { allow: false } }).allow(''),
+        MAIL_FROM_ADDRESS: Joi.string()
+          .email({ tlds: { allow: false } })
+          .allow(''),
         MAIL_TEMPLATE_DIR: Joi.string().default('./templates'),
-        MAIL_TEMPLATE_ADAPTER: Joi.string().valid('handlebars', 'nunjucks', 'pug').default('handlebars'),
+        MAIL_TEMPLATE_ADAPTER: Joi.string()
+          .valid('handlebars', 'nunjucks', 'pug')
+          .default('handlebars'),
 
         // Rate limit (load test / dev: tắt toàn bộ throttle khi true)
         THROTTLE_DISABLED: Joi.string().valid('true', 'false').optional(),
@@ -80,26 +96,42 @@ import { AppQueueModule } from '@/core/queue/queue.module';
 
         // Attempt limiter (generalized)
         SECURITY_ATTEMPT_MAX: Joi.number().min(1).max(20).default(5),
-        SECURITY_ATTEMPT_LOCKOUT_SECONDS: Joi.number().min(60).max(7200).default(1800), // 30 minutes
-        SECURITY_ATTEMPT_WINDOW_SECONDS: Joi.number().min(30).max(7200).default(900), // 15 minutes
+        SECURITY_ATTEMPT_LOCKOUT_SECONDS: Joi.number()
+          .min(60)
+          .max(7200)
+          .default(1800), // 30 minutes
+        SECURITY_ATTEMPT_WINDOW_SECONDS: Joi.number()
+          .min(30)
+          .max(7200)
+          .default(900), // 15 minutes
 
         // Storage
         STORAGE_TYPE: Joi.string().valid('local', 's3').default('local'),
-        STORAGE_MAX_FILE_SIZE: Joi.number().min(1024).max(104857600).default(10485760), // 1KB to 100MB, default 10MB
+        STORAGE_MAX_FILE_SIZE: Joi.number()
+          .min(1024)
+          .max(104857600)
+          .default(10485760), // 1KB to 100MB, default 10MB
         // Remote object storage (S3/MinIO/compatible) – dùng tên biến chung, không gắn AWS
         STORAGE_S3_REGION: Joi.string().allow(''),
         STORAGE_S3_BUCKET: Joi.string().allow(''),
         STORAGE_S3_ACCESS_KEY_ID: Joi.string().allow(''),
         STORAGE_S3_SECRET_ACCESS_KEY: Joi.string().allow(''),
         STORAGE_S3_BASE_URL: Joi.string().allow(''),
-        STORAGE_S3_ENDPOINT: Joi.string().uri({ allowRelative: false, scheme: ['http', 'https'] }).allow(''),
-        STORAGE_S3_FORCE_PATH_STYLE: Joi.boolean().truthy('true').falsy('false').default(true),
+        STORAGE_S3_ENDPOINT: Joi.string()
+          .uri({ allowRelative: false, scheme: ['http', 'https'] })
+          .allow(''),
+        STORAGE_S3_FORCE_PATH_STYLE: Joi.boolean()
+          .truthy('true')
+          .falsy('false')
+          .default(true),
 
         // Google OAuth (optional)
         GOOGLE_CLIENT_ID: Joi.string().allow(''),
         GOOGLE_CLIENT_SECRET: Joi.string().allow(''),
         GOOGLE_CALLBACK_URL: Joi.string().allow(''),
-        GOOGLE_FRONTEND_URL: Joi.string().uri({ scheme: ['http', 'https'] }).default('http://localhost:3000'),
+        GOOGLE_FRONTEND_URL: Joi.string()
+          .uri({ scheme: ['http', 'https'] })
+          .default('http://localhost:3000'),
       }),
     }),
     PrismaModule,
@@ -107,13 +139,21 @@ import { AppQueueModule } from '@/core/queue/queue.module';
     AppQueueModule,
   ],
   providers: [RedisUtil, TokenBlacklistService, AttemptLimiterService],
-  exports: [ConfigModule, PrismaModule, SeederModule, RedisUtil, TokenBlacklistService, AttemptLimiterService],
+  exports: [
+    ConfigModule,
+    PrismaModule,
+    SeederModule,
+    RedisUtil,
+    TokenBlacklistService,
+    AttemptLimiterService,
+  ],
 })
 export class CoreModule {
   constructor(private readonly configService: ConfigService) {
-    const tz = this.configService.get<string>('app.timezone') || process.env.APP_TIMEZONE || 'Asia/Ho_Chi_Minh';
+    const tz =
+      this.configService.get<string>('app.timezone') ||
+      process.env.APP_TIMEZONE ||
+      'Asia/Ho_Chi_Minh';
     DateUtil.setTimezone(tz);
   }
 }
-
-

@@ -4,9 +4,9 @@ import { EmailConfigService as AdminEmailConfigService } from './admin/services/
 import { SystemConfigRepositoryModule } from '../system-config.repository.module';
 
 @Module({
-    imports: [SystemConfigRepositoryModule],
-    controllers: [AdminEmailConfigController],
-    providers: [AdminEmailConfigService],
-    exports: [AdminEmailConfigService],
+  imports: [SystemConfigRepositoryModule],
+  controllers: [AdminEmailConfigController],
+  providers: [AdminEmailConfigService],
+  exports: [AdminEmailConfigService],
 })
-export class EmailConfigModule { }
+export class EmailConfigModule {}

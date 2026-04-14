@@ -1,4 +1,9 @@
-import { Injectable, Inject, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { UserStatus } from '@/shared/enums/types/user-status.enum';
@@ -6,7 +11,10 @@ import { RedisUtil } from '@/core/utils/redis.util';
 import { TokenService } from '@/modules/core/auth/services/token.service';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { AttemptLimiterService } from '@/core/security/attempt-limiter.service';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
 import { LoginDto } from '@/modules/core/auth/dto/login.dto';
 
 @Injectable()
@@ -18,7 +26,7 @@ export class LoginService {
     private readonly tokenBlacklistService: TokenBlacklistService,
     private readonly tokenService: TokenService,
     private readonly accountLockoutService: AttemptLimiterService,
-  ) { }
+  ) {}
 
   /**
    * Handle primary email/password login.
@@ -42,7 +50,10 @@ export class LoginService {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng.');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, (user as any).password);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      (user as any).password,
+    );
     if (!isPasswordValid) {
       await this.accountLockoutService.add(scope, identifier);
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng.');
@@ -50,7 +61,9 @@ export class LoginService {
 
     // 3. Check Account Status
     if (user.status !== UserStatus.active) {
-      throw new ForbiddenException('Tài khoản đã bị khóa hoặc không hoạt động.');
+      throw new ForbiddenException(
+        'Tài khoản đã bị khóa hoặc không hoạt động.',
+      );
     }
 
     // 4. Success Tasks
@@ -100,11 +113,15 @@ export class LoginService {
 
     const refreshKey = `auth:refresh:${userId}:${jti}`;
     const isActive = await this.redis.get(refreshKey);
-    if (!isActive) throw new UnauthorizedException('Refresh token revoked or expired');
+    if (!isActive)
+      throw new UnauthorizedException('Refresh token revoked or expired');
 
     await this.redis.del(refreshKey);
 
-    const tokens = await this.tokenService.issueAndStoreNewTokens(userId, decoded.email);
+    const tokens = await this.tokenService.issueAndStoreNewTokens(
+      userId,
+      decoded.email,
+    );
 
     return {
       token: tokens.accessToken,
@@ -113,5 +130,3 @@ export class LoginService {
     };
   }
 }
-
-

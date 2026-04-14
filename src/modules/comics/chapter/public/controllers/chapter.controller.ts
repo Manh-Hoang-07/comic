@@ -4,7 +4,6 @@ import {
   Post,
   Param,
   Query,
-  
   ValidationPipe,
   Body,
   Req,
@@ -20,7 +19,7 @@ export class PublicChaptersController {
   constructor(
     private readonly chaptersService: PublicChaptersService,
     private readonly viewTrackingService: ViewTrackingService,
-  ) { }
+  ) {}
 
   @Permission('public')
   @Get()
@@ -55,10 +54,7 @@ export class PublicChaptersController {
   @Permission('public')
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 views per minute per IP
   @Post(':id/view')
-  async trackView(
-    @Param('id') id: any,
-    @Req() req: any,
-  ) {
+  async trackView(@Param('id') id: any, @Req() req: any) {
     const chapter = await this.chaptersService.getOne(id);
     if (!chapter) {
       return { tracked: false };
@@ -73,5 +69,3 @@ export class PublicChaptersController {
     });
   }
 }
-
-

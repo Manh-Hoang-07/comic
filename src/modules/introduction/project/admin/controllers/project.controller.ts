@@ -25,7 +25,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/projects')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) { }
+  constructor(private readonly projectService: ProjectService) {}
 
   @LogRequest()
   @Post()
@@ -54,7 +54,10 @@ export class ProjectController {
 
   @Put(':id')
   @Permission('project.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateProjectDto: UpdateProjectDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateProjectDto: UpdateProjectDto,
+  ) {
     return this.projectService.update(id, updateProjectDto);
   }
 
@@ -82,5 +85,3 @@ export class ProjectController {
     return this.projectService.updateSortOrder(id, sortOrder);
   }
 }
-
-

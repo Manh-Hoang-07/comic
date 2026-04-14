@@ -9,4 +9,4 @@ import { ReviewRepositoryModule } from '../review.repository.module';
   providers: [PublicReviewsService],
   exports: [PublicReviewsService],
 })
-export class PublicReviewsModule { }
+export class PublicReviewsModule {}

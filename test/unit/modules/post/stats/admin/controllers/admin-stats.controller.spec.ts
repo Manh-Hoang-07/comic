@@ -45,4 +45,3 @@ describe('AdminPostStatsController', () => {
     expect(service.getViewsOverTime).toHaveBeenCalled();
   });
 });
-

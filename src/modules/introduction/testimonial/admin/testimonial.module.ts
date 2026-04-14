@@ -7,14 +7,9 @@ import { TestimonialRepositoryModule } from '@/modules/introduction/testimonial/
 import { ProjectRepositoryModule } from '@/modules/introduction/project/project.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    TestimonialRepositoryModule,
-    ProjectRepositoryModule,
-  ],
+  imports: [RbacModule, TestimonialRepositoryModule, ProjectRepositoryModule],
   controllers: [TestimonialController],
   providers: [TestimonialService],
   exports: [TestimonialService],
 })
-export class AdminTestimonialModule { }
-
+export class AdminTestimonialModule {}

@@ -22,7 +22,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/faqs')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class FaqController {
-  constructor(private readonly faqService: FaqService) { }
+  constructor(private readonly faqService: FaqService) {}
 
   @LogRequest()
   @Post()
@@ -51,7 +51,10 @@ export class FaqController {
 
   @Put(':id')
   @Permission('faq.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateFaqDto: UpdateFaqDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateFaqDto: UpdateFaqDto,
+  ) {
     return this.faqService.update(id, updateFaqDto);
   }
 
@@ -61,5 +64,3 @@ export class FaqController {
     return this.faqService.delete(id);
   }
 }
-
-

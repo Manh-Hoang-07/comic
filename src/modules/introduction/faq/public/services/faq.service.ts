@@ -1,6 +1,10 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Faq } from '@prisma/client';
-import { IFaqRepository, FAQ_REPOSITORY, FaqFilter } from '@/modules/introduction/faq/domain/faq.repository';
+import {
+  IFaqRepository,
+  FAQ_REPOSITORY,
+  FaqFilter,
+} from '@/modules/introduction/faq/domain/faq.repository';
 import { BaseContentService } from '@/common/core/services';
 
 @Injectable()
@@ -41,7 +45,7 @@ export class PublicFaqService extends BaseContentService<Faq, IFaqRepository> {
       sort: 'view_count:desc',
       filter: { status: 'active' },
     });
-    return result.data.map(item => this.transform(item));
+    return result.data.map((item) => this.transform(item));
   }
 
   async incrementHelpfulCount(id: any) {
@@ -56,8 +60,3 @@ export class PublicFaqService extends BaseContentService<Faq, IFaqRepository> {
     return item;
   }
 }
-
-
-
-
-

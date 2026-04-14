@@ -6,14 +6,9 @@ import { ComicRepositoryModule } from '../comic.repository.module';
 import { FollowRepositoryModule } from '@/modules/comics/follow/follow.repository.module';
 
 @Module({
-  imports: [
-    UserFollowsModule,
-    ComicRepositoryModule,
-    FollowRepositoryModule,
-  ],
+  imports: [UserFollowsModule, ComicRepositoryModule, FollowRepositoryModule],
   controllers: [PublicComicsController],
   providers: [PublicComicsService],
   exports: [PublicComicsService],
 })
-export class PublicComicsModule { }
-
+export class PublicComicsModule {}

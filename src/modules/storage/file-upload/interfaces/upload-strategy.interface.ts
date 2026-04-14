@@ -9,4 +9,3 @@ export interface UploadResult {
 export interface IUploadStrategy {
   upload(file: Express.Multer.File): Promise<UploadResult>;
 }
-

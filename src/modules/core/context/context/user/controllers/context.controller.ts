@@ -23,15 +23,13 @@ export class ContextController {
       return [];
     }
 
-    const contexts = await this.contextService.getUserContextsForTransfer(userId);
-    return contexts.map(ctx => ({
+    const contexts =
+      await this.contextService.getUserContextsForTransfer(userId);
+    return contexts.map((ctx) => ({
       id: ctx.id.toString(),
       type: ctx.type,
       ref_id: ctx.ref_id?.toString() || null,
       name: ctx.name,
     }));
   }
-
 }
-
-

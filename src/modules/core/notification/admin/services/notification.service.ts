@@ -1,11 +1,18 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { INotificationRepository, NOTIFICATION_REPOSITORY, NotificationFilter } from '@/modules/core/notification/domain/notification.repository';
+import {
+  INotificationRepository,
+  NOTIFICATION_REPOSITORY,
+  NotificationFilter,
+} from '@/modules/core/notification/domain/notification.repository';
 import { BaseService } from '@/common/core/services';
 
 import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 
 @Injectable()
-export class NotificationService extends BaseService<any, INotificationRepository> {
+export class NotificationService extends BaseService<
+  any,
+  INotificationRepository
+> {
   constructor(
     @Inject(NOTIFICATION_REPOSITORY)
     private readonly notificationRepo: INotificationRepository,
@@ -46,11 +53,12 @@ export class NotificationService extends BaseService<any, INotificationRepositor
     return data;
   }
 
-
-
   async markAsReadForUser(id: any, userId: any) {
     const notification = await this.getOne(id);
-    if (!notification || String((notification as any).user_id) !== String(userId)) {
+    if (
+      !notification ||
+      String((notification as any).user_id) !== String(userId)
+    ) {
       throw new NotFoundException('Notification not found');
     }
     const updated = await this.notificationRepo.markAsRead(id);
@@ -61,5 +69,3 @@ export class NotificationService extends BaseService<any, INotificationRepositor
     await this.notificationRepo.markAllAsRead(userId);
   }
 }
-
-

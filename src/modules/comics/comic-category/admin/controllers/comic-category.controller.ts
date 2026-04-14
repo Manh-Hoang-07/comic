@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
 } from '@nestjs/common';
 import { ComicCategoryService } from '../services/comic-category.service';
@@ -18,7 +17,7 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('admin/comic-categories')
 export class ComicCategoryController {
-  constructor(private readonly comicCategoryService: ComicCategoryService) { }
+  constructor(private readonly comicCategoryService: ComicCategoryService) {}
 
   @Permission('comic.manage')
   @Get()
@@ -62,5 +61,3 @@ export class ComicCategoryController {
     return this.comicCategoryService.delete(id);
   }
 }
-
-

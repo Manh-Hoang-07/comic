@@ -1,10 +1,26 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  Logger,
+} from '@nestjs/common';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
 import { RequestContext } from '@/common/shared/utils';
-import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
-import { USER_ROLE_ASSIGNMENT_REPOSITORY, IUserRoleAssignmentRepository } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
+import {
+  IRoleRepository,
+  ROLE_REPOSITORY,
+} from '@/modules/core/iam/role/domain/role.repository';
+import {
+  USER_ROLE_ASSIGNMENT_REPOSITORY,
+  IUserRoleAssignmentRepository,
+} from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
 import { BaseService } from '@/common/core/services';
-import { normalizeIdArray, transformPermission, resolveRoleContexts } from '@/modules/core/iam/utils/iam-transform.helper';
+import {
+  normalizeIdArray,
+  transformPermission,
+  resolveRoleContexts,
+} from '@/modules/core/iam/utils/iam-transform.helper';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
@@ -34,7 +50,9 @@ export class RoleService extends BaseService<any, IRoleRepository> {
 
     // Ngữ cảnh cục bộ -> bắt buộc phải ép chặt filter vào contextId hiện tại
     if (!contextId) {
-      throw new BadRequestException('Context ID is required to access roles in non-system scope');
+      throw new BadRequestException(
+        'Context ID is required to access roles in non-system scope',
+      );
     }
 
     return { ...filter, contextId };
@@ -65,7 +83,11 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     }
 
     // Transform parent_id to Prisma relation
-    if (payload.parent_id !== undefined && payload.parent_id !== null && payload.parent_id !== '') {
+    if (
+      payload.parent_id !== undefined &&
+      payload.parent_id !== null &&
+      payload.parent_id !== ''
+    ) {
       payload.parent = { connect: { id: toPrimaryKey(payload.parent_id) } };
       delete payload.parent_id;
     }
@@ -122,11 +144,17 @@ export class RoleService extends BaseService<any, IRoleRepository> {
   }
 
   protected override async beforeDelete(id: any): Promise<boolean> {
-    const childrenCount = await this.roleRepo.count({ parent_id: toPrimaryKey(id) });
-    if (childrenCount > 0) throw new BadRequestException('Cannot delete role with children');
+    const childrenCount = await this.roleRepo.count({
+      parent_id: toPrimaryKey(id),
+    });
+    if (childrenCount > 0)
+      throw new BadRequestException('Cannot delete role with children');
 
-    const userCount = await this.assignmentRepo.count({ role_id: toPrimaryKey(id) });
-    if (userCount > 0) throw new BadRequestException('Cannot delete role assigned to users');
+    const userCount = await this.assignmentRepo.count({
+      role_id: toPrimaryKey(id),
+    });
+    if (userCount > 0)
+      throw new BadRequestException('Cannot delete role assigned to users');
 
     return true;
   }
@@ -153,14 +181,27 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     const preparedFilters = await this.prepareFilters(filter, normalized);
 
     if (preparedFilters === false) {
-      return { data: [], meta: { page: normalized.page, limit: normalized.limit, total: 0 } as any };
+      return {
+        data: [],
+        meta: {
+          page: normalized.page,
+          limit: normalized.limit,
+          total: 0,
+        } as any,
+      };
     }
 
-    normalized.filter = preparedFilters && typeof preparedFilters === 'object' ? preparedFilters : filter;
+    normalized.filter =
+      preparedFilters && typeof preparedFilters === 'object'
+        ? preparedFilters
+        : filter;
 
     const startDb = performance.now();
     // Bỏ qua bước COUNT để kiểm tra xem có phải do độ trễ của 2 câu lệnh SQL riêng biệt không
-    const result = await this.roleRepo.findAll({ ...normalized, skipCount: true } as any);
+    const result = await this.roleRepo.findAll({
+      ...normalized,
+      skipCount: true,
+    } as any);
     const endDb = performance.now();
 
     tracker?.addCheckpoint('controller_db_query_end');
@@ -196,7 +237,9 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     }
 
     // Handle Contexts
-    const { context_ids, contexts } = resolveRoleContexts(item.role_contexts || []);
+    const { context_ids, contexts } = resolveRoleContexts(
+      item.role_contexts || [],
+    );
     item.context_ids = context_ids;
     item.contexts = contexts;
     delete item.role_contexts;
@@ -204,4 +247,3 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     return item;
   }
 }
-

@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { Auth } from '@/common/auth/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
@@ -6,7 +15,7 @@ import { PermissionService } from '@/modules/core/iam/permission/admin/services/
 
 @Controller('admin/permissions')
 export class PermissionController {
-  constructor(private readonly service: PermissionService) { }
+  constructor(private readonly service: PermissionService) {}
 
   @Permission('permission.manage')
   @Get()
@@ -36,10 +45,7 @@ export class PermissionController {
   @Permission('permission.manage')
   @LogRequest()
   @Put(':id')
-  async update(
-    @Param('id') id: any,
-    @Body() dto: any,
-  ) {
+  async update(@Param('id') id: any, @Body() dto: any) {
     return this.service.update(id, dto);
   }
 
@@ -50,8 +56,3 @@ export class PermissionController {
     return this.service.delete(id);
   }
 }
-
-
-
-
-

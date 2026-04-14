@@ -20,5 +20,4 @@ import { FaqRepositoryModule } from './faq.repository.module';
   ],
   exports: [FaqRepositoryModule],
 })
-export class FaqModule { }
-
+export class FaqModule {}

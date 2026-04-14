@@ -47,7 +47,9 @@ describe('RbacGuard', () => {
     guard = module.get<RbacGuard>(RbacGuard);
     reflector = module.get<Reflector>(Reflector);
     rbacService = module.get<RbacService>(RbacService);
-    orchestrator = module.get<RbacAuthorizationOrchestrator>(RbacAuthorizationOrchestrator);
+    orchestrator = module.get<RbacAuthorizationOrchestrator>(
+      RbacAuthorizationOrchestrator,
+    );
 
     jest.clearAllMocks();
   });
@@ -67,7 +69,9 @@ describe('RbacGuard', () => {
     it('should throw forbidden if no permissions required', async () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([]);
 
-      await expect(guard.canActivate(createMockContext())).rejects.toMatchObject({
+      await expect(
+        guard.canActivate(createMockContext()),
+      ).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
     });
@@ -80,10 +84,14 @@ describe('RbacGuard', () => {
     });
 
     it('should throw unauthorized if user id not found', async () => {
-      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['read_dashboard']);
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue(['read_dashboard']);
       (Auth.id as jest.Mock).mockReturnValue(null);
 
-      await expect(guard.canActivate(createMockContext())).rejects.toMatchObject({
+      await expect(
+        guard.canActivate(createMockContext()),
+      ).rejects.toMatchObject({
         status: HttpStatus.UNAUTHORIZED,
       });
     });
@@ -94,32 +102,48 @@ describe('RbacGuard', () => {
 
       const result = await guard.canActivate(createMockContext());
       expect(result).toBe(true);
-      expect(orchestrator.resolveActiveGroupScopeForRbac).not.toHaveBeenCalled();
+      expect(
+        orchestrator.resolveActiveGroupScopeForRbac,
+      ).not.toHaveBeenCalled();
     });
 
     it('should throw forbidden if user lacks permissions in group', async () => {
-      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['manage_users']);
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue(['manage_users']);
       (Auth.id as jest.Mock).mockReturnValue(1);
-      (orchestrator.resolveActiveGroupScopeForRbac as jest.Mock).mockResolvedValue(2);
+      (
+        orchestrator.resolveActiveGroupScopeForRbac as jest.Mock
+      ).mockResolvedValue(2);
       jest.spyOn(rbacService, 'hasPermissions').mockResolvedValue(false);
 
-      await expect(guard.canActivate(createMockContext())).rejects.toMatchObject({
+      await expect(
+        guard.canActivate(createMockContext()),
+      ).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
 
-      expect(rbacService.hasPermissions).toHaveBeenCalledWith(1, 2, ['manage_users']);
+      expect(rbacService.hasPermissions).toHaveBeenCalledWith(1, 2, [
+        'manage_users',
+      ]);
     });
 
     it('should return true if user has permissions with system scope', async () => {
-      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['manage_users']);
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue(['manage_users']);
       (Auth.id as jest.Mock).mockReturnValue(1);
-      (orchestrator.resolveActiveGroupScopeForRbac as jest.Mock).mockResolvedValue(null);
+      (
+        orchestrator.resolveActiveGroupScopeForRbac as jest.Mock
+      ).mockResolvedValue(null);
       jest.spyOn(rbacService, 'hasPermissions').mockResolvedValue(true);
 
       const result = await guard.canActivate(createMockContext());
       expect(result).toBe(true);
 
-      expect(rbacService.hasPermissions).toHaveBeenCalledWith(1, null, ['manage_users']);
+      expect(rbacService.hasPermissions).toHaveBeenCalledWith(1, null, [
+        'manage_users',
+      ]);
     });
   });
 });

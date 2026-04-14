@@ -10,5 +10,4 @@ import { StaffRepositoryModule } from '@/modules/introduction/staff/staff.reposi
   providers: [PublicStaffService],
   exports: [PublicStaffService],
 })
-export class PublicStaffModule { }
-
+export class PublicStaffModule {}

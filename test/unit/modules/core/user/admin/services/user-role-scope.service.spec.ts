@@ -52,7 +52,9 @@ describe('UserRoleScopeService', () => {
         return undefined;
       });
 
-      await expect(service.resolveRoleUi(1)).rejects.toThrow(ForbiddenException);
+      await expect(service.resolveRoleUi(1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('scopes to current groupId in non-system context', async () => {
@@ -102,7 +104,9 @@ describe('UserRoleScopeService', () => {
         return undefined;
       });
 
-      expect(() => service.guardBatchGroups([{ group_id: 1 }])).toThrow(ForbiddenException);
+      expect(() => service.guardBatchGroups([{ group_id: 1 }])).toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -112,11 +116,15 @@ describe('UserRoleScopeService', () => {
         if (key === 'context') return { type: 'system' };
         return undefined;
       });
-      jest.spyOn(groupOwnership, 'getGroupFilter').mockReturnValue({ group_id: 9 });
+      jest
+        .spyOn(groupOwnership, 'getGroupFilter')
+        .mockReturnValue({ group_id: 9 });
 
       const out = service.mergeListFilter({ search: 'a' });
 
-      expect(out).toEqual(expect.objectContaining({ search: 'a', group_id: 9 }));
+      expect(out).toEqual(
+        expect.objectContaining({ search: 'a', group_id: 9 }),
+      );
     });
 
     it('adds groupId from context for non-system', () => {

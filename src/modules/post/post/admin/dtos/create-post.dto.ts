@@ -1,4 +1,16 @@
-import { IsString, IsOptional, IsArray, IsNumber, IsBoolean, IsEnum, IsDateString, IsInt, Min, MaxLength, ValidateIf } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsNumber,
+  IsBoolean,
+  IsEnum,
+  IsDateString,
+  IsInt,
+  Min,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 import { PostStatus, PostType } from '@/shared/enums';
@@ -96,4 +108,3 @@ export class CreatePostDto {
   @IsArray()
   category_ids?: any[];
 }
-

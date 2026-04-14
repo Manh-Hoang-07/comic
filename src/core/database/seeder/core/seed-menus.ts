@@ -6,21 +6,32 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedMenus {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
     await this.prisma.menuPermission.deleteMany({});
     await this.prisma.menu.deleteMany({});
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'systemadmin' },
+    });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);
 
     const permissions = await this.prisma.permission.findMany();
     const permMap = new Map<string, any>();
-    permissions.forEach(perm => permMap.set(perm.code, perm));
+    permissions.forEach((perm) => permMap.set(perm.code, perm));
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'core');
-    const menuData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'menus.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'core',
+    );
+    const menuData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'menus.json'), 'utf8'),
+    );
 
     const createdMenus = new Map<string, any>();
     const sortedMenus = this.sortMenusByParent(menuData);
@@ -28,7 +39,11 @@ export class SeedMenus {
     for (const menuItem of sortedMenus) {
       let parent: any | null = null;
       if (menuItem.parent_code) {
-        parent = createdMenus.get(menuItem.parent_code) || await this.prisma.menu.findFirst({ where: { code: menuItem.parent_code } });
+        parent =
+          createdMenus.get(menuItem.parent_code) ||
+          (await this.prisma.menu.findFirst({
+            where: { code: menuItem.parent_code },
+          }));
       }
 
       let requiredPermission: any | null = null;
@@ -50,13 +65,19 @@ export class SeedMenus {
           is_public: menuItem.is_public,
           show_in_menu: menuItem.show_in_menu,
           group: menuItem.group || 'admin',
-          required_permission_id: requiredPermission ? requiredPermission.id : null,
+          required_permission_id: requiredPermission
+            ? requiredPermission.id
+            : null,
           created_user_id: defaultUserId,
           updated_user_id: defaultUserId,
         },
       });
 
-      if (saved.type === MenuType.group && menuItem.permission_codes && Array.isArray(menuItem.permission_codes)) {
+      if (
+        saved.type === MenuType.group &&
+        menuItem.permission_codes &&
+        Array.isArray(menuItem.permission_codes)
+      ) {
         for (const permCode of menuItem.permission_codes) {
           const perm = permMap.get(permCode);
           if (perm) {
@@ -102,4 +123,3 @@ export class SeedMenus {
     await this.prisma.menu.deleteMany({});
   }
 }
-

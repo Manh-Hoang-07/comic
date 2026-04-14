@@ -103,8 +103,16 @@ export class ResponseUtil {
     return this.error(message, 'NOT_FOUND', HttpStatus.NOT_FOUND);
   }
 
-  static validationError(errors: any, message = 'Validation failed'): ApiResponse<null> {
-    return this.error(message, 'VALIDATION_ERROR', HttpStatus.BAD_REQUEST, errors);
+  static validationError(
+    errors: any,
+    message = 'Validation failed',
+  ): ApiResponse<null> {
+    return this.error(
+      message,
+      'VALIDATION_ERROR',
+      HttpStatus.BAD_REQUEST,
+      errors,
+    );
   }
 
   static forbidden(message = 'Forbidden'): ApiResponse<null> {
@@ -119,8 +127,14 @@ export class ResponseUtil {
     return this.error(message, 'BAD_REQUEST', HttpStatus.BAD_REQUEST, errors);
   }
 
-  static internalServerError(message = 'Internal server error'): ApiResponse<null> {
-    return this.error(message, 'INTERNAL_SERVER_ERROR', HttpStatus.INTERNAL_SERVER_ERROR);
+  static internalServerError(
+    message = 'Internal server error',
+  ): ApiResponse<null> {
+    return this.error(
+      message,
+      'INTERNAL_SERVER_ERROR',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 
   static conflict(message = 'Conflict'): ApiResponse<null> {
@@ -128,7 +142,11 @@ export class ResponseUtil {
   }
 
   static tooManyRequests(message = 'Too many requests'): ApiResponse<null> {
-    return this.error(message, 'TOO_MANY_REQUESTS', HttpStatus.TOO_MANY_REQUESTS);
+    return this.error(
+      message,
+      'TOO_MANY_REQUESTS',
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
   }
 
   static invalidQuery(message = 'Invalid query parameters'): ApiResponse<null> {
@@ -148,7 +166,8 @@ export class ResponseUtil {
       success,
       message: message || (success ? 'Success' : 'Error'),
       code: code || (success ? 'SUCCESS' : 'ERROR'),
-      httpStatus: httpStatus || (success ? HttpStatus.OK : HttpStatus.BAD_REQUEST),
+      httpStatus:
+        httpStatus || (success ? HttpStatus.OK : HttpStatus.BAD_REQUEST),
       data: success ? data : null,
       meta: meta || {},
       timestamp: formatResponseTimestamp(),

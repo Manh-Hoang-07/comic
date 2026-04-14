@@ -4,9 +4,9 @@ import { PublicBannerController } from '@/modules/marketing/banner/public/contro
 import { MarketingRepositoryModule } from '@/modules/marketing/marketing.repository.module';
 
 @Module({
-    imports: [MarketingRepositoryModule],
-    controllers: [PublicBannerController],
-    providers: [PublicBannerService],
-    exports: [PublicBannerService],
+  imports: [MarketingRepositoryModule],
+  controllers: [PublicBannerController],
+  providers: [PublicBannerService],
+  exports: [PublicBannerService],
 })
-export class PublicBannerModule { }
+export class PublicBannerModule {}

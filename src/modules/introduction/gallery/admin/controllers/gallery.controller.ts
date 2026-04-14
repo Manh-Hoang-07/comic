@@ -22,7 +22,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/gallery')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class GalleryController {
-  constructor(private readonly galleryService: GalleryService) { }
+  constructor(private readonly galleryService: GalleryService) {}
 
   @LogRequest()
   @Post()
@@ -51,7 +51,10 @@ export class GalleryController {
 
   @Put(':id')
   @Permission('gallery.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateGalleryDto: UpdateGalleryDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateGalleryDto: UpdateGalleryDto,
+  ) {
     return this.galleryService.update(id, updateGalleryDto);
   }
 
@@ -61,5 +64,3 @@ export class GalleryController {
     return this.galleryService.delete(id);
   }
 }
-
-

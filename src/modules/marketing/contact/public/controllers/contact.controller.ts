@@ -6,7 +6,7 @@ import { LogRequest } from '@/common/shared/decorators';
 
 @Controller('public/contacts')
 export class PublicContactController {
-  constructor(private readonly contactService: PublicContactService) { }
+  constructor(private readonly contactService: PublicContactService) {}
 
   @Permission('public')
   @LogRequest()
@@ -15,5 +15,3 @@ export class PublicContactController {
     return this.contactService.create(createContactDto);
   }
 }
-
-

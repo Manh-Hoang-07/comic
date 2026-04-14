@@ -17,5 +17,4 @@ import { ContactRepositoryModule } from './contact.repository.module';
   ],
   exports: [],
 })
-export class ContactModule { }
-
+export class ContactModule {}

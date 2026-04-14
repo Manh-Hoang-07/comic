@@ -5,34 +5,43 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedBanners {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    async seed(): Promise<void> {
-        const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'marketing');
-        const bannersData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'banners.json'), 'utf8'));
+  async seed(): Promise<void> {
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'marketing',
+    );
+    const bannersData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'banners.json'), 'utf8'),
+    );
 
-        for (const bannerData of bannersData) {
-            const location = await this.prisma.bannerLocation.findUnique({
-                where: { code: bannerData.location_code },
-            });
-            if (!location) continue;
+    for (const bannerData of bannersData) {
+      const location = await this.prisma.bannerLocation.findUnique({
+        where: { code: bannerData.location_code },
+      });
+      if (!location) continue;
 
-            const existingBanner = await this.prisma.banner.findFirst({
-                where: { location_id: location.id },
-            });
-            if (existingBanner) continue;
+      const existingBanner = await this.prisma.banner.findFirst({
+        where: { location_id: location.id },
+      });
+      if (existingBanner) continue;
 
-            const { location_code, ...rest } = bannerData;
-            await this.prisma.banner.create({
-                data: {
-                    ...rest,
-                    location_id: location.id,
-                },
-            });
-        }
+      const { location_code, ...rest } = bannerData;
+      await this.prisma.banner.create({
+        data: {
+          ...rest,
+          location_id: location.id,
+        },
+      });
     }
+  }
 
-    async clear(): Promise<void> {
-        await this.prisma.banner.deleteMany({});
-    }
+  async clear(): Promise<void> {
+    await this.prisma.banner.deleteMany({});
+  }
 }

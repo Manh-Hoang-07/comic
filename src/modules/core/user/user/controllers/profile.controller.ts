@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Optional, Patch, Req, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Optional,
+  Patch,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { ProfileService } from '../services/profile.service';
@@ -12,7 +20,7 @@ import { Permission } from '@/common/auth/decorators';
 @ApiBearerAuth('access-token')
 @Controller('user/profile')
 export class ProfileController {
-  constructor(private readonly service: ProfileService) { }
+  constructor(private readonly service: ProfileService) {}
 
   // ── Profile Management ─────────────────────────────────────────────────────
 

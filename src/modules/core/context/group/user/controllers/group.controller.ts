@@ -30,6 +30,3 @@ export class UserGroupController {
     return groups;
   }
 }
-
-
-

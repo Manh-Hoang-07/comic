@@ -26,7 +26,12 @@ import { RbacRepositoryModule } from '@/modules/core/rbac/rbac.repository.module
     UserContextModule,
     UserGroupModule,
   ],
-  exports: [ContextRepositoryModule, AdminContextModule, AdminGroupModule, UserContextModule, UserGroupModule],
+  exports: [
+    ContextRepositoryModule,
+    AdminContextModule,
+    AdminGroupModule,
+    UserContextModule,
+    UserGroupModule,
+  ],
 })
-export class ContextModule { }
-
+export class ContextModule {}

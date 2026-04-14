@@ -22,7 +22,7 @@ export class ContactController {
   constructor(
     private readonly contactService: ContactService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   @Permission('contact.manage')
   @LogRequest()
@@ -69,10 +69,7 @@ export class ContactController {
   @Permission('contact.manage')
   @LogRequest()
   @Put(':id/reply')
-  reply(
-    @Param('id') id: string,
-    @Body('reply') reply: string,
-  ) {
+  reply(@Param('id') id: string, @Body('reply') reply: string) {
     return this.contactService.replyToContact(id, reply);
   }
 
@@ -90,5 +87,3 @@ export class ContactController {
     return this.contactService.closeContact(id);
   }
 }
-
-

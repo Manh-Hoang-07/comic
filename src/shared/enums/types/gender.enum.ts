@@ -12,8 +12,3 @@ export const GenderLabels: Record<Gender, string> = {
   [Gender.female]: 'Nữ',
   [Gender.other]: 'Khác',
 };
-
-
-
-
-

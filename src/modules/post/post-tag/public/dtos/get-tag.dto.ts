@@ -4,4 +4,3 @@ export class GetTagDto {
   @IsString()
   slug: string;
 }
-

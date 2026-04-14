@@ -11,5 +11,4 @@ import { PostStatsRepositoryImpl } from './infrastructure/repositories/post-stat
   ],
   exports: [POST_STATS_REPOSITORY],
 })
-export class PostStatsRepositoryModule { }
-
+export class PostStatsRepositoryModule {}

@@ -35,7 +35,7 @@ export class StringUtil {
     return str
       .replace(/\W+/g, ' ')
       .split(/ |\B(?=[A-Z])/)
-      .map(word => word.toLowerCase())
+      .map((word) => word.toLowerCase())
       .join('_');
   }
 
@@ -46,7 +46,7 @@ export class StringUtil {
     return str
       .replace(/\W+/g, ' ')
       .split(/ |\B(?=[A-Z])/)
-      .map(word => word.toLowerCase())
+      .map((word) => word.toLowerCase())
       .join('-');
   }
 
@@ -61,8 +61,9 @@ export class StringUtil {
    * Capitalize first letter of each word
    */
   static capitalizeWords(str: string): string {
-    return str.replace(/\w\S*/g, txt => 
-      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    return str.replace(
+      /\w\S*/g,
+      (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
     );
   }
 
@@ -86,7 +87,10 @@ export class StringUtil {
   /**
    * Generate random string
    */
-  static random(length = 8, charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'): string {
+  static random(
+    length = 8,
+    charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+  ): string {
     let result = '';
     for (let i = 0; i < length; i++) {
       result += charset.charAt(Math.floor(Math.random() * charset.length));
@@ -99,8 +103,8 @@ export class StringUtil {
    */
   static generateUuid(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
   }
@@ -143,7 +147,10 @@ export class StringUtil {
    * Count words in string
    */
   static wordCount(str: string): number {
-    return str.trim().split(/\s+/).filter(word => word.length > 0).length;
+    return str
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
   }
 
   /**
@@ -157,15 +164,20 @@ export class StringUtil {
   /**
    * Mask string (e.g., for passwords or sensitive data)
    */
-  static mask(str: string, maskChar = '*', visibleStart = 2, visibleEnd = 2): string {
+  static mask(
+    str: string,
+    maskChar = '*',
+    visibleStart = 2,
+    visibleEnd = 2,
+  ): string {
     if (str.length <= visibleStart + visibleEnd) {
       return maskChar.repeat(str.length);
     }
-    
+
     const start = str.substring(0, visibleStart);
     const end = str.substring(str.length - visibleEnd);
     const middle = maskChar.repeat(str.length - visibleStart - visibleEnd);
-    
+
     return start + middle + end;
   }
 }

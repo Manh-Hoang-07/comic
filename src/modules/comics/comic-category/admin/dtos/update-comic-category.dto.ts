@@ -15,6 +15,3 @@ export class UpdateComicCategoryDto {
   @IsString()
   description?: string;
 }
-
-
-

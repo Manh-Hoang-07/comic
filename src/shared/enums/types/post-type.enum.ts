@@ -27,10 +27,4 @@ export const MEDIA_POST_TYPES = [
 /**
  * Các loại bài viết yêu cầu URL media
  */
-export const REQUIRES_MEDIA_URL_POST_TYPES = [
-  PostType.video,
-  PostType.audio,
-];
-
-
-
+export const REQUIRES_MEDIA_URL_POST_TYPES = [PostType.video, PostType.audio];

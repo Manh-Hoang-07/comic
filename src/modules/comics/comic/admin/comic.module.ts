@@ -18,4 +18,4 @@ import { StatsRepositoryModule } from '../../stats/stats.repository.module';
   providers: [ComicService, ComicActionService],
   exports: [ComicService, ComicActionService],
 })
-export class AdminComicModule { }
+export class AdminComicModule {}

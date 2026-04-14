@@ -43,13 +43,16 @@ async function bootstrap() {
   // Set process timezone (best effort; DB timezone configured separately)
   try {
     process.env.TZ = appConfig.timezone;
-  } catch { }
+  } catch {}
 
   // Configure logging based on environment
   setupLogging(appConfig.environment);
 
   // Enable CORS if configured
-  applyCors(app, { enabled: appConfig.corsEnabled, origins: appConfig.corsOrigins });
+  applyCors(app, {
+    enabled: appConfig.corsEnabled,
+    origins: appConfig.corsOrigins,
+  });
 
   // HTTP hardening middlewares
   applyHttpHardening(app, '10mb');
@@ -57,7 +60,7 @@ async function bootstrap() {
   // Trust proxy (needed when running behind reverse proxy to get correct req.ip)
   try {
     (app as any).set('trust proxy', true);
-  } catch { }
+  } catch {}
 
   // Set global prefix
   app.setGlobalPrefix(appConfig.globalPrefix);
@@ -94,7 +97,9 @@ async function bootstrap() {
       },
     });
 
-    logger.log(`📚 Swagger documentation available at: http://localhost:${appConfig.port}${swaggerPath}`);
+    logger.log(
+      `📚 Swagger documentation available at: http://localhost:${appConfig.port}${swaggerPath}`,
+    );
   } else {
     logger.log('Swagger is disabled in production environment');
   }
@@ -127,5 +132,3 @@ bootstrap().catch((error) => {
   console.error('Failed to start application:', error);
   process.exit(1);
 });
-
-

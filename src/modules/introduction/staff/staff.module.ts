@@ -17,5 +17,4 @@ import { StaffRepositoryModule } from './staff.repository.module';
   ],
   exports: [],
 })
-export class StaffModule { }
-
+export class StaffModule {}

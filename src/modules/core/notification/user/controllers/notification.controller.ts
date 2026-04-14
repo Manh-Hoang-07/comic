@@ -21,7 +21,7 @@ import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 @Controller('user/notifications')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   @Get()
   @Permission('notification.manage')
@@ -35,24 +35,32 @@ export class NotificationController {
   @Get('unread')
   @Permission('notification.manage')
   async getUnread(@Request() req: { user: AuthUser }) {
-    return this.notificationService.getList({ isRead: false, userId: req.user.id });
+    return this.notificationService.getList({
+      isRead: false,
+      userId: req.user.id,
+    });
   }
 
   @Get('unread/count')
   @Permission('notification.manage')
   async getUnreadCount(@Request() req: { user: AuthUser }) {
-    const result = await this.notificationService.getList(
-      { userId: req.user.id, isRead: false, status: BasicStatus.active, page: 1, limit: 1 },
-    );
-    return { success: true, data: { count: result.meta?.totalItems || 0 }, message: 'Unread count retrieved successfully' };
+    const result = await this.notificationService.getList({
+      userId: req.user.id,
+      isRead: false,
+      status: BasicStatus.active,
+      page: 1,
+      limit: 1,
+    });
+    return {
+      success: true,
+      data: { count: result.meta?.totalItems || 0 },
+      message: 'Unread count retrieved successfully',
+    };
   }
 
   @Get(':id')
   @Permission('notification.manage')
-  async getOne(
-    @Param('id') id: string,
-    @Request() req: { user: AuthUser },
-  ) {
+  async getOne(@Param('id') id: string, @Request() req: { user: AuthUser }) {
     // Current getOne only takes ID, we should ensure user owns it.
     const notification = await this.notificationService.getOne(id);
     if (!notification || String(notification.user_id) !== String(req.user.id)) {
@@ -78,4 +86,3 @@ export class NotificationController {
     return this.notificationService.markAllAsReadForUser(req.user.id);
   }
 }
-

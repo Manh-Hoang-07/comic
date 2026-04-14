@@ -1,5 +1,15 @@
-import { Injectable, Inject, BadRequestException, NotFoundException, forwardRef } from '@nestjs/common';
-import { IMenuRepository, MENU_REPOSITORY, MenuFilter } from '@/modules/core/menu/domain/menu.repository';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+  forwardRef,
+} from '@nestjs/common';
+import {
+  IMenuRepository,
+  MENU_REPOSITORY,
+  MenuFilter,
+} from '@/modules/core/menu/domain/menu.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RequestContext } from '@/common/shared/utils';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
@@ -7,7 +17,11 @@ import { MenuTreeItem } from '@/modules/core/menu/admin/interfaces/menu-tree-ite
 import { BaseService } from '@/common/core/services';
 import { stableObjectJsonForCache } from '@/common/core/utils/cache-key.helper';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { buildMenuTree, filterAdminMenus, filterClientMenus } from '@/modules/core/menu/utils/menu.helper';
+import {
+  buildMenuTree,
+  filterAdminMenus,
+  filterClientMenus,
+} from '@/modules/core/menu/utils/menu.helper';
 import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
 
 /** Raw cây menu ít đổi — cache Redis; bust toàn bộ prefix khi CRUD menu. */
@@ -80,11 +94,19 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return buildMenuTree(menus);
   }
 
-  async getUserMenus(userId?: any, filters: MenuFilter = {}): Promise<MenuTreeItem[]> {
+  async getUserMenus(
+    userId?: any,
+    filters: MenuFilter = {},
+  ): Promise<MenuTreeItem[]> {
     const group = filters.group || 'admin';
-    const dbFilter: MenuFilter = { ...filters, group, status: BasicStatus.active };
+    const dbFilter: MenuFilter = {
+      ...filters,
+      group,
+      status: BasicStatus.active,
+    };
 
-    const { rows: allMenus, fromCache } = await this.findAllWithChildrenCachedWithMeta(dbFilter);
+    const { rows: allMenus, fromCache } =
+      await this.findAllWithChildrenCachedWithMeta(dbFilter);
     const menus = (allMenus as any[]).filter((m) => m.show_in_menu);
 
     if (!menus.length) {
@@ -98,7 +120,10 @@ export class MenuService extends BaseService<any, IMenuRepository> {
       if (!userId) return [];
       const groupId = RequestContext.get<any>('groupId');
       await this.rbacService.prepare();
-      const userPerms = await this.rbacService.getPermissions(userId, groupId ?? null);
+      const userPerms = await this.rbacService.getPermissions(
+        userId,
+        groupId ?? null,
+      );
       filtered = filterAdminMenus(menus, userPerms, (assigned, code) =>
         this.rbacService.hasCode(assigned, code),
       );
@@ -124,12 +149,16 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return `${MENU_TREE_RAW_PREFIX}${stableObjectJsonForCache(dbFilter)}`;
   }
 
-  private async findAllWithChildrenCached(dbFilter: MenuFilter): Promise<any[]> {
+  private async findAllWithChildrenCached(
+    dbFilter: MenuFilter,
+  ): Promise<any[]> {
     const { rows } = await this.findAllWithChildrenCachedWithMeta(dbFilter);
     return rows;
   }
 
-  private async findAllWithChildrenCachedWithMeta(dbFilter: MenuFilter): Promise<{ rows: any[]; fromCache: boolean }> {
+  private async findAllWithChildrenCachedWithMeta(
+    dbFilter: MenuFilter,
+  ): Promise<{ rows: any[]; fromCache: boolean }> {
     if (!this.redis.isEnabled()) {
       const rows = await this.menuRepo.findAllWithChildren(dbFilter);
       return { rows, fromCache: false };
@@ -159,9 +188,18 @@ export class MenuService extends BaseService<any, IMenuRepository> {
 
   private preparePayload(data: any): any {
     const payload = { ...data };
-    const bigIntFields = ['parent_id', 'required_permission_id', 'created_user_id', 'updated_user_id'];
+    const bigIntFields = [
+      'parent_id',
+      'required_permission_id',
+      'created_user_id',
+      'updated_user_id',
+    ];
     bigIntFields.forEach((field) => {
-      if (payload[field] !== undefined && payload[field] !== null && payload[field] !== '') {
+      if (
+        payload[field] !== undefined &&
+        payload[field] !== null &&
+        payload[field] !== ''
+      ) {
         payload[field] = toPrimaryKey(payload[field]);
       } else if (payload[field] === '' || payload[field] === null) {
         payload[field] = null;
@@ -185,5 +223,3 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return item;
   }
 }
-
-

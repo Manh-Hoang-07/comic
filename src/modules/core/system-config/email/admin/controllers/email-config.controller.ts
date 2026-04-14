@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Body,
-  ValidationPipe,
-  Post,
-} from '@nestjs/common';
+import { Controller, Get, Body, ValidationPipe, Post } from '@nestjs/common';
 import { EmailConfigService } from '../services/email-config.service';
 import { UpdateEmailConfigDto } from '../dtos/update-email-config.dto';
 import { LogRequest } from '@/common/shared/decorators';
@@ -16,7 +10,7 @@ export class EmailConfigController {
   constructor(
     private readonly emailConfigService: EmailConfigService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   /**
    * Lấy cấu hình email
@@ -37,4 +31,3 @@ export class EmailConfigController {
     return this.emailConfigService.updateConfig(dto);
   }
 }
-

@@ -1,12 +1,22 @@
-import { Injectable, Inject, InternalServerErrorException } from '@nestjs/common';
-import { IEmailConfigRepository, EMAIL_CONFIG_REPOSITORY } from '../../domain/repositories/email-config.repository';
+import {
+  Injectable,
+  Inject,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import {
+  IEmailConfigRepository,
+  EMAIL_CONFIG_REPOSITORY,
+} from '../../domain/repositories/email-config.repository';
 import { UpdateEmailConfigDto } from '../dtos/update-email-config.dto';
 import { BaseService } from '@/common/core/services';
 import { buildConfigPayload } from '@/modules/core/system-config/utils/config-payload.helper';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
-export class EmailConfigService extends BaseService<any, IEmailConfigRepository> {
+export class EmailConfigService extends BaseService<
+  any,
+  IEmailConfigRepository
+> {
   constructor(
     @Inject(EMAIL_CONFIG_REPOSITORY)
     private readonly emailConfigRepo: IEmailConfigRepository,
@@ -60,4 +70,3 @@ export class EmailConfigService extends BaseService<any, IEmailConfigRepository>
     return item;
   }
 }
-

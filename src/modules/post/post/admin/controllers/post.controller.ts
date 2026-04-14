@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
   UseInterceptors,
 } from '@nestjs/common';
@@ -23,7 +22,7 @@ import { CacheInterceptor, CacheEvict } from '@/common/cache';
 @Controller('admin/posts')
 @UseInterceptors(CacheInterceptor)
 export class PostController {
-  constructor(private readonly postService: PostService) { }
+  constructor(private readonly postService: PostService) {}
 
   @Permission('post.manage')
   @Get()
@@ -55,10 +54,7 @@ export class PostController {
   @LogRequest({ fileBaseName: 'post_update' })
   @Put(':id')
   @CacheEvict({ keys: ['posts:list:*', 'posts:featured:*', 'posts:slug:*'] })
-  async update(
-    @Param('id') id: any,
-    @Body(ValidationPipe) dto: UpdatePostDto,
-  ) {
+  async update(@Param('id') id: any, @Body(ValidationPipe) dto: UpdatePostDto) {
     return this.postService.update(id, dto as any);
   }
 
@@ -70,6 +66,3 @@ export class PostController {
     return this.postService.delete(id);
   }
 }
-
-
-

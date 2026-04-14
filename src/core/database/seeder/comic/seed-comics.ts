@@ -6,31 +6,48 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedComics {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
     const existingComics = await this.prisma.comic.count();
     if (existingComics > 0) return;
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'comic');
-    const comicsData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'comics.json'), 'utf8'));
-    const cmangaData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'cmanga.json'), 'utf8'));
-    const nettruyenData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'nettruyen.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'comic',
+    );
+    const comicsData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'comics.json'), 'utf8'),
+    );
+    const cmangaData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'cmanga.json'), 'utf8'),
+    );
+    const nettruyenData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'nettruyen.json'), 'utf8'),
+    );
 
     // Combine all data sets (nettruyen data takes priority as featured/realistic data)
     const allComicsData = [...nettruyenData, ...cmangaData, ...comicsData];
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'admin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'admin' },
+    });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);
 
     const categories = await this.prisma.comicCategory.findMany();
     if (categories.length === 0) return;
 
-    const systemGroup = await this.prisma.group.findFirst({ where: { code: 'system' } });
+    const systemGroup = await this.prisma.group.findFirst({
+      where: { code: 'system' },
+    });
     const groupId = systemGroup ? systemGroup.id : null;
 
     for (const comicData of allComicsData) {
-      const comicCategories = categories.filter(cat =>
+      const comicCategories = categories.filter((cat) =>
         (comicData.category_slugs as string[]).includes(cat.slug),
       );
 
@@ -55,7 +72,9 @@ export class SeedComics {
             },
           },
           categoryLinks: {
-            create: comicCategories.map(cat => ({ comic_category_id: cat.id })),
+            create: comicCategories.map((cat) => ({
+              comic_category_id: cat.id,
+            })),
           },
         },
       });
@@ -68,4 +87,3 @@ export class SeedComics {
     await this.prisma.comic.deleteMany({});
   }
 }
-

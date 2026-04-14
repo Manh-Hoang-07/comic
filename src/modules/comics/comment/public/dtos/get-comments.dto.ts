@@ -9,4 +9,3 @@ export class GetCommentsByChapterDto {
   @IsPrimaryKey()
   chapterId: any;
 }
-

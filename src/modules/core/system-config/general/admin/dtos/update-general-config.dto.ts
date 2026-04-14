@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsEmail, MaxLength, IsArray, IsBoolean, IsNumber, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  MaxLength,
+  IsArray,
+  IsBoolean,
+  IsNumber,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 import { ContactChannel } from '@/shared/interfaces/contact-channel.interface';

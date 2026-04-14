@@ -1,8 +1,4 @@
-import {
-  Controller,
-  Get,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { PublicGeneralConfigService } from '../services/general-config.service';
 import { Permission } from '@/common/auth/decorators';
 import { CacheInterceptor, Cacheable } from '@/common/cache';
@@ -12,7 +8,7 @@ import { CacheInterceptor, Cacheable } from '@/common/cache';
 export class PublicGeneralConfigController {
   constructor(
     private readonly generalConfigService: PublicGeneralConfigService,
-  ) { }
+  ) {}
 
   /**
    * Lấy cấu hình chung (public, có cache)
@@ -24,4 +20,3 @@ export class PublicGeneralConfigController {
     return this.generalConfigService.getConfig();
   }
 }
-

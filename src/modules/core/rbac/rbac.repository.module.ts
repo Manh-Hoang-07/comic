@@ -10,29 +10,29 @@ import { RoleContextRepositoryImpl } from './role-context/infrastructure/reposit
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: USER_GROUP_REPOSITORY,
-            useClass: UserGroupRepositoryImpl,
-        },
-        {
-            provide: USER_ROLE_ASSIGNMENT_REPOSITORY,
-            useClass: UserRoleAssignmentRepositoryImpl,
-        },
-        {
-            provide: ROLE_HAS_PERMISSION_REPOSITORY,
-            useClass: RoleHasPermissionRepositoryImpl,
-        },
-        {
-            provide: ROLE_CONTEXT_REPOSITORY,
-            useClass: RoleContextRepositoryImpl,
-        },
-    ],
-    exports: [
-        USER_GROUP_REPOSITORY,
-        USER_ROLE_ASSIGNMENT_REPOSITORY,
-        ROLE_HAS_PERMISSION_REPOSITORY,
-        ROLE_CONTEXT_REPOSITORY,
-    ],
+  providers: [
+    {
+      provide: USER_GROUP_REPOSITORY,
+      useClass: UserGroupRepositoryImpl,
+    },
+    {
+      provide: USER_ROLE_ASSIGNMENT_REPOSITORY,
+      useClass: UserRoleAssignmentRepositoryImpl,
+    },
+    {
+      provide: ROLE_HAS_PERMISSION_REPOSITORY,
+      useClass: RoleHasPermissionRepositoryImpl,
+    },
+    {
+      provide: ROLE_CONTEXT_REPOSITORY,
+      useClass: RoleContextRepositoryImpl,
+    },
+  ],
+  exports: [
+    USER_GROUP_REPOSITORY,
+    USER_ROLE_ASSIGNMENT_REPOSITORY,
+    ROLE_HAS_PERMISSION_REPOSITORY,
+    ROLE_CONTEXT_REPOSITORY,
+  ],
 })
-export class RbacRepositoryModule { }
+export class RbacRepositoryModule {}

@@ -4,15 +4,7 @@ import { ProvinceModule } from './province/province.module';
 import { WardModule } from './ward/ward.module';
 
 @Module({
-    imports: [
-        CountryModule,
-        ProvinceModule,
-        WardModule,
-    ],
-    exports: [
-        CountryModule,
-        ProvinceModule,
-        WardModule,
-    ],
+  imports: [CountryModule, ProvinceModule, WardModule],
+  exports: [CountryModule, ProvinceModule, WardModule],
 })
-export class LocationModule { }
+export class LocationModule {}

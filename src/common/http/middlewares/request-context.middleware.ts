@@ -13,15 +13,20 @@ export class RequestContextMiddleware implements NestMiddleware {
       const method = req.method;
       const url = req.originalUrl || req.url;
       const userAgent = req.get('User-Agent') || '';
-      const ip = (req.ip || (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '').toString();
+      const ip = (
+        req.ip ||
+        (req.headers['x-forwarded-for'] as string) ||
+        req.socket.remoteAddress ||
+        ''
+      ).toString();
 
       // Prefer incoming header, else generate
       const ridHeader = req.headers['x-request-id'];
       const requestId = Array.isArray(ridHeader)
         ? (ridHeader[0] as string)
-        : (typeof ridHeader === 'string' && ridHeader.length > 0
-            ? ridHeader
-            : `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+        : typeof ridHeader === 'string' && ridHeader.length > 0
+          ? ridHeader
+          : `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Save to per-request store
       RequestContext.set('tracker', tracker);

@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Inject,
+} from '@nestjs/common';
 import { Transporter } from 'nodemailer';
 import { CacheService } from '@/common/cache/services';
 import {
@@ -25,7 +29,7 @@ export class MailService {
     @Inject(EMAIL_CONFIG_REPOSITORY)
     private readonly emailConfigRepo: IEmailConfigRepository,
     private readonly cacheService: CacheService,
-  ) { }
+  ) {}
 
   // ── Config & Transporter ──────────────────────────────────────────────────
 
@@ -101,8 +105,10 @@ export class MailService {
 
   // ── Private Helpers ───────────────────────────────────────────────────────
 
-
-  private validateEmailContent(options: { html?: string; text?: string }): void {
+  private validateEmailContent(options: {
+    html?: string;
+    text?: string;
+  }): void {
     if (!options.html && !options.text) {
       throw new InternalServerErrorException(
         'Either html or text content must be provided when sending email.',

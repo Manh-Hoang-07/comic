@@ -1,10 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PostCategory } from '@prisma/client';
-import { IPostCategoryRepository, POST_CATEGORY_REPOSITORY, PostCategoryFilter } from '@/modules/post/post-category/domain/post-category.repository';
+import {
+  IPostCategoryRepository,
+  POST_CATEGORY_REPOSITORY,
+  PostCategoryFilter,
+} from '@/modules/post/post-category/domain/post-category.repository';
 import { BaseService } from '@/common/core/services';
 
 @Injectable()
-export class PostCategoryService extends BaseService<PostCategory, IPostCategoryRepository> {
+export class PostCategoryService extends BaseService<
+  PostCategory,
+  IPostCategoryRepository
+> {
   constructor(
     @Inject(POST_CATEGORY_REPOSITORY)
     private readonly categoryRepo: IPostCategoryRepository,
@@ -50,7 +57,3 @@ export class PostCategoryService extends BaseService<PostCategory, IPostCategory
     return item;
   }
 }
-
-
-
-

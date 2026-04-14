@@ -10,4 +10,4 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
   providers: [PostCategoryService],
   exports: [PostCategoryService],
 })
-export class PublicPostCategoryModule { }
+export class PublicPostCategoryModule {}

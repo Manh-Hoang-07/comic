@@ -11,5 +11,3 @@ export interface AuthUser {
   updated_at: Date;
   [key: string]: any;
 }
-
-

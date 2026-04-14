@@ -1,12 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IUploadStrategy, UploadResult } from '../interfaces/upload-strategy.interface';
+import {
+  IUploadStrategy,
+  UploadResult,
+} from '../interfaces/upload-strategy.interface';
 
 @Injectable()
 export class UploadService {
   constructor(
     @Inject('UPLOAD_STRATEGY') private readonly strategy: IUploadStrategy,
   ) {}
-
 
   async uploadFile(file: Express.Multer.File): Promise<UploadResult> {
     if (!file) {
@@ -21,8 +23,6 @@ export class UploadService {
       throw new Error('Files are required');
     }
 
-    return Promise.all(files.map(file => this.strategy.upload(file)));
+    return Promise.all(files.map((file) => this.strategy.upload(file)));
   }
 }
-
-

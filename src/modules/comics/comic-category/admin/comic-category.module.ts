@@ -5,12 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { ComicCategoryRepositoryModule } from '../comic-category.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    ComicCategoryRepositoryModule,
-  ],
+  imports: [RbacModule, ComicCategoryRepositoryModule],
   controllers: [ComicCategoryController],
   providers: [ComicCategoryService],
   exports: [ComicCategoryService],
 })
-export class AdminComicCategoryModule { }
+export class AdminComicCategoryModule {}

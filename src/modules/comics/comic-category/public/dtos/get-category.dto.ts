@@ -4,4 +4,3 @@ export class GetComicCategoryDto {
   @IsString()
   slug: string;
 }
-

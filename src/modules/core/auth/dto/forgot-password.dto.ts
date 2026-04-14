@@ -10,4 +10,3 @@ export class ForgotPasswordDto {
   @IsEmail({}, { message: 'Email không hợp lệ.' })
   email: string;
 }
-

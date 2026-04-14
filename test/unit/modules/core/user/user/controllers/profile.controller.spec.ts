@@ -23,9 +23,7 @@ describe('ProfileController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProfileController],
-      providers: [
-        { provide: ProfileService, useValue: service },
-      ],
+      providers: [{ provide: ProfileService, useValue: service }],
     }).compile();
 
     controller = module.get<ProfileController>(ProfileController);

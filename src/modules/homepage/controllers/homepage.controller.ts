@@ -4,13 +4,13 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('public/homepage1')
 export class HomepageController {
-  constructor(private readonly homepageService: HomepageService) { }
+  constructor(private readonly homepageService: HomepageService) {}
 
   /**
    * Lấy tất cả dữ liệu cần thiết cho trang chủ
    * Kết hợp nhiều API calls thành 1 endpoint
    * Mỗi block được cache riêng với TTL khác nhau
-   * 
+   *
    * Response bao gồm:
    * - featured_projects: Dự án nổi bật
    * - about_sections: Các phần giới thiệu
@@ -28,5 +28,3 @@ export class HomepageController {
     return await this.homepageService.getHomepageData();
   }
 }
-
-

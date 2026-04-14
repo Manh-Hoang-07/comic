@@ -1,6 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
-import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { CONTEXT_REPOSITORY, IContextRepository } from '@/modules/core/context/context/domain/context.repository';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common';
+import {
+  IGroupRepository,
+  GROUP_REPOSITORY,
+} from '@/modules/core/context/group/domain/group.repository';
+import {
+  CONTEXT_REPOSITORY,
+  IContextRepository,
+} from '@/modules/core/context/context/domain/context.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { BaseService } from '@/common/core/services';
 import { RequestContext } from '@/common/shared/utils';
@@ -39,15 +51,22 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
    * Override để vẫn tương thích signature `BaseService.getOne(id, _options?: IPaginationOptions)`
    * nhưng bổ sung mode `'context' | 'full'` cho use-cases nội bộ.
    */
-  async getOne(id: any, optionsOrMode: IPaginationOptions | 'full' | 'context' = {}): Promise<any> {
+  async getOne(
+    id: any,
+    optionsOrMode: IPaginationOptions | 'full' | 'context' = {},
+  ): Promise<any> {
     const mode: 'full' | 'context' =
-      optionsOrMode === 'context' || optionsOrMode === 'full' ? optionsOrMode : 'full';
+      optionsOrMode === 'context' || optionsOrMode === 'full'
+        ? optionsOrMode
+        : 'full';
 
     if (mode === 'context') {
       const cacheKey = `ctx:group:snapshot:${id}`;
       const cached = await this.redis.get(cacheKey);
       if (cached) {
-        try { return JSON.parse(cached); } catch { }
+        try {
+          return JSON.parse(cached);
+        } catch {}
       }
 
       const group = await this.groupRepo.findByIdForContext(id);
@@ -59,7 +78,9 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     const cacheKey = `ctx:group:${id}`;
     const cached = await this.redis.get(cacheKey);
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) { }
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
     }
 
     const entity = await this.groupRepo.findById(id);
@@ -73,7 +94,9 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
   async createGroup(data: any, requesterUserId: any) {
     const context = RequestContext.get<any>('context');
     if (context?.type !== 'system') {
-      throw new ForbiddenException('Groups can only be created under the system context');
+      throw new ForbiddenException(
+        'Groups can only be created under the system context',
+      );
     }
     return this.create(data);
   }
@@ -89,12 +112,16 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     // Validate Context
     const context = await this.contextRepo.findById(data.context_id);
     if (!context || (context as any).status !== 'active') {
-      throw new NotFoundException(`Context with id ${data.context_id} not found`);
+      throw new NotFoundException(
+        `Context with id ${data.context_id} not found`,
+      );
     }
 
     // Validate Code Uniqueness
     if (await this.groupRepo.findByCode(data.code)) {
-      throw new BadRequestException(`Group with code "${data.code}" already exists`);
+      throw new BadRequestException(
+        `Group with code "${data.code}" already exists`,
+      );
     }
 
     return {
@@ -111,9 +138,9 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     }
   }
 
-  protected async afterUpdate(): Promise<void> { }
+  protected async afterUpdate(): Promise<void> {}
 
-  protected async afterDelete(): Promise<void> { }
+  protected async afterDelete(): Promise<void> {}
 
   // ── Transformation ─────────────────────────────────────────────────────────
 
@@ -130,5 +157,3 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     return item;
   }
 }
-
-

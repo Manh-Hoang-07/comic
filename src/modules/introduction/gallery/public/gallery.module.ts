@@ -10,5 +10,4 @@ import { GalleryRepositoryModule } from '@/modules/introduction/gallery/gallery.
   providers: [PublicGalleryService],
   exports: [PublicGalleryService],
 })
-export class PublicGalleryModule { }
-
+export class PublicGalleryModule {}

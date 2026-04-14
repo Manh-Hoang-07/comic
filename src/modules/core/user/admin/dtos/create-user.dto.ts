@@ -1,10 +1,21 @@
-import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class UserProfilePayloadDto {
-  @ApiPropertyOptional({ description: 'Ngày sinh (YYYY-MM-DD)', example: '1990-01-01' })
+  @ApiPropertyOptional({
+    description: 'Ngày sinh (YYYY-MM-DD)',
+    example: '1990-01-01',
+  })
   @IsOptional()
   @IsString()
   birthday?: string;
@@ -14,7 +25,10 @@ export class UserProfilePayloadDto {
   @IsString()
   gender?: string;
 
-  @ApiPropertyOptional({ description: 'Địa chỉ', example: '123 Đường ABC, Quận 1, TP.HCM' })
+  @ApiPropertyOptional({
+    description: 'Địa chỉ',
+    example: '123 Đường ABC, Quận 1, TP.HCM',
+  })
   @IsOptional()
   @IsString()
   address?: string;
@@ -46,7 +60,10 @@ export class CreateUserDto {
   @IsString()
   username?: string;
 
-  @ApiPropertyOptional({ description: 'Email của người dùng', example: 'user@example.com' })
+  @ApiPropertyOptional({
+    description: 'Email của người dùng',
+    example: 'user@example.com',
+  })
   @IsOptional()
   @IsEmail()
   email?: string;
@@ -56,7 +73,11 @@ export class CreateUserDto {
   @IsString()
   phone?: string;
 
-  @ApiProperty({ description: 'Mật khẩu', minLength: 6, example: 'P@ssw0rd123' })
+  @ApiProperty({
+    description: 'Mật khẩu',
+    minLength: 6,
+    example: 'P@ssw0rd123',
+  })
   @IsNotEmpty()
   @IsString()
   @MinLength(6)
@@ -72,8 +93,10 @@ export class CreateUserDto {
   @IsString()
   image?: string;
 
-
-  @ApiPropertyOptional({ description: 'Thông tin hồ sơ bổ sung', type: UserProfilePayloadDto })
+  @ApiPropertyOptional({
+    description: 'Thông tin hồ sơ bổ sung',
+    type: UserProfilePayloadDto,
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => UserProfilePayloadDto)

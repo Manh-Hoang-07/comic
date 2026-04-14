@@ -1,12 +1,22 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PERM } from '@/modules/core/rbac/rbac.constants';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { IPermissionRepository, PERMISSION_REPOSITORY } from '@/modules/core/iam/permission/domain/permission.repository';
+import {
+  IPermissionRepository,
+  PERMISSION_REPOSITORY,
+} from '@/modules/core/iam/permission/domain/permission.repository';
 
 type PermissionNode = { code: string; parentCode: string | null };
 
 @Injectable()
-export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy {
+export class RbacPermissionIndexService
+  implements OnModuleInit, OnModuleDestroy
+{
   private permissionByCode = new Map<string, PermissionNode>();
   private lastPermFetchMs = 0;
   private readonly permIndexTtlMs = 24 * 60 * 60 * 1000;
@@ -16,9 +26,10 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
   private prewarmTimer: NodeJS.Timeout | null = null;
 
   constructor(
-    @Inject(PERMISSION_REPOSITORY) private readonly permissionRepo: IPermissionRepository,
+    @Inject(PERMISSION_REPOSITORY)
+    private readonly permissionRepo: IPermissionRepository,
     private readonly redis: RedisUtil,
-  ) { }
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.ensurePermissionIndexes().catch(() => undefined);
@@ -54,12 +65,20 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
     return this.grants(need, (code) => assignedCodes.has(code));
   }
 
-  hasAnyRequiredFromAssigned(assignedCodes: Set<string>, required: string[]): boolean {
+  hasAnyRequiredFromAssigned(
+    assignedCodes: Set<string>,
+    required: string[],
+  ): boolean {
     return required.some((need) => this.matchesAssigned(assignedCodes, need));
   }
 
   private async ensurePermissionIndexes(force = false): Promise<void> {
-    if (!force && this.permissionByCode.size > 0 && Date.now() - this.lastPermFetchMs <= this.permIndexTtlMs) return;
+    if (
+      !force &&
+      this.permissionByCode.size > 0 &&
+      Date.now() - this.lastPermFetchMs <= this.permIndexTtlMs
+    )
+      return;
 
     if (this.permissionIndexRefreshInFlight) {
       await this.permissionIndexRefreshInFlight;
@@ -71,11 +90,19 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
       const nodes = await this.permissionRepo.findActiveForRbacIndex();
       const byId = new Map<string, { code: string; parent_id: any | null }>();
       for (const n of nodes as any[]) {
-        byId.set(String(n.id), { code: n.code, parent_id: n.parent_id ?? null });
+        byId.set(String(n.id), {
+          code: n.code,
+          parent_id: n.parent_id ?? null,
+        });
       }
       for (const n of nodes as any[]) {
-        const parent = n.parent_id != null ? byId.get(String(n.parent_id)) : null;
-        if (n.code) byCode.set(n.code, { code: n.code, parentCode: parent?.code ?? null });
+        const parent =
+          n.parent_id != null ? byId.get(String(n.parent_id)) : null;
+        if (n.code)
+          byCode.set(n.code, {
+            code: n.code,
+            parentCode: parent?.code ?? null,
+          });
       }
       this.permissionByCode = byCode;
       this.lastPermFetchMs = Date.now();
@@ -91,7 +118,7 @@ export class RbacPermissionIndexService implements OnModuleInit, OnModuleDestroy
   private grants(need: string, has: (code: string) => boolean): boolean {
     if (has(PERM.SYSTEM.MANAGE)) return true;
     if (has(need)) return true;
-    for (let cur = this.permissionByCode.get(need); cur?.parentCode;) {
+    for (let cur = this.permissionByCode.get(need); cur?.parentCode; ) {
       const parent = this.permissionByCode.get(cur.parentCode);
       if (!parent) break;
       if (parent.code && has(parent.code)) return true;

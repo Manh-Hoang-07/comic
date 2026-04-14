@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsEmail, MaxLength, IsEnum, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  MaxLength,
+  IsEnum,
+  IsDate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 import { ContactStatus } from '@/shared/enums/types/contact-status.enum';
@@ -40,4 +47,3 @@ export class UpdateContactDto {
   @IsPrimaryKey()
   replied_by?: any;
 }
-

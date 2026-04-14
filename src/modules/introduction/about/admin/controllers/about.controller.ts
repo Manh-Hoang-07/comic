@@ -22,7 +22,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/about-sections')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class AboutController {
-  constructor(private readonly aboutService: AboutService) { }
+  constructor(private readonly aboutService: AboutService) {}
 
   @LogRequest()
   @Post()
@@ -51,7 +51,10 @@ export class AboutController {
 
   @Put(':id')
   @Permission('about.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateAboutDto: UpdateAboutDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateAboutDto: UpdateAboutDto,
+  ) {
     return this.aboutService.update(id, updateAboutDto);
   }
 
@@ -61,5 +64,3 @@ export class AboutController {
     return this.aboutService.delete(id);
   }
 }
-
-

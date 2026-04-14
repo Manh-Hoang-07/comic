@@ -34,7 +34,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    const { message, errors } = extractErrorDetails(exception, exceptionResponse);
+    const { message, errors } = extractErrorDetails(
+      exception,
+      exceptionResponse,
+    );
 
     if (this.shouldLog(status, request.url)) {
       this.logger.error(
@@ -54,7 +57,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
     }
 
-    response.status(status).json(ResponseUtil.error(message, 'ERROR', status, errors));
+    response
+      .status(status)
+      .json(ResponseUtil.error(message, 'ERROR', status, errors));
   }
 
   private shouldLog(status: number, url: string): boolean {

@@ -14,6 +14,3 @@ export const ProjectStatusLabels: Record<ProjectStatus, string> = {
   [ProjectStatus.completed]: 'Hoàn thành',
   [ProjectStatus.cancelled]: 'Đã hủy',
 };
-
-
-

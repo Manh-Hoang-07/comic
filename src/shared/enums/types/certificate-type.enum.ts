@@ -16,6 +16,3 @@ export const CertificateTypeLabels: Record<CertificateType, string> = {
   [CertificateType.certification]: 'Chứng nhận',
   [CertificateType.other]: 'Khác',
 };
-
-
-

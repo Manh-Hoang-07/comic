@@ -5,7 +5,7 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('faqs')
 export class PublicFaqController {
-  constructor(private readonly faqService: PublicFaqService) { }
+  constructor(private readonly faqService: PublicFaqService) {}
 
   @Permission('public')
   @Get()
@@ -34,5 +34,3 @@ export class PublicFaqController {
     return this.faqService.incrementHelpfulCount(id);
   }
 }
-
-

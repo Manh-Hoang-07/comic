@@ -5,13 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { FaqRepositoryModule } from '../faq.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    FaqRepositoryModule,
-  ],
+  imports: [RbacModule, FaqRepositoryModule],
   controllers: [FaqController],
   providers: [FaqService],
   exports: [FaqService],
 })
-export class AdminFaqModule { }
-
+export class AdminFaqModule {}

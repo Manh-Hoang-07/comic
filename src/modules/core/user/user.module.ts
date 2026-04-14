@@ -24,7 +24,7 @@ import { ProfileController } from './user/controllers/profile.controller';
     UserRolesService,
     PasswordService,
     RelationService,
-    ProfileService, 
+    ProfileService,
     UserRepositoryImpl,
     ProfileRepositoryImpl,
     {
@@ -36,20 +36,17 @@ import { ProfileController } from './user/controllers/profile.controller';
       useExisting: ProfileRepositoryImpl,
     },
   ],
-  controllers: [
-    UserController, 
-    ProfileController
-  ],
+  controllers: [UserController, ProfileController],
   exports: [
     PolicyService,
     UserService,
     PasswordService,
     RelationService,
-    ProfileService, 
+    ProfileService,
     UserRepositoryImpl,
     ProfileRepositoryImpl,
     USER_REPOSITORY,
-    PROFILE_REPOSITORY
+    PROFILE_REPOSITORY,
   ],
 })
-export class UserModule { }
+export class UserModule {}

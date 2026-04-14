@@ -6,7 +6,10 @@ export function createPostgresAdapter() {
     process.env.DATABASE_URL?.includes('supabase.com') ||
     process.env.DATABASE_URL?.includes('sslmode=require');
 
-  const max = Math.max(1, parseInt(process.env.DB_CONNECTION_LIMIT || '50', 10));
+  const max = Math.max(
+    1,
+    parseInt(process.env.DB_CONNECTION_LIMIT || '50', 10),
+  );
 
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

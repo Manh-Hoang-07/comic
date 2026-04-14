@@ -25,4 +25,4 @@ import { NotificationRepositoryModule } from '@/modules/core/notification/notifi
   providers: [ChapterService, ChapterActionService, ComicNotificationService],
   exports: [ChapterService, ChapterActionService, ComicNotificationService],
 })
-export class AdminChapterModule { }
+export class AdminChapterModule {}

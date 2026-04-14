@@ -4,12 +4,12 @@ import { StaffRepositoryImpl } from './infrastructure/repositories/staff.reposit
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: STAFF_REPOSITORY,
-            useClass: StaffRepositoryImpl,
-        },
-    ],
-    exports: [STAFF_REPOSITORY],
+  providers: [
+    {
+      provide: STAFF_REPOSITORY,
+      useClass: StaffRepositoryImpl,
+    },
+  ],
+  exports: [STAFF_REPOSITORY],
 })
-export class StaffRepositoryModule { }
+export class StaffRepositoryModule {}

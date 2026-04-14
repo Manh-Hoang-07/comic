@@ -10,5 +10,4 @@ import { ContactRepositoryModule } from '@/modules/marketing/contact/contact.rep
   providers: [PublicContactService],
   exports: [PublicContactService],
 })
-export class PublicContactModule { }
-
+export class PublicContactModule {}

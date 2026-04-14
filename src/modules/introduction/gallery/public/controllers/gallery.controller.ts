@@ -1,11 +1,17 @@
-import { Controller, Get, Param, Query, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  NotFoundException,
+} from '@nestjs/common';
 import { PublicGalleryService } from '@/modules/introduction/gallery/public/services/gallery.service';
 import { prepareQuery } from '@/common/core/utils';
 import { Permission } from '@/common/auth/decorators';
 
 @Controller('gallery')
 export class PublicGalleryController {
-  constructor(private readonly galleryService: PublicGalleryService) { }
+  constructor(private readonly galleryService: PublicGalleryService) {}
 
   @Permission('public')
   @Get()
@@ -29,5 +35,3 @@ export class PublicGalleryController {
     return gallery;
   }
 }
-
-

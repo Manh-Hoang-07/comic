@@ -1,8 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
-import { IPostRepository, POST_REPOSITORY } from '@/modules/post/post/domain/post.repository';
-import { IPostStatsRepository, POST_STATS_REPOSITORY } from '../../domain/post-stats.repository';
+import {
+  IPostRepository,
+  POST_REPOSITORY,
+} from '@/modules/post/post/domain/post.repository';
+import {
+  IPostStatsRepository,
+  POST_STATS_REPOSITORY,
+} from '../../domain/post-stats.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
@@ -13,29 +19,56 @@ export class AdminPostStatsService {
     @Inject(POST_STATS_REPOSITORY)
     private readonly statsRepository: IPostStatsRepository,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   async getStatisticsOverview() {
     const filter = getGroupFilter();
 
-    const [totalPosts, publishedPosts, draftPosts, scheduledPosts, totalComments, pendingComments, totalViews, topViewedPosts] =
-      await Promise.all([
-        this.postRepository.count(filter as any),
-        this.postRepository.count({ ...(filter as any), status: 'published' } as any),
-        this.postRepository.count({ ...(filter as any), status: 'draft' } as any),
-        this.postRepository.count({ ...(filter as any), status: 'scheduled' } as any),
-        (this.prisma as any).postComment.count(filter.group_id ? { where: { post: { group_id: toPrimaryKey(filter.group_id as any) } } } : undefined),
-        (this.prisma as any).postComment.count(
-          filter.group_id
-            ? { where: { status: 'hidden', post: { group_id: toPrimaryKey(filter.group_id as any) } } }
-            : { where: { status: 'hidden' } },
-        ),
-        this.statsRepository.sum('view_count', filter as any),
-        this.postRepository.findMany(
-          { ...(filter as any), status: 'published' } as any,
-          { limit: 10, sort: 'view_count:desc' } as any,
-        ),
-      ]);
+    const [
+      totalPosts,
+      publishedPosts,
+      draftPosts,
+      scheduledPosts,
+      totalComments,
+      pendingComments,
+      totalViews,
+      topViewedPosts,
+    ] = await Promise.all([
+      this.postRepository.count(filter as any),
+      this.postRepository.count({
+        ...(filter as any),
+        status: 'published',
+      } as any),
+      this.postRepository.count({ ...(filter as any), status: 'draft' } as any),
+      this.postRepository.count({
+        ...(filter as any),
+        status: 'scheduled',
+      } as any),
+      (this.prisma as any).postComment.count(
+        filter.group_id
+          ? {
+              where: {
+                post: { group_id: toPrimaryKey(filter.group_id as any) },
+              },
+            }
+          : undefined,
+      ),
+      (this.prisma as any).postComment.count(
+        filter.group_id
+          ? {
+              where: {
+                status: 'hidden',
+                post: { group_id: toPrimaryKey(filter.group_id as any) },
+              },
+            }
+          : { where: { status: 'hidden' } },
+      ),
+      this.statsRepository.sum('view_count', filter as any),
+      this.postRepository.findMany(
+        { ...(filter as any), status: 'published' } as any,
+        { limit: 10, sort: 'view_count:desc' } as any,
+      ),
+    ]);
 
     return {
       total_posts: totalPosts,
@@ -60,7 +93,10 @@ export class AdminPostStatsService {
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
 
-    const posts = await this.postRepository.findMany(filter as any, { select: { id: true } } as any);
+    const posts = await this.postRepository.findMany(
+      filter as any,
+      { select: { id: true } } as any,
+    );
     const postIds = (posts as any[]).map((p) => (p as any).id);
     if (postIds.length === 0) return [];
 
@@ -83,6 +119,3 @@ export class AdminPostStatsService {
     }));
   }
 }
-
-
-

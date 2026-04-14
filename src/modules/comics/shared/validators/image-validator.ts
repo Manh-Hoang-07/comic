@@ -22,7 +22,7 @@ export class ImageValidator {
     // Validate MIME type
     if (!this.ALLOWED_MIMETYPES.includes(file.mimetype)) {
       throw new BadRequestException(
-        `File type not allowed. Allowed types: ${this.ALLOWED_MIMETYPES.join(', ')}`
+        `File type not allowed. Allowed types: ${this.ALLOWED_MIMETYPES.join(', ')}`,
       );
     }
 
@@ -30,7 +30,7 @@ export class ImageValidator {
     if (file.size > this.MAX_FILE_SIZE) {
       const maxSizeMB = (this.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
       throw new BadRequestException(
-        `File size exceeds maximum allowed size of ${maxSizeMB}MB`
+        `File size exceeds maximum allowed size of ${maxSizeMB}MB`,
       );
     }
 
@@ -39,7 +39,7 @@ export class ImageValidator {
     const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
     if (!ext || !allowedExts.includes(ext)) {
       throw new BadRequestException(
-        `File extension not allowed. Allowed extensions: ${allowedExts.join(', ')}`
+        `File extension not allowed. Allowed extensions: ${allowedExts.join(', ')}`,
       );
     }
   }
@@ -53,9 +53,6 @@ export class ImageValidator {
       throw new BadRequestException('Maximum 100 files allowed');
     }
 
-    files.forEach(file => this.validate(file));
+    files.forEach((file) => this.validate(file));
   }
 }
-
-
-

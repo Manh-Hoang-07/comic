@@ -4,15 +4,9 @@ import { PermissionController } from '@/modules/core/iam/permission/admin/contro
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 
 @Module({
-  imports: [
-    RbacModule,
-  ],
+  imports: [RbacModule],
   providers: [PermissionService],
   controllers: [PermissionController],
   exports: [PermissionService],
 })
-export class AdminPermissionModule { }
-
-
-
-
+export class AdminPermissionModule {}

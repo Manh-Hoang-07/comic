@@ -6,15 +6,15 @@ import { AdminProvinceController } from './admin/controllers/province.controller
 import { ProvinceRepositoryImpl } from './infrastructure/repositories/province.repository.impl';
 
 @Module({
-    controllers: [ProvinceController, AdminProvinceController],
-    providers: [
-        ProvinceService,
-        AdminProvinceService,
-        {
-            provide: 'IProvinceRepository',
-            useClass: ProvinceRepositoryImpl,
-        },
-    ],
-    exports: [ProvinceService, AdminProvinceService, 'IProvinceRepository'],
+  controllers: [ProvinceController, AdminProvinceController],
+  providers: [
+    ProvinceService,
+    AdminProvinceService,
+    {
+      provide: 'IProvinceRepository',
+      useClass: ProvinceRepositoryImpl,
+    },
+  ],
+  exports: [ProvinceService, AdminProvinceService, 'IProvinceRepository'],
 })
-export class ProvinceModule { }
+export class ProvinceModule {}

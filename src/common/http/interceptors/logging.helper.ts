@@ -6,11 +6,11 @@ import { LogRequestOptions } from '@/common/shared/decorators';
  * Prefers crypto.randomUUID() when available; falls back to Math.random().
  */
 export function generateRequestId(): string {
-    const uid =
-        typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID().replace(/-/g, '').substring(0, 9)
-            : Math.random().toString(36).substring(2, 11);
-    return `req_${Date.now()}_${uid}`;
+  const uid =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().replace(/-/g, '').substring(0, 9)
+      : Math.random().toString(36).substring(2, 11);
+  return `req_${Date.now()}_${uid}`;
 }
 
 /**
@@ -18,15 +18,15 @@ export function generateRequestId(): string {
  * Returns the first value if the header is an array.
  */
 export function extractRequestId(request: Request): string {
-    const raw = request.headers['x-request-id'];
-    if (Array.isArray(raw)) return raw[0] || generateRequestId();
-    if (typeof raw === 'string' && raw.length > 0) return raw;
-    return generateRequestId();
+  const raw = request.headers['x-request-id'];
+  if (Array.isArray(raw)) return raw[0] || generateRequestId();
+  if (typeof raw === 'string' && raw.length > 0) return raw;
+  return generateRequestId();
 }
 
 export interface ResolvedLogTarget {
-    filePath?: string;
-    fileBaseName?: string;
+  filePath?: string;
+  fileBaseName?: string;
 }
 
 /**
@@ -38,16 +38,18 @@ export interface ResolvedLogTarget {
  * 5. Default base name `'api-requests'`
  */
 export function resolveLogTarget(
-    request: Request,
-    logConfig: LogRequestOptions,
+  request: Request,
+  logConfig: LogRequestOptions,
 ): ResolvedLogTarget {
-    const filePathHeader = request.headers['x-log-file'] as string | undefined;
-    if (filePathHeader) return { filePath: filePathHeader };
-    if (logConfig.filePath) return { filePath: logConfig.filePath };
+  const filePathHeader = request.headers['x-log-file'] as string | undefined;
+  if (filePathHeader) return { filePath: filePathHeader };
+  if (logConfig.filePath) return { filePath: logConfig.filePath };
 
-    const baseNameHeader = request.headers['x-log-base-name'] as string | undefined;
-    if (baseNameHeader) return { fileBaseName: baseNameHeader };
-    if (logConfig.fileBaseName) return { fileBaseName: logConfig.fileBaseName };
+  const baseNameHeader = request.headers['x-log-base-name'] as
+    | string
+    | undefined;
+  if (baseNameHeader) return { fileBaseName: baseNameHeader };
+  if (logConfig.fileBaseName) return { fileBaseName: logConfig.fileBaseName };
 
-    return { fileBaseName: 'api-requests' };
+  return { fileBaseName: 'api-requests' };
 }

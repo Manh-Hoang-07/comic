@@ -12,6 +12,3 @@ export const PartnerTypeLabels: Record<PartnerType, string> = {
   [PartnerType.supplier]: 'Nhà cung cấp',
   [PartnerType.partner]: 'Đối tác',
 };
-
-
-

@@ -77,4 +77,3 @@ export class CreateMenuDto {
   @MaxLength(50, { message: 'Group must not exceed 50 characters' })
   group?: string;
 }
-

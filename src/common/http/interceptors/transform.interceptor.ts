@@ -25,7 +25,12 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
 
     if (isApiResponse(safeData)) return safeData;
 
-    if (safeData && typeof safeData === 'object' && 'data' in safeData && 'meta' in safeData) {
+    if (
+      safeData &&
+      typeof safeData === 'object' &&
+      'data' in safeData &&
+      'meta' in safeData
+    ) {
       const { data, meta } = safeData;
       return ResponseUtil.paginated(
         data,
@@ -53,6 +58,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
 }
 
 function isApiResponse(obj: any): boolean {
-  return obj && typeof obj === 'object' && 'success' in obj && 'timestamp' in obj;
+  return (
+    obj && typeof obj === 'object' && 'success' in obj && 'timestamp' in obj
+  );
 }
-

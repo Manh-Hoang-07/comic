@@ -9,5 +9,4 @@ import { FaqRepositoryModule } from '../faq.repository.module';
   providers: [PublicFaqService],
   exports: [PublicFaqService],
 })
-export class PublicFaqModule { }
-
+export class PublicFaqModule {}

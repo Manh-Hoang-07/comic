@@ -59,4 +59,3 @@ export class CreateCertificateDto {
   @Type(() => Number)
   sort_order?: number = 0;
 }
-

@@ -31,7 +31,10 @@ describe('AuthService', () => {
 
     registrationService = { register: jest.fn() };
     passwordService = { forgotPassword: jest.fn(), resetPassword: jest.fn() };
-    otpService = { sendRegisterOtp: jest.fn(), sendForgotPasswordOtp: jest.fn() };
+    otpService = {
+      sendRegisterOtp: jest.fn(),
+      sendForgotPasswordOtp: jest.fn(),
+    };
     socialAuthService = { handleGoogleAuth: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -61,12 +64,20 @@ describe('AuthService', () => {
     const dto = { email: 'test@test.com', password: 'password123' };
 
     it('delegates to LoginService', async () => {
-      loginService.login.mockResolvedValue({ token: 't', refreshToken: 'r', expiresIn: 3600 });
+      loginService.login.mockResolvedValue({
+        token: 't',
+        refreshToken: 'r',
+        expiresIn: 3600,
+      });
 
       const result = await service.login(dto as any);
 
       expect(loginService.login).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({ token: 't', refreshToken: 'r', expiresIn: 3600 });
+      expect(result).toEqual({
+        token: 't',
+        refreshToken: 'r',
+        expiresIn: 3600,
+      });
     });
   });
 
@@ -108,9 +119,9 @@ describe('AuthService', () => {
   describe('sendOtpForRegister', () => {
     it('throws when email exists', async () => {
       userRepo.findByEmail.mockResolvedValue({ id: 1 });
-      await expect(service.sendOtpForRegister({ email: 'a@b.com' } as any)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.sendOtpForRegister({ email: 'a@b.com' } as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(otpService.sendRegisterOtp).not.toHaveBeenCalled();
     });
 
@@ -118,7 +129,9 @@ describe('AuthService', () => {
       userRepo.findByEmail.mockResolvedValue(null);
       otpService.sendRegisterOtp.mockResolvedValue(undefined);
 
-      const result = await service.sendOtpForRegister({ email: 'new@test.com' } as any);
+      const result = await service.sendOtpForRegister({
+        email: 'new@test.com',
+      } as any);
 
       expect(otpService.sendRegisterOtp).toHaveBeenCalledWith('new@test.com');
       expect(result.message).toContain('OTP');
@@ -128,9 +141,9 @@ describe('AuthService', () => {
   describe('sendOtpForForgotPassword', () => {
     it('throws when email missing', async () => {
       userRepo.findByEmail.mockResolvedValue(null);
-      await expect(service.sendOtpForForgotPassword({ email: 'x@y.com' } as any)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.sendOtpForForgotPassword({ email: 'x@y.com' } as any),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('sends OTP when email exists', async () => {

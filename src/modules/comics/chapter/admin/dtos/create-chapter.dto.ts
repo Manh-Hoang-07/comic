@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsNumber, IsArray, IsEnum, MaxLength, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsArray,
+  IsEnum,
+  MaxLength,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { ChapterStatus } from '@/shared/enums';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 
@@ -49,6 +58,3 @@ export class CreateChapterDto {
   @IsArray()
   pages?: CreateChapterPageDto[];
 }
-
-
-

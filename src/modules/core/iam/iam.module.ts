@@ -21,4 +21,4 @@ import { RbacModule } from '../rbac/rbac.module';
     RbacModule,
   ],
 })
-export class IamModule { }
+export class IamModule {}

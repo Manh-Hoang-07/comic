@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
   UploadedFile,
   UseInterceptors,
@@ -26,7 +25,7 @@ export class ComicController {
   constructor(
     private readonly comicService: ComicService,
     private readonly uploadService: UploadService,
-  ) { }
+  ) {}
 
   @Permission('comic.manage')
   @Get()
@@ -70,8 +69,6 @@ export class ComicController {
     return this.comicService.delete(id);
   }
 
-
-
   @Permission('comic.manage')
   @Post(':id/cover')
   @UseInterceptors(FileInterceptor('file'))
@@ -91,5 +88,3 @@ export class ComicController {
     return this.comicService.update(id, { cover_image: uploadResult.url });
   }
 }
-
-

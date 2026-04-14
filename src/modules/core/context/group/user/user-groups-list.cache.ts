@@ -7,7 +7,10 @@ export function userGroupsListCacheKey(userId: any): string {
   return `user:groups:list:${String(userId)}`;
 }
 
-export async function invalidateUserGroupsListCache(redis: RedisUtil, userId: any): Promise<void> {
+export async function invalidateUserGroupsListCache(
+  redis: RedisUtil,
+  userId: any,
+): Promise<void> {
   if (!redis.isEnabled()) return;
   await redis.del(userGroupsListCacheKey(userId));
 }

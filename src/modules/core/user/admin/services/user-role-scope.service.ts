@@ -1,10 +1,20 @@
 import { ForbiddenException, Injectable, Inject } from '@nestjs/common';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
-import { assertReqGroup, isSysCtx, reqGroupId } from '@/common/shared/utils/request-group-context.util';
+import {
+  assertReqGroup,
+  isSysCtx,
+  reqGroupId,
+} from '@/common/shared/utils/request-group-context.util';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
-import { GROUP_REPOSITORY, IGroupRepository } from '@/modules/core/context/group/domain/group.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
+import {
+  GROUP_REPOSITORY,
+  IGroupRepository,
+} from '@/modules/core/context/group/domain/group.repository';
 
 /** Nhóm active dùng cho UI role tree (đọc thẳng DB). */
 export type RbacUiGroup = {
@@ -45,7 +55,9 @@ export class UserRoleScopeService {
   }> {
     if (isSysCtx()) {
       const memberIds = await this.userRepo.findMemberGroupIds(targetUserId);
-      const rows = await this.groupRepo.findActiveByIds(memberIds.map((x) => toPrimaryKey(x)));
+      const rows = await this.groupRepo.findActiveByIds(
+        memberIds.map((x) => toPrimaryKey(x)),
+      );
       return {
         groups: this.mapRowsToUiGroups(rows),
         assignmentGroupPks: memberIds.map((x) => toPrimaryKey(x)),
@@ -58,7 +70,9 @@ export class UserRoleScopeService {
       throw new ForbiddenException('No context available');
     }
 
-    const rows = await this.groupRepo.findActiveByIds([toPrimaryKey(ctxGroupId)]);
+    const rows = await this.groupRepo.findActiveByIds([
+      toPrimaryKey(ctxGroupId),
+    ]);
     return {
       groups: this.mapRowsToUiGroups(rows),
       assignmentGroupPks: [toPrimaryKey(ctxGroupId)],
@@ -73,7 +87,9 @@ export class UserRoleScopeService {
     const ctxPk = String(toPrimaryKey(reqGroupId()));
     for (const it of items) {
       if (String(toPrimaryKey(it.group_id)) !== ctxPk) {
-        throw new ForbiddenException('group_id is not allowed in the current context');
+        throw new ForbiddenException(
+          'group_id is not allowed in the current context',
+        );
       }
     }
   }

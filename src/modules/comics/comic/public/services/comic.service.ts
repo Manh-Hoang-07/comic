@@ -1,10 +1,16 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Comic } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IComicRepository, COMIC_REPOSITORY } from '../../domain/comic.repository';
+import {
+  IComicRepository,
+  COMIC_REPOSITORY,
+} from '../../domain/comic.repository';
 import { RequestContext } from '@/common/shared/utils';
 import { PUBLIC_COMIC_STATUSES, ComicStatus } from '@/shared/enums';
-import { IFollowRepository, FOLLOW_REPOSITORY } from '@/modules/comics/follow/domain/follow.repository';
+import {
+  IFollowRepository,
+  FOLLOW_REPOSITORY,
+} from '@/modules/comics/follow/domain/follow.repository';
 import { CacheService } from '@/common/cache/services/cache.service';
 
 @Injectable()
@@ -190,6 +196,3 @@ export class PublicComicsService extends BaseService<Comic, IComicRepository> {
     return this.comicRepository.getChapters(comic.id, finalOptions);
   }
 }
-
-
-

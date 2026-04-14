@@ -4,12 +4,12 @@ import { CertificateRepositoryImpl } from './infrastructure/repositories/certifi
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: CERTIFICATE_REPOSITORY,
-            useClass: CertificateRepositoryImpl,
-        },
-    ],
-    exports: [CERTIFICATE_REPOSITORY],
+  providers: [
+    {
+      provide: CERTIFICATE_REPOSITORY,
+      useClass: CertificateRepositoryImpl,
+    },
+  ],
+  exports: [CERTIFICATE_REPOSITORY],
 })
-export class CertificateRepositoryModule { }
+export class CertificateRepositoryModule {}

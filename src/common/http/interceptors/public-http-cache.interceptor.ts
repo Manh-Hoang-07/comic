@@ -28,7 +28,8 @@ export class PublicHttpCacheInterceptor implements NestInterceptor {
 
     const maxAge = Number(process.env.PUBLIC_HTTP_CACHE_MAX_AGE) || 60;
     const sMaxAge = Number(process.env.PUBLIC_HTTP_CACHE_S_MAXAGE) || 300;
-    const swr = Number(process.env.PUBLIC_HTTP_CACHE_STALE_WHILE_REVALIDATE) || 120;
+    const swr =
+      Number(process.env.PUBLIC_HTTP_CACHE_STALE_WHILE_REVALIDATE) || 120;
     const cacheControl = `public, max-age=${maxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`;
 
     return next.handle().pipe(
@@ -71,9 +72,15 @@ function weakEtagFromPayload(body: any): string | null {
   if (!body || typeof body !== 'object') {
     return null;
   }
-  const envelope = body.success === true && body.data !== undefined ? body.data : body;
+  const envelope =
+    body.success === true && body.data !== undefined ? body.data : body;
   let d = envelope;
-  if (envelope && typeof envelope === 'object' && 'data' in envelope && 'meta' in envelope) {
+  if (
+    envelope &&
+    typeof envelope === 'object' &&
+    'data' in envelope &&
+    'meta' in envelope
+  ) {
     d = envelope.data;
   }
   if (!d || typeof d !== 'object' || Array.isArray(d)) {
@@ -83,7 +90,8 @@ function weakEtagFromPayload(body: any): string | null {
   if (updated == null) {
     return null;
   }
-  const t = typeof updated === 'string' ? updated : new Date(updated).toISOString();
+  const t =
+    typeof updated === 'string' ? updated : new Date(updated).toISOString();
   const id = (d as any).slug ?? (d as any).id ?? '';
   return `W/"${String(id)}-${t}"`;
 }

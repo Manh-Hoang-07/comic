@@ -14,9 +14,4 @@ export const CommentStatusLabels: Record<CommentStatus, string> = {
 /**
  * Các trạng thái comment có thể hiển thị công khai
  */
-export const PUBLIC_COMMENT_STATUSES = [
-  CommentStatus.visible,
-];
-
-
-
+export const PUBLIC_COMMENT_STATUSES = [CommentStatus.visible];

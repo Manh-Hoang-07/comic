@@ -4,12 +4,11 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('public/location/countries')
 export class CountryController {
-    constructor(private readonly countryService: CountryService) { }
+  constructor(private readonly countryService: CountryService) {}
 
-    @Permission('public')
-    @Get()
-    async getList(@Query() query: any) {
-        return this.countryService.getList(query);
-    }
+  @Permission('public')
+  @Get()
+  async getList(@Query() query: any) {
+    return this.countryService.getList(query);
+  }
 }
-

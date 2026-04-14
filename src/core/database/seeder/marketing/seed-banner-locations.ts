@@ -5,22 +5,31 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedBannerLocations {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    async seed(): Promise<void> {
-        const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'marketing');
-        const data: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'banner-locations.json'), 'utf8'));
+  async seed(): Promise<void> {
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'marketing',
+    );
+    const data: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'banner-locations.json'), 'utf8'),
+    );
 
-        for (const loc of data) {
-            await this.prisma.bannerLocation.upsert({
-                where: { code: loc.code },
-                update: {},
-                create: loc,
-            });
-        }
+    for (const loc of data) {
+      await this.prisma.bannerLocation.upsert({
+        where: { code: loc.code },
+        update: {},
+        create: loc,
+      });
     }
+  }
 
-    async clear(): Promise<void> {
-        await this.prisma.bannerLocation.deleteMany({});
-    }
+  async clear(): Promise<void> {
+    await this.prisma.bannerLocation.deleteMany({});
+  }
 }

@@ -2,7 +2,10 @@ import { Injectable, Inject } from '@nestjs/common';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { BaseService } from '@/common/core/services';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { PasswordService } from './password.service';
 import { RelationService } from './relation.service';

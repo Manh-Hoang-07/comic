@@ -13,9 +13,11 @@ describe('request-group-context.util', () => {
 
   describe('isSysCtx', () => {
     it('true when context.type is system', () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) =>
-        key === 'context' ? { type: 'system' } : undefined,
-      );
+      jest
+        .spyOn(RequestContext, 'get')
+        .mockImplementation((key: string) =>
+          key === 'context' ? { type: 'system' } : undefined,
+        );
       expect(isSysCtx()).toBe(true);
     });
 
@@ -27,9 +29,11 @@ describe('request-group-context.util', () => {
 
   describe('reqGroupId', () => {
     it('returns groupId from context', () => {
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) =>
-        key === 'groupId' ? 42 : undefined,
-      );
+      jest
+        .spyOn(RequestContext, 'get')
+        .mockImplementation((key: string) =>
+          key === 'groupId' ? 42 : undefined,
+        );
       expect(reqGroupId()).toBe(42);
     });
   });

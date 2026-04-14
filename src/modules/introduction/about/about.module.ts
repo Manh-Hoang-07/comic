@@ -16,4 +16,3 @@ import { PublicAboutModule } from '@/modules/introduction/about/public/about.mod
   exports: [],
 })
 export class AboutModule {}
-

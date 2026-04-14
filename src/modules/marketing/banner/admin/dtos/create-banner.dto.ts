@@ -1,75 +1,84 @@
-import { IsString, IsNotEmpty, IsOptional, IsUrl, MaxLength, IsInt, Min, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsUrl,
+  MaxLength,
+  IsInt,
+  Min,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 import { BannerLinkTarget } from '@/shared/enums/types/banner-link-target.enum';
 
 export class CreateBannerDto {
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(255)
-    title: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  title: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(255)
-    subtitle?: string;
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  subtitle?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(500)
-    image: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  image: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(500)
-    mobile_image?: string;
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  mobile_image?: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(500)
-    link?: string;
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  link?: string;
 
-    @IsOptional()
-    @IsEnum(BannerLinkTarget)
-    link_target?: BannerLinkTarget = BannerLinkTarget.SELF;
+  @IsOptional()
+  @IsEnum(BannerLinkTarget)
+  link_target?: BannerLinkTarget = BannerLinkTarget.SELF;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(1000)
-    description?: string;
+  @IsString()
+  @IsOptional()
+  @MaxLength(1000)
+  description?: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(100)
-    button_text?: string;
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  button_text?: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(20)
-    button_color?: string;
+  @IsString()
+  @IsOptional()
+  @MaxLength(20)
+  button_color?: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(20)
-    text_color?: string;
+  @IsString()
+  @IsOptional()
+  @MaxLength(20)
+  text_color?: string;
 
-    @IsPrimaryKey()
-    location_id: any;
+  @IsPrimaryKey()
+  location_id: any;
 
-    @IsInt()
-    @Min(0)
-    @IsOptional()
-    sort_order?: number = 0;
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  sort_order?: number = 0;
 
-    @IsOptional()
-    status?: BasicStatus = BasicStatus.active;
+  @IsOptional()
+  status?: BasicStatus = BasicStatus.active;
 
-    @IsOptional()
-    @Type(() => Date)
-    start_date?: Date;
+  @IsOptional()
+  @Type(() => Date)
+  start_date?: Date;
 
-    @IsOptional()
-    @Type(() => Date)
-    end_date?: Date;
+  @IsOptional()
+  @Type(() => Date)
+  end_date?: Date;
 }

@@ -9,7 +9,10 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { PERMS_REQUIRED_KEY, PUBLIC_PERMISSION } from '@/common/auth/decorators';
+import {
+  PERMS_REQUIRED_KEY,
+  PUBLIC_PERMISSION,
+} from '@/common/auth/decorators';
 import { ResponseUtil } from '@/common/shared/utils';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { RequestContext } from '@/common/shared/utils';
@@ -44,12 +47,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     // Parallelize blacklist check and Passport strategy validation
-    const blacklistPromise = token && this.tokenBlacklist ? this.tokenBlacklist.has(token) : Promise.resolve(false);
-    const authPromise = isPublic 
-      ? this.handlePublicRoute(context, request, token) 
+    const blacklistPromise =
+      token && this.tokenBlacklist
+        ? this.tokenBlacklist.has(token)
+        : Promise.resolve(false);
+    const authPromise = isPublic
+      ? this.handlePublicRoute(context, request, token)
       : this.handleProtectedRoute(context);
 
-    const [isBlocked, isAuthOk] = await Promise.all([blacklistPromise, authPromise]);
+    const [isBlocked, isAuthOk] = await Promise.all([
+      blacklistPromise,
+      authPromise,
+    ]);
     tracker?.addCheckpoint('jwt_auth_parallel_end');
 
     if (isBlocked) {
@@ -113,7 +122,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     try {
       RequestContext.set('user', null);
       RequestContext.set('userId', null);
-    } catch { }
+    } catch {}
   }
 
   /** Store authenticated user in the shared request context. */
@@ -121,7 +130,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     try {
       RequestContext.set('user', user);
       RequestContext.set('userId', user.id);
-    } catch { }
+    } catch {}
   }
 
   /**

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ForbiddenException, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  ForbiddenException,
+  Query,
+} from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { AdminGroupService } from '../services/group.service';
@@ -14,21 +24,24 @@ export class AdminGroupController {
   constructor(
     private readonly groupService: AdminGroupService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   /**
    * Tạo group mới (chỉ system admin)
    */
   @Permission('group.manage')
   @Post()
-  async createGroup(@Body() body: {
-    type: string;
-    code: string;
-    name: string;
-    description?: string;
-    metadata?: any;
-    context_id: any;
-  }) {
+  async createGroup(
+    @Body()
+    body: {
+      type: string;
+      code: string;
+      name: string;
+      description?: string;
+      metadata?: any;
+      context_id: any;
+    },
+  ) {
     const userId = this.auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
@@ -98,7 +111,9 @@ export class AdminGroupController {
     // Check system context
     const context = RequestContext.get<any>('context');
     if (context?.type !== 'system') {
-      throw new ForbiddenException('Groups can only be updated under the system context');
+      throw new ForbiddenException(
+        'Groups can only be updated under the system context',
+      );
     }
 
     return this.groupService.update(id, body);
@@ -118,13 +133,12 @@ export class AdminGroupController {
     // Check system context
     const context = RequestContext.get<any>('context');
     if (context?.type !== 'system') {
-      throw new ForbiddenException('Groups can only be deleted under the system context');
+      throw new ForbiddenException(
+        'Groups can only be deleted under the system context',
+      );
     }
 
     await this.groupService.delete(id);
     return { message: 'Group deleted successfully' };
   }
 }
-
-
-

@@ -33,7 +33,10 @@ export interface ICacheStrategy {
 
   // PubSub
   publish(channel: string, message: string): Promise<void>;
-  subscribe(channel: string, callback: (message: string) => void): Promise<void>;
+  subscribe(
+    channel: string,
+    callback: (message: string) => void,
+  ): Promise<void>;
 
   // Locking
   lock(key: string, ttlSeconds: number, token?: string): Promise<boolean>;

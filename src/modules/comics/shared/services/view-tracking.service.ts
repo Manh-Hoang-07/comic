@@ -1,9 +1,21 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IComicViewRepository, COMIC_VIEW_REPOSITORY } from '../../stats/domain/comic-view.repository';
-import { IComicStatsRepository, COMIC_STATS_REPOSITORY } from '../../stats/domain/comic-stats.repository';
-import { IChapterRepository, CHAPTER_REPOSITORY } from '../../chapter/domain/chapter.repository';
+import {
+  IComicViewRepository,
+  COMIC_VIEW_REPOSITORY,
+} from '../../stats/domain/comic-view.repository';
+import {
+  IComicStatsRepository,
+  COMIC_STATS_REPOSITORY,
+} from '../../stats/domain/comic-stats.repository';
+import {
+  IChapterRepository,
+  CHAPTER_REPOSITORY,
+} from '../../chapter/domain/chapter.repository';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
-import { IComicRepository, COMIC_REPOSITORY } from '@/modules/comics/comic/domain/comic.repository';
+import {
+  IComicRepository,
+  COMIC_REPOSITORY,
+} from '@/modules/comics/comic/domain/comic.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
@@ -18,7 +30,7 @@ export class ViewTrackingService {
     @Inject(COMIC_REPOSITORY)
     private readonly comicRepository: IComicRepository,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   /**
    * Track view cho comic/chapter
@@ -70,7 +82,9 @@ export class ViewTrackingService {
 
     // Update chapter view count nếu có
     if (chapterId) {
-      const chapterViewCount = await this.viewRepository.count({ chapter_id: chapterId });
+      const chapterViewCount = await this.viewRepository.count({
+        chapter_id: chapterId,
+      });
 
       await this.chapterRepository.update(chapterId, {
         view_count: BigInt(chapterViewCount),
@@ -78,5 +92,3 @@ export class ViewTrackingService {
     }
   }
 }
-
-

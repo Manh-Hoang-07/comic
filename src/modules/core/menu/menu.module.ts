@@ -12,5 +12,4 @@ import { MenuRepositoryModule } from './menu.repository.module';
     PublicMenuModule,
   ],
 })
-export class MenuModule { }
-
+export class MenuModule {}

@@ -1,21 +1,18 @@
-
 import { Menu } from '@prisma/client';
 import { IRepository } from '@/common/core/repositories';
 
 export const MENU_REPOSITORY = 'IMenuRepository';
 
 export interface MenuFilter {
-    search?: string;
-    status?: string;
-    parentId?: any;
-    parent_id?: any;
-    type?: string;
-    group?: string;
+  search?: string;
+  status?: string;
+  parentId?: any;
+  parent_id?: any;
+  type?: string;
+  group?: string;
 }
 
 export interface IMenuRepository extends IRepository<Menu> {
-    findAllWithChildren(filter?: MenuFilter): Promise<Menu[]>;
-    findByCode(code: string): Promise<Menu | null>;
+  findAllWithChildren(filter?: MenuFilter): Promise<Menu[]>;
+  findByCode(code: string): Promise<Menu | null>;
 }
-
-

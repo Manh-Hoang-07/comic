@@ -1,10 +1,17 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Gallery } from '@prisma/client';
-import { IGalleryRepository, GALLERY_REPOSITORY, GalleryFilter } from '@/modules/introduction/gallery/domain/gallery.repository';
+import {
+  IGalleryRepository,
+  GALLERY_REPOSITORY,
+  GalleryFilter,
+} from '@/modules/introduction/gallery/domain/gallery.repository';
 import { BaseContentService } from '@/common/core/services';
 
 @Injectable()
-export class GalleryService extends BaseContentService<Gallery, IGalleryRepository> {
+export class GalleryService extends BaseContentService<
+  Gallery,
+  IGalleryRepository
+> {
   constructor(
     @Inject(GALLERY_REPOSITORY)
     private readonly galleryRepo: IGalleryRepository,
@@ -13,7 +20,6 @@ export class GalleryService extends BaseContentService<Gallery, IGalleryReposito
   }
 
   protected defaultSort = 'sort_order:asc,created_at:desc';
-
 
   protected async beforeCreate(data: any) {
     const payload = { ...data };
@@ -34,8 +40,3 @@ export class GalleryService extends BaseContentService<Gallery, IGalleryReposito
     return super.transform(gallery);
   }
 }
-
-
-
-
-

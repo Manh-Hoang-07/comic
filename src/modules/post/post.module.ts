@@ -61,4 +61,4 @@ import { UserPostCommentsModule } from '@/modules/post/comment/user/comment.modu
     PostCommentService,
   ],
 })
-export class PostModule { }
+export class PostModule {}

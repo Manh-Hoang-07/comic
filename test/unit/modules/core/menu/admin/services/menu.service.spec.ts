@@ -10,88 +10,95 @@ import * as menuHelper from '@/modules/core/menu/utils/menu.helper';
 jest.mock('@/modules/core/menu/utils/menu.helper');
 
 describe('MenuService', () => {
-    let service: MenuService;
-    let menuRepo: any;
-    let rbacService: any;
+  let service: MenuService;
+  let menuRepo: any;
+  let rbacService: any;
 
-    beforeEach(async () => {
-        menuRepo = {
-            findByCode: jest.fn(),
-            findById: jest.fn(),
-            findAll: jest.fn(),
-            findAllWithChildren: jest.fn(),
-            create: jest.fn(),
-            update: jest.fn(),
-            delete: jest.fn(),
-            toPrimaryKey: jest.fn((id) => id),
-        };
+  beforeEach(async () => {
+    menuRepo = {
+      findByCode: jest.fn(),
+      findById: jest.fn(),
+      findAll: jest.fn(),
+      findAllWithChildren: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      toPrimaryKey: jest.fn((id) => id),
+    };
 
-        rbacService = {
-            hasPermissions: jest.fn(),
-            prepare: jest.fn().mockResolvedValue(undefined),
-            getPermissions: jest.fn(),
-            hasCode: jest.fn(),
-        };
+    rbacService = {
+      hasPermissions: jest.fn(),
+      prepare: jest.fn().mockResolvedValue(undefined),
+      getPermissions: jest.fn(),
+      hasCode: jest.fn(),
+    };
 
-        const redisUtil = {
-            isEnabled: jest.fn().mockReturnValue(false),
-            get: jest.fn(),
-            set: jest.fn(),
-            scan: jest.fn(),
-            unlinkMany: jest.fn(),
-        };
+    const redisUtil = {
+      isEnabled: jest.fn().mockReturnValue(false),
+      get: jest.fn(),
+      set: jest.fn(),
+      scan: jest.fn(),
+      unlinkMany: jest.fn(),
+    };
 
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                MenuService,
-                {
-                    provide: MENU_REPOSITORY,
-                    useValue: menuRepo,
-                },
-                {
-                    provide: RbacService,
-                    useValue: rbacService,
-                },
-                { provide: RedisUtil, useValue: redisUtil },
-            ],
-        }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        MenuService,
+        {
+          provide: MENU_REPOSITORY,
+          useValue: menuRepo,
+        },
+        {
+          provide: RbacService,
+          useValue: rbacService,
+        },
+        { provide: RedisUtil, useValue: redisUtil },
+      ],
+    }).compile();
 
-        service = module.get<MenuService>(MenuService);
+    service = module.get<MenuService>(MenuService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('beforeCreate', () => {
+    it('should throw BadRequestException if code already exists', async () => {
+      menuRepo.findByCode.mockResolvedValue({ id: 1 });
+      await expect(
+        (service as any).beforeCreate({ code: 'CODE' }),
+      ).rejects.toThrow(BadRequestException);
     });
 
-    it('should be defined', () => {
-        expect(service).toBeDefined();
+    it('should convert IDs to BigInt', async () => {
+      menuRepo.findByCode.mockResolvedValue(null);
+      const result = await (service as any).beforeCreate({
+        parent_id: 10,
+        required_permission_id: 20,
+      });
+      expect(result.parent_id).toBe(10n);
+      expect(result.required_permission_id).toBe(20n);
     });
+  });
 
-    describe('beforeCreate', () => {
-        it('should throw BadRequestException if code already exists', async () => {
-            menuRepo.findByCode.mockResolvedValue({ id: 1 });
-            await expect((service as any).beforeCreate({ code: 'CODE' })).rejects.toThrow(BadRequestException);
-        });
+  describe('getUserMenus', () => {
+    it('should call helper functions to filter and build tree', async () => {
+      const mockMenus = [{ id: 1, code: 'm1', show_in_menu: true }];
+      menuRepo.findAllWithChildren.mockResolvedValue(mockMenus);
 
-        it('should convert IDs to BigInt', async () => {
-            menuRepo.findByCode.mockResolvedValue(null);
-            const result = await (service as any).beforeCreate({ parent_id: 10, required_permission_id: 20 });
-            expect(result.parent_id).toBe(10n);
-            expect(result.required_permission_id).toBe(20n);
-        });
+      rbacService.getPermissions.mockResolvedValue(new Set<string>());
+      (menuHelper.filterAdminMenus as jest.Mock).mockReturnValue(mockMenus);
+      (menuHelper.buildMenuTree as jest.Mock).mockReturnValue([
+        { id: 1, children: [] },
+      ]);
+
+      const result = await service.getUserMenus(1, { group: 'admin' });
+
+      expect(menuRepo.findAllWithChildren).toHaveBeenCalled();
+      expect(menuHelper.filterAdminMenus).toHaveBeenCalled();
+      expect(menuHelper.buildMenuTree).toHaveBeenCalledWith(mockMenus);
+      expect(result).toEqual([{ id: 1, children: [] }]);
     });
-
-    describe('getUserMenus', () => {
-        it('should call helper functions to filter and build tree', async () => {
-            const mockMenus = [{ id: 1, code: 'm1', show_in_menu: true }];
-            menuRepo.findAllWithChildren.mockResolvedValue(mockMenus);
-
-            rbacService.getPermissions.mockResolvedValue(new Set<string>());
-            (menuHelper.filterAdminMenus as jest.Mock).mockReturnValue(mockMenus);
-            (menuHelper.buildMenuTree as jest.Mock).mockReturnValue([{ id: 1, children: [] }]);
-
-            const result = await service.getUserMenus(1, { group: 'admin' });
-
-            expect(menuRepo.findAllWithChildren).toHaveBeenCalled();
-            expect(menuHelper.filterAdminMenus).toHaveBeenCalled();
-            expect(menuHelper.buildMenuTree).toHaveBeenCalledWith(mockMenus);
-            expect(result).toEqual([{ id: 1, children: [] }]);
-        });
-    });
+  });
 });

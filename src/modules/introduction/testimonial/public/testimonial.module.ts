@@ -10,5 +10,4 @@ import { TestimonialRepositoryModule } from '@/modules/introduction/testimonial/
   providers: [PublicTestimonialService],
   exports: [PublicTestimonialService],
 })
-export class PublicTestimonialModule { }
-
+export class PublicTestimonialModule {}

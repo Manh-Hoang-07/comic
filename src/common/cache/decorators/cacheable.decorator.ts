@@ -9,12 +9,12 @@ export interface CacheOptions {
    * Example: 'product:${id}' or 'products:list:${page}:${limit}'
    */
   key: string;
-  
+
   /**
    * Time to live in seconds
    */
   ttl: number;
-  
+
   /**
    * Whether to cache null/undefined values
    */
@@ -23,7 +23,7 @@ export interface CacheOptions {
 
 /**
  * Decorator to enable caching for a method
- * 
+ *
  * @example
  * ```typescript
  * @Cacheable({ key: 'product:${id}', ttl: 300 })
@@ -34,7 +34,11 @@ export interface CacheOptions {
  */
 export const Cacheable = (options: CacheOptions) => {
   return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
-    SetMetadata(CACHE_KEY_METADATA, options.key)(target, propertyKey, descriptor);
+    SetMetadata(CACHE_KEY_METADATA, options.key)(
+      target,
+      propertyKey,
+      descriptor,
+    );
     SetMetadata(CACHE_TTL_METADATA, options)(target, propertyKey, descriptor);
     return descriptor;
   };
@@ -42,7 +46,7 @@ export const Cacheable = (options: CacheOptions) => {
 
 /**
  * Decorator to invalidate cache
- * 
+ *
  * @example
  * ```typescript
  * @CacheEvict({ keys: ['product:${id}', 'products:list:*'] })

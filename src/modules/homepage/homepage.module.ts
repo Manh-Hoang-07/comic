@@ -27,4 +27,3 @@ import { PublicFaqModule } from '@/modules/introduction/faq/public/faq.module';
   exports: [HomepageService],
 })
 export class HomepageModule {}
-

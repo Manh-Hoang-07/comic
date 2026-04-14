@@ -1,12 +1,21 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ComicCategory } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IComicCategoryRepository, COMIC_CATEGORY_REPOSITORY } from '../../domain/comic-category.repository';
-import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
+import {
+  IComicCategoryRepository,
+  COMIC_CATEGORY_REPOSITORY,
+} from '../../domain/comic-category.repository';
+import {
+  verifyGroupOwnership,
+  getGroupFilter,
+} from '@/common/shared/utils/group-ownership.util';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
 
 @Injectable()
-export class ComicCategoryService extends BaseService<ComicCategory, IComicCategoryRepository> {
+export class ComicCategoryService extends BaseService<
+  ComicCategory,
+  IComicCategoryRepository
+> {
   constructor(
     @Inject(COMIC_CATEGORY_REPOSITORY)
     protected readonly comicCategoryRepository: IComicCategoryRepository,
@@ -34,7 +43,10 @@ export class ComicCategoryService extends BaseService<ComicCategory, IComicCateg
 
     // Handle Slug
     if (!payload.slug) {
-      payload.slug = await SlugHelper.uniqueSlug(payload.name, this.comicCategoryRepository);
+      payload.slug = await SlugHelper.uniqueSlug(
+        payload.name,
+        this.comicCategoryRepository,
+      );
     }
 
     return payload;
@@ -50,7 +62,7 @@ export class ComicCategoryService extends BaseService<ComicCategory, IComicCateg
       payload.slug = await SlugHelper.uniqueSlug(
         payload.slug || payload.name || '',
         this.comicCategoryRepository,
-        id
+        id,
       );
     }
 
@@ -62,5 +74,3 @@ export class ComicCategoryService extends BaseService<ComicCategory, IComicCateg
     return true;
   }
 }
-
-

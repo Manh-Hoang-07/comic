@@ -15,21 +15,21 @@ import { performance } from 'perf_hooks';
  * ```
  */
 export class CheckpointTracker {
-    private readonly startTimeMs: number;
-    private readonly checkpoints: Record<string, number> = {};
+  private readonly startTimeMs: number;
+  private readonly checkpoints: Record<string, number> = {};
 
-    constructor() {
-        this.startTimeMs = performance.now();
-    }
+  constructor() {
+    this.startTimeMs = performance.now();
+  }
 
-    /** Record the elapsed ms at the current moment under the given key. */
-    addCheckpoint(key: string): void {
-        const now = performance.now();
-        this.checkpoints[key] = Math.round(now - this.startTimeMs);
-    }
+  /** Record the elapsed ms at the current moment under the given key. */
+  addCheckpoint(key: string): void {
+    const now = performance.now();
+    this.checkpoints[key] = Math.round(now - this.startTimeMs);
+  }
 
-    /** Return a copy of all recorded checkpoints (key → elapsed ms). */
-    toLogDetails(): Record<string, number> {
-        return { ...this.checkpoints };
-    }
+  /** Return a copy of all recorded checkpoints (key → elapsed ms). */
+  toLogDetails(): Record<string, number> {
+    return { ...this.checkpoints };
+  }
 }

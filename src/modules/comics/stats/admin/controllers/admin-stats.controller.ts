@@ -1,15 +1,10 @@
-import {
-  Controller,
-  Get,
-  Query,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Query, ParseIntPipe } from '@nestjs/common';
 import { AdminStatsService } from '../services/admin-stats.service';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('admin/stats')
 export class AdminStatsController {
-  constructor(private readonly analyticsService: AdminStatsService) { }
+  constructor(private readonly analyticsService: AdminStatsService) {}
 
   @Permission('comic.manage')
   @Get('dashboard')
@@ -38,7 +33,3 @@ export class AdminStatsController {
     );
   }
 }
-
-
-
-

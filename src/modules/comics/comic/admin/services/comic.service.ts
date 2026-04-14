@@ -1,10 +1,16 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Comic } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IComicRepository, COMIC_REPOSITORY } from '../../domain/comic.repository';
+import {
+  IComicRepository,
+  COMIC_REPOSITORY,
+} from '../../domain/comic.repository';
 import { CreateComicDto } from '../dtos/create-comic.dto';
 import { UpdateComicDto } from '../dtos/update-comic.dto';
-import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
+import {
+  verifyGroupOwnership,
+  getGroupFilter,
+} from '@/common/shared/utils/group-ownership.util';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
 import { ComicActionService } from './comic-action.service';
 
@@ -51,14 +57,20 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
     const payload = await super.beforeCreate(data);
 
     // Handle Slug
-    payload.slug = await SlugHelper.uniqueSlug(payload.title, this.comicRepository);
+    payload.slug = await SlugHelper.uniqueSlug(
+      payload.title,
+      this.comicRepository,
+    );
 
     // Relationships handled in create() override
     delete (payload as any).category_ids;
     return payload;
   }
 
-  protected override async beforeUpdate(id: any, data: UpdateComicDto): Promise<any> {
+  protected override async beforeUpdate(
+    id: any,
+    data: UpdateComicDto,
+  ): Promise<any> {
     const entity = await this.getOne(id); // Already includes ownership check
 
     const payload = { ...data };
@@ -68,7 +80,7 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
       payload.slug = await SlugHelper.uniqueSlug(
         payload.slug || payload.title || '',
         this.comicRepository,
-        id
+        id,
       );
     }
 
@@ -89,7 +101,9 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
 
     // Flatten category links
     if (item.categoryLinks && Array.isArray(item.categoryLinks)) {
-      item.categories = item.categoryLinks.map((l: any) => l?.category).filter(Boolean);
+      item.categories = item.categoryLinks
+        .map((l: any) => l?.category)
+        .filter(Boolean);
       item.category_ids = item.categories.map((c: any) => c.id);
       delete item.categoryLinks;
     } else {
@@ -100,5 +114,3 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
     return item;
   }
 }
-
-

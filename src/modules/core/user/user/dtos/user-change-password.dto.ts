@@ -7,7 +7,11 @@ export class UserChangePasswordDto {
   @IsString()
   old_password: string;
 
-  @ApiProperty({ description: 'Mật khẩu mới', minLength: 6, example: 'NewP@ssw0rd123' })
+  @ApiProperty({
+    description: 'Mật khẩu mới',
+    minLength: 6,
+    example: 'NewP@ssw0rd123',
+  })
   @IsNotEmpty()
   @IsString()
   @MinLength(6)

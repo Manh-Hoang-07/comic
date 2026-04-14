@@ -5,13 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { CertificateRepositoryModule } from '@/modules/introduction/certificate/certificate.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    CertificateRepositoryModule,
-  ],
+  imports: [RbacModule, CertificateRepositoryModule],
   controllers: [CertificateController],
   providers: [CertificateService],
   exports: [CertificateService],
 })
-export class AdminCertificateModule { }
-
+export class AdminCertificateModule {}

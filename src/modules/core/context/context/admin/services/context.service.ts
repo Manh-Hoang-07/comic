@@ -1,8 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
-import { IContextRepository, CONTEXT_REPOSITORY } from '@/modules/core/context/context/domain/context.repository';
-import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common';
+import {
+  IContextRepository,
+  CONTEXT_REPOSITORY,
+} from '@/modules/core/context/context/domain/context.repository';
+import {
+  IGroupRepository,
+  GROUP_REPOSITORY,
+} from '@/modules/core/context/group/domain/group.repository';
 import { BaseService } from '@/common/core/services';
-import { ContextType, SYSTEM_CONTEXT_CODE } from '@/modules/core/rbac/rbac.constants';
+import {
+  ContextType,
+  SYSTEM_CONTEXT_CODE,
+} from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RequestContext } from '@/common/shared/utils';
 
@@ -21,7 +36,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
   protected defaultSort = 'id:desc';
 
-
   /**
    * Lấy System Context (có cache)
    */
@@ -32,7 +46,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     if (!context) {
       // Fallback: tìm theo type nếu code chưa đúng
       const byType = await this.contextRepo.findFirstRaw({
-        where: { type: ContextType.SYSTEM, status: 'active' as any }
+        where: { type: ContextType.SYSTEM, status: 'active' as any },
       });
       this.systemContextCache = byType;
     } else {
@@ -45,7 +59,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   async findById(id: any) {
     const context = await this.contextRepo.findOne({
       id,
-      status: 'active'
+      status: 'active',
     });
     return this.transform(context);
   }
@@ -64,9 +78,14 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
   }
 
   protected async beforeCreate(data: any) {
-    const existing = await this.contextRepo.findByTypeAndRefId(data.type, data.ref_id ?? null);
+    const existing = await this.contextRepo.findByTypeAndRefId(
+      data.type,
+      data.ref_id ?? null,
+    );
     if (existing) {
-      throw new BadRequestException(`Context với loại "${data.type}" và ref_id "${data.ref_id ?? 'null'}" đã tồn tại`);
+      throw new BadRequestException(
+        `Context với loại "${data.type}" và ref_id "${data.ref_id ?? 'null'}" đã tồn tại`,
+      );
     }
 
     const code = data.code || `${data.type}-${data.ref_id ?? 'system'}`;
@@ -100,14 +119,19 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     const current = await this.contextRepo.findById(id);
     if (!current) throw new NotFoundException('Context không tồn tại');
 
-    if (current.type === ContextType.SYSTEM || current.code === SYSTEM_CONTEXT_CODE) {
+    if (
+      current.type === ContextType.SYSTEM ||
+      current.code === SYSTEM_CONTEXT_CODE
+    ) {
       throw new BadRequestException('Không thể cập nhật context hệ thống');
     }
 
     if (data.code && data.code !== current.code) {
       const existing = await this.contextRepo.findByCode(data.code);
       if (existing) {
-        throw new BadRequestException(`Context với mã "${data.code}" đã tồn tại`);
+        throw new BadRequestException(
+          `Context với mã "${data.code}" đã tồn tại`,
+        );
       }
     }
 
@@ -130,7 +154,10 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     const current = await this.contextRepo.findById(id);
     if (!current) throw new NotFoundException('Context không tồn tại');
 
-    if (current.type === ContextType.SYSTEM || current.code === SYSTEM_CONTEXT_CODE) {
+    if (
+      current.type === ContextType.SYSTEM ||
+      current.code === SYSTEM_CONTEXT_CODE
+    ) {
       throw new BadRequestException('Không thể xóa context hệ thống');
     }
 
@@ -139,7 +166,9 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     });
 
     if (groups.length > 0) {
-      throw new BadRequestException(`Không thể xóa context: ${groups.length} group đang sử dụng context này`);
+      throw new BadRequestException(
+        `Không thể xóa context: ${groups.length} group đang sử dụng context này`,
+      );
     }
     return true;
   }
@@ -148,5 +177,3 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     this.systemContextCache = null;
   }
 }
-
-

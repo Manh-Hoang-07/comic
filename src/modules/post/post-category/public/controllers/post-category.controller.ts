@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Param,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, Query, Param, ValidationPipe } from '@nestjs/common';
 import { PostCategoryService } from '@/modules/post/post-category/public/services/post-category.service';
 import { GetCategoriesDto } from '@/modules/post/post-category/public/dtos/get-categories.dto';
 import { GetCategoryDto } from '@/modules/post/post-category/public/dtos/get-category.dto';
@@ -13,7 +7,7 @@ import { prepareQuery } from '@/common/core/utils';
 
 @Controller('public/post-categories')
 export class PostCategoryController {
-  constructor(private readonly postCategoryService: PostCategoryService) { }
+  constructor(private readonly postCategoryService: PostCategoryService) {}
 
   @Permission('public')
   @Get()
@@ -27,5 +21,3 @@ export class PostCategoryController {
     return this.postCategoryService.findBySlug(dto.slug);
   }
 }
-
-

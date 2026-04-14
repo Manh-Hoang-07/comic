@@ -23,7 +23,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/testimonials')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class TestimonialController {
-  constructor(private readonly testimonialService: TestimonialService) { }
+  constructor(private readonly testimonialService: TestimonialService) {}
 
   @LogRequest()
   @Post()
@@ -52,7 +52,10 @@ export class TestimonialController {
 
   @Put(':id')
   @Permission('testimonial.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateTestimonialDto: UpdateTestimonialDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateTestimonialDto: UpdateTestimonialDto,
+  ) {
     return this.testimonialService.update(id, updateTestimonialDto);
   }
 
@@ -68,5 +71,3 @@ export class TestimonialController {
     return this.testimonialService.toggleFeatured(id, featured);
   }
 }
-
-

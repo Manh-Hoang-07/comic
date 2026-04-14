@@ -6,13 +6,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { ProjectRepositoryModule } from '@/modules/introduction/project/project.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    ProjectRepositoryModule,
-  ],
+  imports: [RbacModule, ProjectRepositoryModule],
   controllers: [ProjectController],
   providers: [ProjectService],
   exports: [ProjectService],
 })
-export class AdminProjectModule { }
-
+export class AdminProjectModule {}

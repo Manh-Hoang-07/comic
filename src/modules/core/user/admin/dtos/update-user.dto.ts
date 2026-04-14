@@ -1,4 +1,11 @@
-import { IsArray, IsEmail, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UserProfilePayloadDto } from './create-user.dto';
@@ -9,7 +16,10 @@ export class UpdateUserDto {
   @IsString()
   username?: string;
 
-  @ApiPropertyOptional({ description: 'Email của người dùng', example: 'user@example.com' })
+  @ApiPropertyOptional({
+    description: 'Email của người dùng',
+    example: 'user@example.com',
+  })
   @IsOptional()
   @IsEmail()
   email?: string;
@@ -19,7 +29,11 @@ export class UpdateUserDto {
   @IsString()
   phone?: string;
 
-  @ApiPropertyOptional({ description: 'Mật khẩu mới', minLength: 6, example: 'NewP@ssw0rd' })
+  @ApiPropertyOptional({
+    description: 'Mật khẩu mới',
+    minLength: 6,
+    example: 'NewP@ssw0rd',
+  })
   @IsOptional()
   @IsString()
   @MinLength(6)
@@ -35,8 +49,10 @@ export class UpdateUserDto {
   @IsString()
   image?: string;
 
-
-  @ApiPropertyOptional({ description: 'Thông tin hồ sơ bổ sung', type: UserProfilePayloadDto })
+  @ApiPropertyOptional({
+    description: 'Thông tin hồ sơ bổ sung',
+    type: UserProfilePayloadDto,
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => UserProfilePayloadDto)

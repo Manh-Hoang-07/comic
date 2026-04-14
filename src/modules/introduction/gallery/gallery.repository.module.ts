@@ -4,12 +4,12 @@ import { GalleryRepositoryImpl } from './infrastructure/repositories/gallery.rep
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: GALLERY_REPOSITORY,
-            useClass: GalleryRepositoryImpl,
-        },
-    ],
-    exports: [GALLERY_REPOSITORY],
+  providers: [
+    {
+      provide: GALLERY_REPOSITORY,
+      useClass: GalleryRepositoryImpl,
+    },
+  ],
+  exports: [GALLERY_REPOSITORY],
 })
-export class GalleryRepositoryModule { }
+export class GalleryRepositoryModule {}

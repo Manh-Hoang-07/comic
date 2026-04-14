@@ -19,7 +19,7 @@ export class GeneralConfigController {
   constructor(
     private readonly generalConfigService: GeneralConfigService,
     private readonly auth: AuthService,
-  ) { }
+  ) {}
 
   /**
    * Lấy cấu hình chung
@@ -41,4 +41,3 @@ export class GeneralConfigController {
     return this.generalConfigService.updateConfig(dto);
   }
 }
-

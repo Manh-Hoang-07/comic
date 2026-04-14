@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
 } from '@nestjs/common';
 import { PostTagService } from '@/modules/post/post-tag/admin/services/post-tag.service';
@@ -19,7 +18,7 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('admin/post-tags')
 export class PostTagController {
-  constructor(private readonly postTagService: PostTagService) { }
+  constructor(private readonly postTagService: PostTagService) {}
 
   @Permission('post_tag.manage')
   @Get()
@@ -63,6 +62,3 @@ export class PostTagController {
     return this.postTagService.delete(id);
   }
 }
-
-
-

@@ -11,5 +11,4 @@ import { RbacRepositoryModule } from '@/modules/core/rbac/rbac.repository.module
   providers: [UserContextService],
   exports: [UserContextService],
 })
-export class UserContextModule { }
-
+export class UserContextModule {}

@@ -11,16 +11,16 @@ import { PublicBannerModule } from '@/modules/marketing/banner/public/banner.mod
 import { PublicContactModule } from '@/modules/marketing/contact/public/contact.module';
 
 @Module({
-    imports: [
-        MarketingRepositoryModule,
-        // Admin modules
-        AdminBannerModule,
-        AdminBannerLocationModule,
-        AdminContactModule,
-        // Public modules
-        PublicBannerModule,
-        PublicContactModule,
-    ],
-    exports: [],
+  imports: [
+    MarketingRepositoryModule,
+    // Admin modules
+    AdminBannerModule,
+    AdminBannerLocationModule,
+    AdminContactModule,
+    // Public modules
+    PublicBannerModule,
+    PublicContactModule,
+  ],
+  exports: [],
 })
-export class MarketingModule { }
+export class MarketingModule {}

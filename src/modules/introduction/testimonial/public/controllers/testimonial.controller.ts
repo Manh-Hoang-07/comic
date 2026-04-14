@@ -5,7 +5,7 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('testimonials')
 export class PublicTestimonialController {
-  constructor(private readonly testimonialService: PublicTestimonialService) { }
+  constructor(private readonly testimonialService: PublicTestimonialService) {}
 
   @Permission('public')
   @Get()
@@ -31,5 +31,3 @@ export class PublicTestimonialController {
     return this.testimonialService.getOne(id);
   }
 }
-
-

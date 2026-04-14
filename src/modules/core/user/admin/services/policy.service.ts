@@ -1,8 +1,15 @@
 import { Injectable, ForbiddenException, Inject } from '@nestjs/common';
-import { assertReqGroup, isSysCtx, reqGroupId } from '@/common/shared/utils/request-group-context.util';
+import {
+  assertReqGroup,
+  isSysCtx,
+  reqGroupId,
+} from '@/common/shared/utils/request-group-context.util';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
 
 export type RoleScope =
   | { kind: 'all' }
@@ -38,7 +45,7 @@ export class PolicyService {
 
   /** Phạm vi group cho query role assignments (system vs group). */
   roleScope(raw?: string | any[]): RoleScope {
-    let ids =
+    const ids =
       typeof raw === 'string'
         ? raw.split(',').filter(Boolean)
         : Array.isArray(raw)

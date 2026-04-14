@@ -5,13 +5,9 @@ import { PublicPostStatsController } from './controllers/stats.controller';
 import { PostStatsService } from './services/stats.service';
 
 @Module({
-  imports: [
-    PostRepositoryModule,
-    PostStatsRepositoryModule,
-  ],
+  imports: [PostRepositoryModule, PostStatsRepositoryModule],
   controllers: [PublicPostStatsController],
   providers: [PostStatsService],
   exports: [PostStatsService],
 })
-export class PublicPostStatsModule { }
-
+export class PublicPostStatsModule {}

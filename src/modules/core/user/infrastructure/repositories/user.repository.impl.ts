@@ -7,13 +7,16 @@ import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { IUserRepository, UserFilter } from '../../domain/user.repository';
 
 @Injectable()
-export class UserRepositoryImpl extends PrismaRepository<
-  User,
-  Prisma.UserWhereInput,
-  Prisma.UserCreateInput,
-  Prisma.UserUpdateInput,
-  Prisma.UserOrderByWithRelationInput
-> implements IUserRepository {
+export class UserRepositoryImpl
+  extends PrismaRepository<
+    User,
+    Prisma.UserWhereInput,
+    Prisma.UserCreateInput,
+    Prisma.UserUpdateInput,
+    Prisma.UserOrderByWithRelationInput
+  >
+  implements IUserRepository
+{
   constructor(private readonly prisma: PrismaService) {
     super(prisma.user as any);
     this.defaultSelect = {
@@ -156,7 +159,10 @@ export class UserRepositoryImpl extends PrismaRepository<
     await this.update(userId, { last_login_at: new Date() });
   }
 
-  async checkMultipleUniques(payload: { email?: string; phone?: string; username?: string }, excludeId?: PrimaryKey): Promise<void> {
+  async checkMultipleUniques(
+    payload: { email?: string; phone?: string; username?: string },
+    excludeId?: PrimaryKey,
+  ): Promise<void> {
     const orConditions = [];
     if (payload.email) orConditions.push({ email: payload.email });
     if (payload.phone) orConditions.push({ phone: payload.phone });
@@ -173,10 +179,12 @@ export class UserRepositoryImpl extends PrismaRepository<
     });
 
     if (existing) {
-      if (payload.email === existing.email) throw new BadRequestException('Email đã được sử dụng.');
-      if (payload.phone === existing.phone) throw new BadRequestException('Số điện thoại đã được sử dụng.');
-      if (payload.username === existing.username) throw new BadRequestException('Tên đăng nhập đã được sử dụng.');
+      if (payload.email === existing.email)
+        throw new BadRequestException('Email đã được sử dụng.');
+      if (payload.phone === existing.phone)
+        throw new BadRequestException('Số điện thoại đã được sử dụng.');
+      if (payload.username === existing.username)
+        throw new BadRequestException('Tên đăng nhập đã được sử dụng.');
     }
   }
-
 }

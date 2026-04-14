@@ -1,15 +1,10 @@
-import {
-  Controller,
-  Get,
-  Query,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Query, ParseIntPipe } from '@nestjs/common';
 import { UserStatsService } from '../services/user-stats.service';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('user/stats')
 export class UserStatsController {
-  constructor(private readonly dashboardService: UserStatsService) { }
+  constructor(private readonly dashboardService: UserStatsService) {}
 
   @Permission('user')
   @Get()
@@ -28,7 +23,3 @@ export class UserStatsController {
     return this.dashboardService.getLibrary(userId, page, limit);
   }
 }
-
-
-
-

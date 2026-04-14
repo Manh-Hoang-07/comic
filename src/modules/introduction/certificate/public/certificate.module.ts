@@ -10,5 +10,4 @@ import { CertificateRepositoryModule } from '@/modules/introduction/certificate/
   providers: [PublicCertificateService],
   exports: [PublicCertificateService],
 })
-export class PublicCertificateModule { }
-
+export class PublicCertificateModule {}

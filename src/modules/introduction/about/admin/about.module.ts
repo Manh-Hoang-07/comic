@@ -5,13 +5,9 @@ import { AboutRepositoryModule } from '@/modules/introduction/about/about.reposi
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    AboutRepositoryModule,
-  ],
+  imports: [RbacModule, AboutRepositoryModule],
   controllers: [AboutController],
   providers: [AboutService],
   exports: [AboutService],
 })
-export class AdminAboutModule { }
-
+export class AdminAboutModule {}

@@ -20,5 +20,4 @@ import { CertificateRepositoryModule } from './certificate.repository.module';
   ],
   exports: [CertificateRepositoryModule],
 })
-export class CertificateModule { }
-
+export class CertificateModule {}

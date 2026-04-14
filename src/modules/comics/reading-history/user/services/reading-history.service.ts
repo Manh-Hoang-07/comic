@@ -1,11 +1,17 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { ReadingHistory } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IReadingHistoryRepository, READING_HISTORY_REPOSITORY } from '../../domain/reading-history.repository';
+import {
+  IReadingHistoryRepository,
+  READING_HISTORY_REPOSITORY,
+} from '../../domain/reading-history.repository';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
-export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingHistoryRepository> {
+export class ReadingHistoryService extends BaseService<
+  ReadingHistory,
+  IReadingHistoryRepository
+> {
   constructor(
     @Inject(READING_HISTORY_REPOSITORY)
     protected readonly readingHistoryRepository: IReadingHistoryRepository,
@@ -30,14 +36,23 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
     const userId = getCurrentUserId();
     if (!userId) throw new UnauthorizedException();
 
-    const existing = await this.repository.findOne({ user_id: userId, comic_id: comicId });
+    const existing = await this.repository.findOne({
+      user_id: userId,
+      comic_id: comicId,
+    });
 
     if (existing) {
-      const updated = await this.repository.update(existing.id, { chapter_id: chapterId });
+      const updated = await this.repository.update(existing.id, {
+        chapter_id: chapterId,
+      });
       return this.transform(updated);
     }
 
-    const created = await this.repository.create({ user_id: userId, comic_id: comicId, chapter_id: chapterId });
+    const created = await this.repository.create({
+      user_id: userId,
+      comic_id: comicId,
+      chapter_id: chapterId,
+    });
     return this.transform(created);
   }
 
@@ -48,7 +63,4 @@ export class ReadingHistoryService extends BaseService<ReadingHistory, IReadingH
     await this.repository.deleteMany({ user_id: userId, comic_id: comicId });
     return { success: true };
   }
-
 }
-
-

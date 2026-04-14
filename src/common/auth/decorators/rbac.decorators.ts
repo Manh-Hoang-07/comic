@@ -14,8 +14,5 @@ export const PUBLIC_PERMISSION = 'public';
  * - Có `@Permission('user')` → chỉ cần authentication (không cần RBAC)
  * - Có `@Permission('some.permission')` → cần RBAC cho permission tương ứng
  */
-export const Permission = (...permissions: string[]) => SetMetadata(PERMS_REQUIRED_KEY, permissions);
-
-
-
-
+export const Permission = (...permissions: string[]) =>
+  SetMetadata(PERMS_REQUIRED_KEY, permissions);

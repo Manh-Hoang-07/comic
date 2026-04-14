@@ -22,7 +22,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/partners')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class PartnerController {
-  constructor(private readonly partnerService: PartnerService) { }
+  constructor(private readonly partnerService: PartnerService) {}
 
   @LogRequest()
   @Post()
@@ -51,7 +51,10 @@ export class PartnerController {
 
   @Put(':id')
   @Permission('partner.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updatePartnerDto: UpdatePartnerDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updatePartnerDto: UpdatePartnerDto,
+  ) {
     return this.partnerService.update(id, updatePartnerDto);
   }
 
@@ -61,5 +64,3 @@ export class PartnerController {
     return this.partnerService.delete(id);
   }
 }
-
-

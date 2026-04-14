@@ -19,7 +19,7 @@ export interface ResponseRef<T> {
 export function handleResponseRef<T>(
   responseRef: ResponseRef<T>,
   defaultMessage = 'Điều kiện tiền xử lý không đạt',
-  defaultCode = 'PRECONDITION_FAILED'
+  defaultCode = 'PRECONDITION_FAILED',
 ): ApiResponse<T> {
   if (responseRef.value) {
     return responseRef.value;
@@ -28,7 +28,6 @@ export function handleResponseRef<T>(
     responseRef.message || defaultMessage,
     responseRef.code || defaultCode,
     responseRef.httpStatus || HttpStatus.BAD_REQUEST,
-    responseRef.errors
+    responseRef.errors,
   ) as ApiResponse<T>;
 }
-

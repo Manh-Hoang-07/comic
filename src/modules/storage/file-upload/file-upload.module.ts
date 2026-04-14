@@ -16,7 +16,11 @@ import { S3StorageStrategy } from './strategies/s3-storage.strategy';
     S3StorageStrategy,
     {
       provide: 'UPLOAD_STRATEGY',
-      useFactory: (config: ConfigService, local: LocalStorageStrategy, s3: S3StorageStrategy) => {
+      useFactory: (
+        config: ConfigService,
+        local: LocalStorageStrategy,
+        s3: S3StorageStrategy,
+      ) => {
         const type = config.get('STORAGE_TYPE') || 'local';
         return type === 's3' ? s3 : local;
       },
@@ -27,4 +31,3 @@ import { S3StorageStrategy } from './strategies/s3-storage.strategy';
   exports: [UploadService],
 })
 export class FileUploadModule {}
-

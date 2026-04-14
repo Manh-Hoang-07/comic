@@ -1,11 +1,17 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { Bookmark } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { IBookmarkRepository, BOOKMARK_REPOSITORY } from '../../domain/bookmark.repository';
+import {
+  IBookmarkRepository,
+  BOOKMARK_REPOSITORY,
+} from '../../domain/bookmark.repository';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
-export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository> {
+export class BookmarksService extends BaseService<
+  Bookmark,
+  IBookmarkRepository
+> {
   constructor(
     @Inject(BOOKMARK_REPOSITORY)
     protected readonly bookmarkRepository: IBookmarkRepository,
@@ -51,7 +57,4 @@ export class BookmarksService extends BaseService<Bookmark, IBookmarkRepository>
 
     return { success: true };
   }
-
 }
-
-

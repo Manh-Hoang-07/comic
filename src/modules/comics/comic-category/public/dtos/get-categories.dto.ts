@@ -22,4 +22,3 @@ export class GetComicCategoriesDto {
   @IsString()
   sort?: string = 'created_at:DESC';
 }
-

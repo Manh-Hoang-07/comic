@@ -16,10 +16,12 @@ import { AppThrottlerGuard } from './app-throttler.guard';
           : undefined; // undefined = use default in-memory storage
 
         return {
-          throttlers: [{
-            ttl: 60000, // 60 seconds = 1 phút
-            limit: 100, // Default limit: 50 request mỗi phút cho mỗi IP
-          }],
+          throttlers: [
+            {
+              ttl: 60000, // 60 seconds = 1 phút
+              limit: 100, // Default limit: 50 request mỗi phút cho mỗi IP
+            },
+          ],
           storage,
         };
       },
@@ -33,4 +35,4 @@ import { AppThrottlerGuard } from './app-throttler.guard';
   ],
   exports: [],
 })
-export class RateLimitModule { }
+export class RateLimitModule {}

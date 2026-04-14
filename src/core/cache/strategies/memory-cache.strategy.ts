@@ -29,7 +29,9 @@ export class MemoryCacheStrategy implements ICacheStrategy {
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-    this.cache.set(key, value, { ttl: ttlSeconds ? ttlSeconds * 1000 : undefined });
+    this.cache.set(key, value, {
+      ttl: ttlSeconds ? ttlSeconds * 1000 : undefined,
+    });
   }
 
   async del(key: string): Promise<void> {
@@ -106,7 +108,11 @@ export class MemoryCacheStrategy implements ICacheStrategy {
     return Object.fromEntries(map);
   }
 
-  async hincrby(key: string, field: string, increment: number): Promise<number> {
+  async hincrby(
+    key: string,
+    field: string,
+    increment: number,
+  ): Promise<number> {
     const map = this.hashes.get(key);
     if (!map) {
       this.hset(key, field, String(increment));
@@ -145,12 +151,19 @@ export class MemoryCacheStrategy implements ICacheStrategy {
     this.emitter.emit(channel, message);
   }
 
-  async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
+  async subscribe(
+    channel: string,
+    callback: (message: string) => void,
+  ): Promise<void> {
     this.emitter.on(channel, callback);
   }
 
   // Locking (In-memory, single process only)
-  async lock(key: string, ttlSeconds: number, token = 'locked'): Promise<boolean> {
+  async lock(
+    key: string,
+    ttlSeconds: number,
+    token = 'locked',
+  ): Promise<boolean> {
     if (this.cache.has(`lock:${key}`)) return false;
     this.cache.set(`lock:${key}`, token, { ttl: ttlSeconds * 1000 });
     return true;

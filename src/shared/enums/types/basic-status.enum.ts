@@ -10,8 +10,3 @@ export const BasicStatusLabels: Record<BasicStatus, string> = {
   [BasicStatus.active]: 'Hoạt động',
   [BasicStatus.inactive]: 'Ngừng hoạt động',
 };
-
-
-
-
-

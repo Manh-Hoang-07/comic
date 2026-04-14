@@ -5,7 +5,6 @@ import {
   Delete,
   Body,
   Param,
-  
   ValidationPipe,
   UsePipes,
 } from '@nestjs/common';
@@ -16,7 +15,7 @@ import { SanitizeHtmlPipe } from '@/modules/comics/shared/pipes/sanitize-html.pi
 
 @Controller('user/comic-reviews')
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) { }
+  constructor(private readonly reviewsService: ReviewsService) {}
 
   @Permission('user')
   @Get()
@@ -32,7 +31,11 @@ export class ReviewsController {
     @Param('comicId') comicId: any,
     @Body(ValidationPipe) body: { rating: any; content?: string },
   ) {
-    return this.reviewsService.createOrUpdateReview(comicId, body.rating, body.content);
+    return this.reviewsService.createOrUpdateReview(
+      comicId,
+      body.rating,
+      body.content,
+    );
   }
 
   @Permission('user')
@@ -41,4 +44,3 @@ export class ReviewsController {
     return this.reviewsService.removeReview(comicId);
   }
 }
-

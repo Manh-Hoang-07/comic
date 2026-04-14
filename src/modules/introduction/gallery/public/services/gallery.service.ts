@@ -1,5 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IGalleryRepository, GALLERY_REPOSITORY } from '@/modules/introduction/gallery/domain/gallery.repository';
+import {
+  IGalleryRepository,
+  GALLERY_REPOSITORY,
+} from '@/modules/introduction/gallery/domain/gallery.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { BaseService } from '@/common/core/services';
 
@@ -21,8 +24,6 @@ export class PublicGalleryService extends BaseService<any, IGalleryRepository> {
     }
     return { ...normalized, status: BasicStatus.active as any };
   }
-
-
 
   async findBySlug(slug: string): Promise<any | null> {
     const gallery = await this.galleryRepo.findOne({
@@ -65,5 +66,3 @@ export class PublicGalleryService extends BaseService<any, IGalleryRepository> {
     return item;
   }
 }
-
-

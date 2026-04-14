@@ -1,4 +1,11 @@
-import { IsOptional, IsInt, Min, IsString, IsEnum, IsBoolean } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  Min,
+  IsString,
+  IsEnum,
+  IsBoolean,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PostStatus } from '@/shared/enums';
 
@@ -45,4 +52,3 @@ export class GetPostsDto {
   @IsString()
   sort?: string = 'created_at:DESC';
 }
-

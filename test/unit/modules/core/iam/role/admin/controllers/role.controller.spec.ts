@@ -4,62 +4,63 @@ import { RoleService } from '@/modules/core/iam/role/admin/services/role.service
 import { AuthService } from '@/common/auth/services';
 
 describe('RoleController', () => {
-    let controller: RoleController;
-    let service: any;
-    let auth: any;
+  let controller: RoleController;
+  let service: any;
+  let auth: any;
 
-    beforeEach(async () => {
-        service = {
-            getList: jest.fn(),
-            getSimpleList: jest.fn(),
-            getOne: jest.fn(),
-            create: jest.fn(),
-            update: jest.fn(),
-            delete: jest.fn(),
-            assignPermissions: jest.fn(),
-        };
+  beforeEach(async () => {
+    service = {
+      getList: jest.fn(),
+      getSimpleList: jest.fn(),
+      getOne: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      assignPermissions: jest.fn(),
+    };
 
-        auth = {
-            id: jest.fn().mockReturnValue(BigInt(1)),
-            isLogin: jest.fn().mockReturnValue(true),
-        };
+    auth = {
+      id: jest.fn().mockReturnValue(BigInt(1)),
+      isLogin: jest.fn().mockReturnValue(true),
+    };
 
-        const module: TestingModule = await Test.createTestingModule({
-            controllers: [RoleController],
-            providers: [
-                { provide: RoleService, useValue: service },
-                { provide: AuthService, useValue: auth },
-            ],
-        }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [RoleController],
+      providers: [
+        { provide: RoleService, useValue: service },
+        { provide: AuthService, useValue: auth },
+      ],
+    }).compile();
 
-        controller = module.get<RoleController>(RoleController);
+    controller = module.get<RoleController>(RoleController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should call create', async () => {
+      const dto = { name: 'Admin' };
+      await controller.create(dto as any);
+      expect(service.create).toHaveBeenCalledWith(dto);
     });
 
-    it('should be defined', () => {
-        expect(controller).toBeDefined();
+    it('should throw error if not authenticated', async () => {
+      auth.id.mockReturnValue(null);
+      await expect(controller.create({})).rejects.toThrow('User not logged in');
     });
+  });
 
-    describe('create', () => {
-        it('should call create', async () => {
-            const dto = { name: 'Admin' };
-            await controller.create(dto as any);
-            expect(service.create).toHaveBeenCalledWith(dto);
-        });
-
-        it('should throw error if not authenticated', async () => {
-            auth.id.mockReturnValue(null);
-            await expect(controller.create({})).rejects.toThrow('User not logged in');
-        });
+  describe('assignPermissions', () => {
+    it('should call service.assignPermissions', async () => {
+      await controller.assignPermissions(BigInt(1), {
+        permission_ids: [BigInt(10), BigInt(20)],
+      });
+      expect(service.assignPermissions).toHaveBeenCalledWith(BigInt(1), [
+        BigInt(10),
+        BigInt(20),
+      ]);
     });
-
-    describe('assignPermissions', () => {
-        it('should call service.assignPermissions', async () => {
-            await controller.assignPermissions(BigInt(1), { permission_ids: [BigInt(10), BigInt(20)] });
-            expect(service.assignPermissions).toHaveBeenCalledWith(BigInt(1), [BigInt(10), BigInt(20)]);
-        });
-    });
+  });
 });
-
-
-
-

@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsNumber, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsNumber,
+  MaxLength,
+} from 'class-validator';
 import { ComicStatus } from '@/shared/enums';
 
 export class CreateComicDto {
@@ -37,4 +44,3 @@ export class CreateComicDto {
   @IsOptional()
   is_featured?: boolean;
 }
-

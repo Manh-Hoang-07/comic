@@ -20,10 +20,12 @@ export class RedisCacheStrategy implements ICacheStrategy {
           maxRetriesPerRequest: 1,
           enableReadyCheck: false,
           retryStrategy: () => null,
-          ...(this.url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+          ...(this.url.startsWith('rediss://')
+            ? { tls: { rejectUnauthorized: false } }
+            : {}),
         };
         globalRedisClient = new Redis(this.url, options);
-        globalRedisClient.on('error', () => { });
+        globalRedisClient.on('error', () => {});
       }
       this.client = globalRedisClient;
     }
@@ -112,7 +114,13 @@ export class RedisCacheStrategy implements ICacheStrategy {
     const keys: string[] = [];
     let cursor = '0';
     do {
-      const [nextCursor, foundKeys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      const [nextCursor, foundKeys] = await this.client.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        count,
+      );
       keys.push(...foundKeys);
       cursor = nextCursor;
     } while (cursor !== '0');
@@ -135,7 +143,11 @@ export class RedisCacheStrategy implements ICacheStrategy {
     return (await this.client?.hgetall(key)) || {};
   }
 
-  async hincrby(key: string, field: string, increment: number): Promise<number> {
+  async hincrby(
+    key: string,
+    field: string,
+    increment: number,
+  ): Promise<number> {
     return (await this.client?.hincrby(key, field, increment)) || 0;
   }
 
@@ -159,12 +171,19 @@ export class RedisCacheStrategy implements ICacheStrategy {
     await this.client?.publish(channel, message);
   }
 
-  async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
+  async subscribe(
+    channel: string,
+    callback: (message: string) => void,
+  ): Promise<void> {
     // subClient removed to optimize connection usage in serverless.
     // Pub/Sub listening is not supported in this strategy for now.
   }
 
-  async lock(key: string, ttlSeconds: number, token = 'locked'): Promise<boolean> {
+  async lock(
+    key: string,
+    ttlSeconds: number,
+    token = 'locked',
+  ): Promise<boolean> {
     if (!this.client) return false;
     const result = await this.client.set(key, token, 'EX', ttlSeconds, 'NX');
     return result === 'OK';
@@ -182,7 +201,9 @@ export class RedisCacheStrategy implements ICacheStrategy {
     await this.client.eval(script, 1, key, token);
   }
 
-  async withPipeline(handler: (pipe: ChainableCommander) => void): Promise<void> {
+  async withPipeline(
+    handler: (pipe: ChainableCommander) => void,
+  ): Promise<void> {
     if (!this.client) return;
     const p = this.client.pipeline();
     handler(p);

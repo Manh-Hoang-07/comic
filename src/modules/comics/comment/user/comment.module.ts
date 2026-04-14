@@ -18,4 +18,4 @@ import { NotificationRepositoryModule } from '@/modules/core/notification/notifi
   providers: [UserCommentsService, ComicNotificationService],
   exports: [UserCommentsService],
 })
-export class UserCommentsModule { }
+export class UserCommentsModule {}

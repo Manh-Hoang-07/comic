@@ -4,7 +4,7 @@ import { PUBLIC_CHAPTER_STATUSES } from '@/shared/enums';
 
 @Injectable()
 export class SeedComicLastChapter {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
     try {
@@ -43,5 +43,3 @@ export class SeedComicLastChapter {
     }
   }
 }
-
-

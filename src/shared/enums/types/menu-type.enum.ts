@@ -12,6 +12,3 @@ export const MenuTypeLabels: Record<MenuType, string> = {
   [MenuType.group]: 'Group',
   [MenuType.link]: 'Link',
 };
-
-
-

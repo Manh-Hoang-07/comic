@@ -5,16 +5,16 @@ import { CHAPTER_PAGE_REPOSITORY } from './domain/chapter-page.repository';
 import { ChapterPageRepositoryImpl } from './infrastructure/repositories/chapter-page.repository.impl';
 
 @Module({
-    providers: [
-        {
-            provide: CHAPTER_REPOSITORY,
-            useClass: ChapterRepositoryImpl,
-        },
-        {
-            provide: CHAPTER_PAGE_REPOSITORY,
-            useClass: ChapterPageRepositoryImpl,
-        },
-    ],
-    exports: [CHAPTER_REPOSITORY, CHAPTER_PAGE_REPOSITORY],
+  providers: [
+    {
+      provide: CHAPTER_REPOSITORY,
+      useClass: ChapterRepositoryImpl,
+    },
+    {
+      provide: CHAPTER_PAGE_REPOSITORY,
+      useClass: ChapterPageRepositoryImpl,
+    },
+  ],
+  exports: [CHAPTER_REPOSITORY, CHAPTER_PAGE_REPOSITORY],
 })
-export class ChapterRepositoryModule { }
+export class ChapterRepositoryModule {}

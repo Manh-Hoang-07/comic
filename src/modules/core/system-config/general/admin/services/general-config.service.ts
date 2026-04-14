@@ -1,5 +1,12 @@
-import { Injectable, Inject, InternalServerErrorException } from '@nestjs/common';
-import { IGeneralConfigRepository, GENERAL_CONFIG_REPOSITORY } from '../../domain/repositories/general-config.repository';
+import {
+  Injectable,
+  Inject,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import {
+  IGeneralConfigRepository,
+  GENERAL_CONFIG_REPOSITORY,
+} from '../../domain/repositories/general-config.repository';
 import { UpdateGeneralConfigDto } from '../dtos/update-general-config.dto';
 import { CacheService } from '@/common/cache/services';
 import { BaseService } from '@/common/core/services';
@@ -7,7 +14,10 @@ import { buildConfigPayload } from '@/modules/core/system-config/utils/config-pa
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 
 @Injectable()
-export class GeneralConfigService extends BaseService<any, IGeneralConfigRepository> {
+export class GeneralConfigService extends BaseService<
+  any,
+  IGeneralConfigRepository
+> {
   private readonly PUBLIC_CACHE_KEY = 'public:general-config';
 
   constructor(
@@ -36,7 +46,12 @@ export class GeneralConfigService extends BaseService<any, IGeneralConfigReposit
       'site_ward_id',
     ];
 
-    const payload = buildConfigPayload(dto, bigIntFields, userId ?? undefined, existing);
+    const payload = buildConfigPayload(
+      dto,
+      bigIntFields,
+      userId ?? undefined,
+      existing,
+    );
 
     let result: any;
     if (!existing) {
@@ -52,7 +67,9 @@ export class GeneralConfigService extends BaseService<any, IGeneralConfigReposit
     }
 
     if (!result) {
-      throw new InternalServerErrorException('Failed to create or update general config');
+      throw new InternalServerErrorException(
+        'Failed to create or update general config',
+      );
     }
 
     await this.invalidateCache();
@@ -65,6 +82,4 @@ export class GeneralConfigService extends BaseService<any, IGeneralConfigReposit
       await this.cacheService.del(this.PUBLIC_CACHE_KEY).catch(() => undefined);
     }
   }
-
 }
-

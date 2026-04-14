@@ -1,5 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IAboutRepository, ABOUT_REPOSITORY } from '@/modules/introduction/about/domain/about.repository';
+import {
+  IAboutRepository,
+  ABOUT_REPOSITORY,
+} from '@/modules/introduction/about/domain/about.repository';
 import { BaseContentService } from '@/common/core/services';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
 
@@ -35,12 +38,10 @@ export class AboutService extends BaseContentService<any, IAboutRepository> {
       payload.slug = await SlugHelper.uniqueSlug(
         payload.slug || payload.title || '',
         this.aboutRepo,
-        id
+        id,
       );
     }
 
     return payload;
   }
 }
-
-

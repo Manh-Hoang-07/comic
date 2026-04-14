@@ -10,4 +10,3 @@ export interface MenuTreeItem {
   children?: MenuTreeItem[];
   allowed?: boolean;
 }
-

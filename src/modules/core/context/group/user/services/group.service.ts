@@ -1,12 +1,36 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
-import { IGroupRepository, GROUP_REPOSITORY } from '@/modules/core/context/group/domain/group.repository';
-import { IContextRepository, CONTEXT_REPOSITORY } from '@/modules/core/context/context/domain/context.repository';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common';
+import {
+  IGroupRepository,
+  GROUP_REPOSITORY,
+} from '@/modules/core/context/group/domain/group.repository';
+import {
+  IContextRepository,
+  CONTEXT_REPOSITORY,
+} from '@/modules/core/context/context/domain/context.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
-import { IUserGroupRepository, USER_GROUP_REPOSITORY } from '@/modules/core/rbac/user-group/domain/user-group.repository';
-import { IUserRoleAssignmentRepository, USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
-import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import {
+  IUserGroupRepository,
+  USER_GROUP_REPOSITORY,
+} from '@/modules/core/rbac/user-group/domain/user-group.repository';
+import {
+  IUserRoleAssignmentRepository,
+  USER_ROLE_ASSIGNMENT_REPOSITORY,
+} from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
+import {
+  IRoleRepository,
+  ROLE_REPOSITORY,
+} from '@/modules/core/iam/role/domain/role.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
 import { RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RequestContext } from '@/common/shared/utils';
@@ -35,7 +59,7 @@ export class UserGroupService {
     private readonly rbacService: RbacService,
     private readonly rbacCache: RbacCacheService,
     private readonly redis: RedisUtil,
-  ) { }
+  ) {}
 
   async isOwner(groupId: any, userId: any): Promise<boolean> {
     const group = await this.groupRepo.findById(groupId);
@@ -50,7 +74,8 @@ export class UserGroupService {
     const group = await this.groupRepo.findById(groupId);
     if (!group) return false;
 
-    if (group.owner_id != null && String(group.owner_id) === String(userId)) return true;
+    if (group.owner_id != null && String(group.owner_id) === String(userId))
+      return true;
 
     // Check system context
     const context = RequestContext.get<any>('context');
@@ -69,7 +94,9 @@ export class UserGroupService {
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
     if (!canManage) {
-      throw new ForbiddenException('You do not have permission to add members to this group');
+      throw new ForbiddenException(
+        'You do not have permission to add members to this group',
+      );
     }
 
     const group = await this.groupRepo.findById(groupId);
@@ -78,7 +105,10 @@ export class UserGroupService {
     const member = await this.userRepo.findById(memberUserId);
     if (!member) throw new NotFoundException('Member user not found');
 
-    const existingUserGroup = await this.userGroupRepo.findUnique(memberUserId, groupId);
+    const existingUserGroup = await this.userGroupRepo.findUnique(
+      memberUserId,
+      groupId,
+    );
 
     if (!existingUserGroup) {
       await this.userGroupRepo.create({
@@ -104,12 +134,19 @@ export class UserGroupService {
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
     if (!canManage) {
-      throw new ForbiddenException('You do not have permission to manage roles in this group');
+      throw new ForbiddenException(
+        'You do not have permission to manage roles in this group',
+      );
     }
 
-    const existingUserGroup = await this.userGroupRepo.findUnique(memberUserId, groupId);
+    const existingUserGroup = await this.userGroupRepo.findUnique(
+      memberUserId,
+      groupId,
+    );
     if (!existingUserGroup) {
-      throw new BadRequestException('User must be a member of the group before assigning roles');
+      throw new BadRequestException(
+        'User must be a member of the group before assigning roles',
+      );
     }
 
     await this.rbacService.syncRolesInGroup(memberUserId, groupId, roleIds);
@@ -123,13 +160,18 @@ export class UserGroupService {
   ): Promise<void> {
     const canManage = await this.canManageGroup(groupId, requesterUserId);
     if (!canManage) {
-      throw new ForbiddenException('You do not have permission to remove members from this group');
+      throw new ForbiddenException(
+        'You do not have permission to remove members from this group',
+      );
     }
 
     const group = await this.groupRepo.findById(groupId);
     if (!group) throw new NotFoundException('Group not found');
 
-    if (group.owner_id != null && String(group.owner_id) === String(memberUserId)) {
+    if (
+      group.owner_id != null &&
+      String(group.owner_id) === String(memberUserId)
+    ) {
       throw new BadRequestException('Cannot remove owner from group');
     }
 
@@ -163,18 +205,20 @@ export class UserGroupService {
 
     // Gom nhóm assignments theo user_id để tránh trả về duplicate user (vì 1 user có N roles)
     const userMap = new Map<string, any>();
-    for (const a of (assignments as any[])) {
+    for (const a of assignments as any[]) {
       const userId = a.user_id;
       const userIdStr = String(userId);
       if (!userMap.has(userIdStr)) {
         userMap.set(userIdStr, {
           user_id: userId,
-          user: a.user ? {
-            id: toPrimaryKey(a.user.id),
-            username: a.user.username,
-            email: a.user.email,
-          } : null,
-          roles: []
+          user: a.user
+            ? {
+                id: toPrimaryKey(a.user.id),
+                username: a.user.username,
+                email: a.user.email,
+              }
+            : null,
+          roles: [],
         });
       }
       if (a.role) {
@@ -236,21 +280,21 @@ export class UserGroupService {
 
     const assignments = groupIds.length
       ? await this.assignmentRepo.findManyRaw({
-        where: {
-          user_id: toPrimaryKey(userId),
-          group_id: { in: groupIds.map((id: any) => toPrimaryKey(id)) },
-        },
-        select: {
-          group_id: true,
-          role: {
-            select: {
-              id: true,
-              code: true,
-              name: true,
+          where: {
+            user_id: toPrimaryKey(userId),
+            group_id: { in: groupIds.map((id: any) => toPrimaryKey(id)) },
+          },
+          select: {
+            group_id: true,
+            role: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+              },
             },
           },
-        },
-      })
+        })
       : [];
     const rolesByGroup = new Map<string, any[]>();
     for (const a of assignments as any[]) {
@@ -266,34 +310,40 @@ export class UserGroupService {
       }
     }
 
-    const result = userGroups.map((ug: any) => {
-      const group = ug.group;
-      if (!group || group.status !== 'active') return null;
-      const gidKey = String(group.id);
+    const result = userGroups
+      .map((ug: any) => {
+        const group = ug.group;
+        if (!group || group.status !== 'active') return null;
+        const gidKey = String(group.id);
 
-      return {
-        id: toPrimaryKey(group.id),
-        code: group.code,
-        name: group.name,
-        type: group.type,
-        description: group.description,
-        context: group.context
-          ? {
-            id: group.context.id.toString(),
-            type: group.context.type,
-            ref_id: group.context.ref_id ? group.context.ref_id.toString() : null,
-            name: group.context.name,
-          }
-          : null,
-        roles: rolesByGroup.get(gidKey) || [],
-        joined_at: ug.joined_at,
-      };
-    }).filter(item => item !== null);
+        return {
+          id: toPrimaryKey(group.id),
+          code: group.code,
+          name: group.name,
+          type: group.type,
+          description: group.description,
+          context: group.context
+            ? {
+                id: group.context.id.toString(),
+                type: group.context.type,
+                ref_id: group.context.ref_id
+                  ? group.context.ref_id.toString()
+                  : null,
+                name: group.context.name,
+              }
+            : null,
+          roles: rolesByGroup.get(gidKey) || [],
+          joined_at: ug.joined_at,
+        };
+      })
+      .filter((item) => item !== null);
     if (this.redis.isEnabled()) {
-      await this.redis.set(userGroupsListCacheKey(userId), JSON.stringify(result), USER_GROUPS_LIST_TTL_SEC);
+      await this.redis.set(
+        userGroupsListCacheKey(userId),
+        JSON.stringify(result),
+        USER_GROUPS_LIST_TTL_SEC,
+      );
     }
     return result;
   }
 }
-
-

@@ -1,9 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 
-export function applyCors(app: INestApplication, options: {
-  enabled: boolean;
-  origins: string[];
-}) {
+export function applyCors(
+  app: INestApplication,
+  options: {
+    enabled: boolean;
+    origins: string[];
+  },
+) {
   if (!options.enabled) return;
   const hasWildcard = options.origins.includes('*');
   app.enableCors({
@@ -24,5 +27,3 @@ export function applyCors(app: INestApplication, options: {
     credentials: !hasWildcard,
   });
 }
-
-

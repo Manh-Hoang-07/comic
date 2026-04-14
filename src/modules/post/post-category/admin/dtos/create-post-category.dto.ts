@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsInt, IsEnum, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsEnum,
+  MaxLength,
+} from 'class-validator';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 
 export class CreatePostCategoryDto {
@@ -47,4 +53,3 @@ export class CreatePostCategoryDto {
   @IsString()
   og_image?: string;
 }
-

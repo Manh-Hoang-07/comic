@@ -69,7 +69,11 @@ describe('RbacCacheService', () => {
     it('should write JSON codes to Redis and publish invalidation', async () => {
       await service.setPermissions(1, 10, ['a', 'b']);
 
-      expect(redisUtil.set).toHaveBeenCalledWith('rbac:v1:u:1:g:10', expect.stringContaining('codes:v1:'), 3600);
+      expect(redisUtil.set).toHaveBeenCalledWith(
+        'rbac:v1:u:1:g:10',
+        expect.stringContaining('codes:v1:'),
+        3600,
+      );
       expect(redisUtil.trackKey).toHaveBeenCalledWith(1, 'rbac:v1:u:1:g:10');
       expect(redisUtil.publish).toHaveBeenCalled();
     });
@@ -83,7 +87,10 @@ describe('RbacCacheService', () => {
       expect(redisUtil.del).toHaveBeenCalledWith('key1');
       expect(redisUtil.del).toHaveBeenCalledWith('key2');
       expect(redisUtil.clearTrackedKeys).toHaveBeenCalledWith(1);
-      expect(redisUtil.publish).toHaveBeenCalledWith('rbac:invalidation', expect.stringContaining('user_all'));
+      expect(redisUtil.publish).toHaveBeenCalledWith(
+        'rbac:invalidation',
+        expect.stringContaining('user_all'),
+      );
     });
   });
 });

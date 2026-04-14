@@ -7,7 +7,11 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { CACHE_KEY_METADATA, CACHE_TTL_METADATA, CacheOptions } from '@/common/cache/decorators';
+import {
+  CACHE_KEY_METADATA,
+  CACHE_TTL_METADATA,
+  CacheOptions,
+} from '@/common/cache/decorators';
 import { RedisUtil } from '@/core/utils/redis.util';
 
 @Injectable()
@@ -15,9 +19,12 @@ export class CacheInterceptor implements NestInterceptor {
   constructor(
     private readonly reflector: Reflector,
     private readonly redis: RedisUtil,
-  ) { }
+  ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<any>> {
     const handler = context.getHandler();
     const request = context.switchToHttp().getRequest();
     const args = context.getArgs();
@@ -58,11 +65,7 @@ export class CacheInterceptor implements NestInterceptor {
     }
 
     // Build cache key from template and method arguments
-    const cacheKey = this.buildCacheKey(
-      cacheOptions.key,
-      request,
-      args,
-    );
+    const cacheKey = this.buildCacheKey(cacheOptions.key, request, args);
 
     // Try to get from cache
     const cachedValue = await this.redis.get(cacheKey);
@@ -124,19 +127,25 @@ export class CacheInterceptor implements NestInterceptor {
     const params = request.params || {};
     for (const [paramName, paramValue] of Object.entries(params)) {
       // [L3] Encode value để tránh conflict với ký tự đặc biệt trong cache key
-      key = key.split(`\${${paramName}}`).join(this.encodeParam(String(paramValue)));
+      key = key
+        .split(`\${${paramName}}`)
+        .join(this.encodeParam(String(paramValue)));
     }
 
     // Replace ${query.param} with query values
     const query = request.query || {};
     for (const [queryName, queryValue] of Object.entries(query)) {
-      key = key.split(`\${query.${queryName}}`).join(this.encodeParam(String(queryValue)));
+      key = key
+        .split(`\${query.${queryName}}`)
+        .join(this.encodeParam(String(queryValue)));
     }
 
     // Replace ${body.param} with body values
     const body = request.body || {};
     for (const [bodyName, bodyValue] of Object.entries(body)) {
-      key = key.split(`\${body.${bodyName}}`).join(this.encodeParam(String(bodyValue)));
+      key = key
+        .split(`\${body.${bodyName}}`)
+        .join(this.encodeParam(String(bodyValue)));
     }
 
     // Replace ${args[n]} with method arguments

@@ -92,7 +92,11 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     return this.strategy.hgetall(key);
   }
 
-  async hincrby(key: string, field: string, increment: number): Promise<number> {
+  async hincrby(
+    key: string,
+    field: string,
+    increment: number,
+  ): Promise<number> {
     return this.strategy.hincrby(key, field, increment);
   }
 
@@ -116,11 +120,18 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     await this.strategy.publish(channel, message);
   }
 
-  async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
+  async subscribe(
+    channel: string,
+    callback: (message: string) => void,
+  ): Promise<void> {
     await this.strategy.subscribe(channel, callback);
   }
 
-  async lock(key: string, ttlSeconds: number, token?: string): Promise<boolean> {
+  async lock(
+    key: string,
+    ttlSeconds: number,
+    token?: string,
+  ): Promise<boolean> {
     return this.strategy.lock(key, ttlSeconds, token);
   }
 
@@ -128,7 +139,9 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     await this.strategy.unlock(key, token);
   }
 
-  async withPipeline(handler: (pipe: ChainableCommander) => void): Promise<void> {
+  async withPipeline(
+    handler: (pipe: ChainableCommander) => void,
+  ): Promise<void> {
     await this.strategy.withPipeline(handler);
   }
 

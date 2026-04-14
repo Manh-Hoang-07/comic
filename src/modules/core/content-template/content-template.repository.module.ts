@@ -4,12 +4,12 @@ import { ContentTemplateRepositoryImpl } from './infrastructure/repositories/con
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: CONTENT_TEMPLATE_REPOSITORY,
-            useClass: ContentTemplateRepositoryImpl,
-        },
-    ],
-    exports: [CONTENT_TEMPLATE_REPOSITORY],
+  providers: [
+    {
+      provide: CONTENT_TEMPLATE_REPOSITORY,
+      useClass: ContentTemplateRepositoryImpl,
+    },
+  ],
+  exports: [CONTENT_TEMPLATE_REPOSITORY],
 })
-export class ContentTemplateRepositoryModule { }
+export class ContentTemplateRepositoryModule {}

@@ -44,7 +44,10 @@ export class AttemptLimiterService {
       const data = await this.redis.get(key);
       if (!data) return { isLocked: false };
 
-      const info = JSON.parse(data) as { attempts?: number; lockedUntil?: number };
+      const info = JSON.parse(data) as {
+        attempts?: number;
+        lockedUntil?: number;
+      };
       const now = Math.floor(Date.now() / 1000);
       if (info.lockedUntil && info.lockedUntil > now) {
         const remaining = Math.ceil((info.lockedUntil - now) / 60);
@@ -77,14 +80,19 @@ export class AttemptLimiterService {
       let lockedUntil = 0;
 
       if (data) {
-        const info = JSON.parse(data) as { attempts?: number; lockedUntil?: number };
+        const info = JSON.parse(data) as {
+          attempts?: number;
+          lockedUntil?: number;
+        };
         if (info.lockedUntil && info.lockedUntil > now) return; // Already locked
         attempts = info.attempts || 0;
       }
 
       const maxAttempts = overrides?.maxAttempts ?? this.defaultMaxAttempts;
-      const lockoutSeconds = overrides?.lockoutSeconds ?? this.defaultLockoutSeconds;
-      const windowSeconds = overrides?.windowSeconds ?? this.defaultWindowSeconds;
+      const lockoutSeconds =
+        overrides?.lockoutSeconds ?? this.defaultLockoutSeconds;
+      const windowSeconds =
+        overrides?.windowSeconds ?? this.defaultWindowSeconds;
 
       attempts += 1;
       const isLocked = attempts >= maxAttempts;
@@ -109,5 +117,3 @@ export class AttemptLimiterService {
     }
   }
 }
-
-

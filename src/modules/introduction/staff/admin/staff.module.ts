@@ -6,13 +6,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { StaffRepositoryModule } from '@/modules/introduction/staff/staff.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    StaffRepositoryModule,
-  ],
+  imports: [RbacModule, StaffRepositoryModule],
   controllers: [StaffController],
   providers: [StaffService],
   exports: [StaffService],
 })
-export class AdminStaffModule { }
-
+export class AdminStaffModule {}

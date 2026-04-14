@@ -61,4 +61,3 @@ export class CreateTestimonialDto {
   @Type(() => Number)
   sort_order?: number = 0;
 }
-

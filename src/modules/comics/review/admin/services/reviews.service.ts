@@ -2,12 +2,24 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { ComicReview } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
 import { IPaginationOptions } from '@/common/core/repositories';
-import { IReviewRepository, REVIEW_REPOSITORY } from '../../domain/review.repository';
-import { verifyGroupOwnership, getGroupFilter } from '@/common/shared/utils/group-ownership.util';
-import { REVIEW_INCLUDE, normalizeReviewFilters } from '@/modules/comics/review/utils/review-query.helper';
+import {
+  IReviewRepository,
+  REVIEW_REPOSITORY,
+} from '../../domain/review.repository';
+import {
+  verifyGroupOwnership,
+  getGroupFilter,
+} from '@/common/shared/utils/group-ownership.util';
+import {
+  REVIEW_INCLUDE,
+  normalizeReviewFilters,
+} from '@/modules/comics/review/utils/review-query.helper';
 
 @Injectable()
-export class ReviewsService extends BaseService<ComicReview, IReviewRepository> {
+export class ReviewsService extends BaseService<
+  ComicReview,
+  IReviewRepository
+> {
   constructor(
     @Inject(REVIEW_REPOSITORY)
     protected readonly reviewRepository: IReviewRepository,
@@ -20,7 +32,9 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     return { ...prepared, ...getGroupFilter(prepared) };
   }
 
-  protected override async prepareOptions(options: IPaginationOptions): Promise<IPaginationOptions> {
+  protected override async prepareOptions(
+    options: IPaginationOptions,
+  ): Promise<IPaginationOptions> {
     const normalized = await super.prepareOptions(options);
     (normalized as any).include = REVIEW_INCLUDE;
     return normalized;
@@ -33,7 +47,14 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
     startOfWeek.setDate(today.getDate() - today.getDay());
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const [total, todayCount, thisWeekCount, thisMonthCount, avgRating, ratingDistribution] = await Promise.all([
+    const [
+      total,
+      todayCount,
+      thisWeekCount,
+      thisMonthCount,
+      avgRating,
+      ratingDistribution,
+    ] = await Promise.all([
       this.repository.count({}),
       this.repository.count({ date_from: today }),
       this.repository.count({ date_from: startOfWeek }),
@@ -55,7 +76,7 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
   override async getOne(id: any): Promise<ComicReview> {
     const entity = await (this.repository as any).delegate.findFirst({
       where: { id: (this.repository as any).toPrimaryKey(id) },
-      include: { comic: true }
+      include: { comic: true },
     });
 
     if (!entity) {
@@ -82,7 +103,7 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
   private async verifyOwnershipAndExistence(id: any) {
     const review = await (this.repository as any).delegate.findFirst({
       where: { id: (this.repository as any).toPrimaryKey(id) },
-      include: { comic: true }
+      include: { comic: true },
     });
 
     if (!review) {
@@ -93,7 +114,4 @@ export class ReviewsService extends BaseService<ComicReview, IReviewRepository> 
       verifyGroupOwnership(review.comic as any);
     }
   }
-
 }
-
-

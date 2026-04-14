@@ -5,9 +5,9 @@ import { PostRepositoryModule } from '@/modules/post/post.repository.module';
 import { RbacModule } from '@/modules/core/rbac/rbac.module';
 
 @Module({
-    imports: [RbacModule, PostRepositoryModule],
-    controllers: [AdminPostCommentController],
-    providers: [AdminPostCommentService],
-    exports: [AdminPostCommentService],
+  imports: [RbacModule, PostRepositoryModule],
+  controllers: [AdminPostCommentController],
+  providers: [AdminPostCommentService],
+  exports: [AdminPostCommentService],
 })
-export class AdminPostCommentModule { }
+export class AdminPostCommentModule {}

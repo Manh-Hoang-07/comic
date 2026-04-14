@@ -10,5 +10,4 @@ import { ComicCategoryRepositoryModule } from '../comic-category.repository.modu
   providers: [PublicComicCategoriesService],
   exports: [PublicComicCategoriesService],
 })
-export class PublicComicCategoriesModule { }
-
+export class PublicComicCategoriesModule {}

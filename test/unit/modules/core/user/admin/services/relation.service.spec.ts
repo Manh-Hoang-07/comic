@@ -12,7 +12,10 @@ describe('RelationService (admin)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RelationService, { provide: PROFILE_REPOSITORY, useValue: profileRepo }],
+      providers: [
+        RelationService,
+        { provide: PROFILE_REPOSITORY, useValue: profileRepo },
+      ],
     }).compile();
 
     service = module.get(RelationService);

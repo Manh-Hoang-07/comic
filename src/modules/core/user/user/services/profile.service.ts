@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
 
@@ -15,7 +18,7 @@ export class ProfileService {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepo: IUserRepository,
-  ) { }
+  ) {}
 
   // ── Profile Operations ─────────────────────────────────────────────────────
 
@@ -39,13 +42,21 @@ export class ProfileService {
 
   async updateProfile(userId: any, dto: UpdateProfileDto) {
     const userFields = ['name', 'image'];
-    const profileFields = ['birthday', 'gender', 'address', 'about', 'country_id', 'province_id', 'ward_id'];
+    const profileFields = [
+      'birthday',
+      'gender',
+      'address',
+      'about',
+      'country_id',
+      'province_id',
+      'ward_id',
+    ];
 
     const userPayload: any = {};
     const profileRawData: any = {};
     const dtoAny = dto as any;
 
-    Object.keys(dto).forEach(key => {
+    Object.keys(dto).forEach((key) => {
       if (userFields.includes(key)) {
         userPayload[key] = dtoAny[key];
       } else if (profileFields.includes(key)) {
@@ -58,8 +69,8 @@ export class ProfileService {
       userPayload.profile = {
         upsert: {
           create: profileData,
-          update: profileData
-        }
+          update: profileData,
+        },
       };
     }
 
@@ -68,13 +79,18 @@ export class ProfileService {
 
   // ── Password Operations ────────────────────────────────────────────────────
 
-  async changePassword(userId: PrimaryKey, oldPassword: string, newPassword: string) {
+  async changePassword(
+    userId: PrimaryKey,
+    oldPassword: string,
+    newPassword: string,
+  ) {
     const user = await this.userRepo.findByIdForAuth(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
     if (user.password) {
       const isMatch = await bcrypt.compare(oldPassword, user.password);
-      if (!isMatch) throw new BadRequestException('Mật khẩu cũ không chính xác');
+      if (!isMatch)
+        throw new BadRequestException('Mật khẩu cũ không chính xác');
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -84,9 +100,15 @@ export class ProfileService {
 
   private normalizeProfileData(data: any) {
     const validFields = [
-      'birthday', 'gender', 'address', 'about',
-      'country_id', 'province_id', 'ward_id',
-      'created_user_id', 'updated_user_id',
+      'birthday',
+      'gender',
+      'address',
+      'about',
+      'country_id',
+      'province_id',
+      'ward_id',
+      'created_user_id',
+      'updated_user_id',
     ];
 
     const result: any = {};
@@ -96,7 +118,15 @@ export class ProfileService {
         if (field === 'birthday' && value) {
           const date = new Date(value);
           value = isNaN(date.getTime()) ? null : date;
-        } else if (['country_id', 'province_id', 'ward_id', 'created_user_id', 'updated_user_id'].includes(field)) {
+        } else if (
+          [
+            'country_id',
+            'province_id',
+            'ward_id',
+            'created_user_id',
+            'updated_user_id',
+          ].includes(field)
+        ) {
           value = value ? toPrimaryKey(value) : null;
         }
         result[field] = value;
@@ -105,5 +135,3 @@ export class ProfileService {
     return result;
   }
 }
-
-

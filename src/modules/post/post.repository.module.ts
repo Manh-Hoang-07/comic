@@ -11,25 +11,30 @@ import { PostStatsRepositoryModule } from './stats/stats.repository.module';
 
 @Global()
 @Module({
-    imports: [PostStatsRepositoryModule],
-    providers: [
-        {
-            provide: POST_REPOSITORY,
-            useClass: PostRepositoryImpl,
-        },
-        {
-            provide: POST_TAG_REPOSITORY,
-            useClass: PostTagRepositoryImpl,
-        },
-        {
-            provide: POST_CATEGORY_REPOSITORY,
-            useClass: PostCategoryRepositoryImpl,
-        },
-        {
-            provide: POST_COMMENT_REPOSITORY,
-            useClass: PostCommentRepositoryImpl,
-        },
-    ],
-    exports: [POST_REPOSITORY, POST_TAG_REPOSITORY, POST_CATEGORY_REPOSITORY, POST_COMMENT_REPOSITORY],
+  imports: [PostStatsRepositoryModule],
+  providers: [
+    {
+      provide: POST_REPOSITORY,
+      useClass: PostRepositoryImpl,
+    },
+    {
+      provide: POST_TAG_REPOSITORY,
+      useClass: PostTagRepositoryImpl,
+    },
+    {
+      provide: POST_CATEGORY_REPOSITORY,
+      useClass: PostCategoryRepositoryImpl,
+    },
+    {
+      provide: POST_COMMENT_REPOSITORY,
+      useClass: PostCommentRepositoryImpl,
+    },
+  ],
+  exports: [
+    POST_REPOSITORY,
+    POST_TAG_REPOSITORY,
+    POST_CATEGORY_REPOSITORY,
+    POST_COMMENT_REPOSITORY,
+  ],
 })
-export class PostRepositoryModule { }
+export class PostRepositoryModule {}

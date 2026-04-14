@@ -5,7 +5,7 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('staff')
 export class PublicStaffController {
-  constructor(private readonly staffService: PublicStaffService) { }
+  constructor(private readonly staffService: PublicStaffService) {}
 
   @Permission('public')
   @Get()
@@ -25,5 +25,3 @@ export class PublicStaffController {
     return this.staffService.getOne(id);
   }
 }
-
-

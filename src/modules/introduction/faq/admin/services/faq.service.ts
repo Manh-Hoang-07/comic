@@ -1,6 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Faq } from '@prisma/client';
-import { IFaqRepository, FAQ_REPOSITORY, FaqFilter } from '@/modules/introduction/faq/domain/faq.repository';
+import {
+  IFaqRepository,
+  FAQ_REPOSITORY,
+  FaqFilter,
+} from '@/modules/introduction/faq/domain/faq.repository';
 import { BaseContentService } from '@/common/core/services';
 
 @Injectable()
@@ -13,9 +17,4 @@ export class FaqService extends BaseContentService<Faq, IFaqRepository> {
   }
 
   protected defaultSort = 'sort_order:asc,created_at:desc';
-
 }
-
-
-
-

@@ -6,13 +6,9 @@ import { ContextRepositoryModule } from '../../context.repository.module';
 import { RbacRepositoryModule } from '@/modules/core/rbac/rbac.repository.module';
 
 @Module({
-  imports: [
-    ContextRepositoryModule,
-    RbacRepositoryModule,
-  ],
+  imports: [ContextRepositoryModule, RbacRepositoryModule],
   controllers: [AdminContextController],
   providers: [AdminContextService],
   exports: [AdminContextService],
 })
-export class AdminContextModule { }
-
+export class AdminContextModule {}

@@ -22,7 +22,7 @@ import { RbacGuard } from '@/common/auth/guards';
 @Controller('admin/staff')
 @UseGuards(JwtAuthGuard, RbacGuard)
 export class StaffController {
-  constructor(private readonly staffService: StaffService) { }
+  constructor(private readonly staffService: StaffService) {}
 
   @LogRequest()
   @Post()
@@ -51,7 +51,10 @@ export class StaffController {
 
   @Put(':id')
   @Permission('staff.manage')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateStaffDto: UpdateStaffDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateStaffDto: UpdateStaffDto,
+  ) {
     return this.staffService.update(id, updateStaffDto);
   }
 
@@ -61,5 +64,3 @@ export class StaffController {
     return this.staffService.delete(id);
   }
 }
-
-

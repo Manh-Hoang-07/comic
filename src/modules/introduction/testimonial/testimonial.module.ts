@@ -17,5 +17,4 @@ import { TestimonialRepositoryModule } from './testimonial.repository.module';
   ],
   exports: [],
 })
-export class TestimonialModule { }
-
+export class TestimonialModule {}

@@ -6,7 +6,7 @@ import { AuthUser } from '@/common/auth/interfaces';
 /**
  * Auth Service
  * Cho phép truy cập user hiện tại trong service/controller methods
- * 
+ *
  * Lưu ý về public routes:
  * - Route không có @Permission() → mặc định là public (không bắt buộc authentication)
  * - Route có @Permission('public') → explicit public route
@@ -15,14 +15,14 @@ import { AuthUser } from '@/common/auth/interfaces';
  * - this.auth.isLogin() = true nếu có token hợp lệ, false nếu không có token hoặc token invalid
  * - this.auth.guest() = false nếu đã đăng nhập, true nếu chưa đăng nhập
  * - Cho phép user đăng nhập vào public route để có thêm thông tin (ví dụ: bài viết đã like chưa)
- * 
+ *
  * Lưu ý
  * - Nếu có token hợp lệ, req.user sẽ được set
  * - this.auth.isLogin() sẽ trả về true nếu có user, false nếu không
  */
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
-  constructor(@Inject(REQUEST) private request: Request) { }
+  constructor(@Inject(REQUEST) private request: Request) {}
 
   /**
    * Lấy user hiện tại từ request
@@ -68,7 +68,7 @@ export class AuthService {
   /**
    * Lấy property của user hiện tại
    * Tương tự Auth::user()->email
-   * 
+   *
    * @example
    * ```typescript
    * const email = this.auth.get('email');

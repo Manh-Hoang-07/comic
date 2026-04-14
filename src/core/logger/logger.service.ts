@@ -108,13 +108,19 @@ function normalizeNestLogContext(optionalParams: any[]): {
   const last = filtered[filtered.length - 1];
   let options: LogWriteOptions | undefined;
   let rest = filtered;
-  if (last && typeof last === 'object' && ('filePath' in last || 'fileBaseName' in last)) {
+  if (
+    last &&
+    typeof last === 'object' &&
+    ('filePath' in last || 'fileBaseName' in last)
+  ) {
     options = last as LogWriteOptions;
     rest = filtered.slice(0, -1);
   }
   const first = rest[0];
-  if (typeof first === 'string') return { context: { context: first }, options };
-  if (first && typeof first === 'object') return { context: first as LogContext, options };
+  if (typeof first === 'string')
+    return { context: { context: first }, options };
+  if (first && typeof first === 'object')
+    return { context: first as LogContext, options };
   return { options };
 }
 
@@ -138,15 +144,21 @@ export class CustomLoggerService implements LoggerService {
     }
 
     // 3. Logtail strategy
-    if (driverList.includes('logtail') && this.configService.get('LOGTAIL_TOKEN')) {
+    if (
+      driverList.includes('logtail') &&
+      this.configService.get('LOGTAIL_TOKEN')
+    ) {
       this.strategies.push(new LogtailLogStrategy(this.configService));
     }
 
     CustomLoggerService._instance = this;
   }
 
-
-  private dispatch(level: LogLevel, entry: any, options?: LogWriteOptions): void {
+  private dispatch(
+    level: LogLevel,
+    entry: any,
+    options?: LogWriteOptions,
+  ): void {
     for (const strategy of this.strategies) {
       try {
         strategy.write(level, entry, options);
@@ -159,7 +171,8 @@ export class CustomLoggerService implements LoggerService {
 
   log(message: any, ...optionalParams: any[]): void {
     if (shouldSkipMessage(message)) return;
-    const { context: nestCtx, options } = normalizeNestLogContext(optionalParams);
+    const { context: nestCtx, options } =
+      normalizeNestLogContext(optionalParams);
     const entry = buildLogEntry('log', message, this.buildContext(nestCtx));
     this.dispatch('log', entry, options);
   }
@@ -182,7 +195,8 @@ export class CustomLoggerService implements LoggerService {
       }
     }
 
-    const { context: nestCtx, options } = normalizeNestLogContext(contextParams);
+    const { context: nestCtx, options } =
+      normalizeNestLogContext(contextParams);
     const ctx = { ...this.buildContext(nestCtx), trace };
     const entry = buildLogEntry('error', message, ctx);
     const errInfo = extractErrorInfo(message, trace);
@@ -191,7 +205,8 @@ export class CustomLoggerService implements LoggerService {
   }
 
   warn(message: any, ...optionalParams: any[]): void {
-    const { context: nestCtx, options } = normalizeNestLogContext(optionalParams);
+    const { context: nestCtx, options } =
+      normalizeNestLogContext(optionalParams);
     const entry = buildLogEntry('warn', message, this.buildContext(nestCtx));
     this.dispatch('warn', entry, options);
   }
@@ -208,7 +223,12 @@ export class CustomLoggerService implements LoggerService {
     this.error(message, ...optionalParams);
   }
 
-  write(level: LogLevel, message: any, context?: LogContext, options?: LogWriteOptions): void {
+  write(
+    level: LogLevel,
+    message: any,
+    context?: LogContext,
+    options?: LogWriteOptions,
+  ): void {
     if (level === 'log' && shouldSkipMessage(message)) return;
     const entry = buildLogEntry(level, message, this.buildContext(context));
     this.dispatch(level, entry, options);
@@ -236,10 +256,16 @@ export class CustomLoggerService implements LoggerService {
   }
 
   static write(extra?: Record<string, any>, filePath?: string): void {
-    const message = extra && typeof extra.message !== 'undefined' ? extra.message : 'LOG';
+    const message =
+      extra && typeof extra.message !== 'undefined' ? extra.message : 'LOG';
     const inst = CustomLoggerService._instance;
     if (inst) {
-      inst.write('log', message, extra ? { extra } : undefined, filePath ? { filePath } : undefined);
+      inst.write(
+        'log',
+        message,
+        extra ? { extra } : undefined,
+        filePath ? { filePath } : undefined,
+      );
     }
   }
 }

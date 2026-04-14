@@ -11,7 +11,7 @@ import { transformFilePaths } from '@/common/file/utils';
 
 /**
  * Interceptor để tự động thêm domain vào các file paths trong response
- * Chuyển đổi các path như /uploads/banners/home-slider-3.jpg 
+ * Chuyển đổi các path như /uploads/banners/home-slider-3.jpg
  * thành https://yourdomain.com/uploads/banners/home-slider-3.jpg
  */
 @Injectable()
@@ -27,7 +27,7 @@ export class FilePathInterceptor implements NestInterceptor {
       // Nếu dùng S3, lấy baseUrl từ S3 config
       const s3Config = this.configService.get('storage.s3');
       const s3BaseUrl = s3Config?.baseUrl;
-      
+
       if (s3BaseUrl) {
         baseUrl = s3BaseUrl;
       } else {
@@ -38,9 +38,12 @@ export class FilePathInterceptor implements NestInterceptor {
       }
     } else {
       // Nếu dùng local storage, dùng app.url
-      baseUrl = this.configService.get<string>('app.url', 'http://localhost:8000');
+      baseUrl = this.configService.get<string>(
+        'app.url',
+        'http://localhost:8000',
+      );
     }
-    
+
     return next.handle().pipe(
       map((data) => {
         // Nếu data là null hoặc undefined, trả về nguyên bản
@@ -49,7 +52,12 @@ export class FilePathInterceptor implements NestInterceptor {
         }
 
         // Nếu data đã được format thành ApiResponse (có structure với success, data, meta, timestamp)
-        if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+        if (
+          data &&
+          typeof data === 'object' &&
+          'success' in data &&
+          'data' in data
+        ) {
           // Transform file paths trong data field của ApiResponse
           return {
             ...data,
@@ -60,8 +68,7 @@ export class FilePathInterceptor implements NestInterceptor {
         // Nếu data chưa được format (trường hợp này ít xảy ra vì TransformInterceptor chạy trước)
         // Transform toàn bộ data
         return transformFilePaths(data, baseUrl);
-      })
+      }),
     );
   }
 }
-

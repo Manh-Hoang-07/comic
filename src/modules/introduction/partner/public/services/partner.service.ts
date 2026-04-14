@@ -1,5 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IPartnerRepository, PARTNER_REPOSITORY, PartnerFilter } from '@/modules/introduction/partner/domain/partner.repository';
+import {
+  IPartnerRepository,
+  PARTNER_REPOSITORY,
+  PartnerFilter,
+} from '@/modules/introduction/partner/domain/partner.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { PartnerType } from '@/shared/enums/types/partner-type.enum';
 import { BaseService } from '@/common/core/services';
@@ -15,7 +19,7 @@ export class PublicPartnerService extends BaseService<any, IPartnerRepository> {
 
   async getList(query: any) {
     const filter: PartnerFilter = {
-      status: BasicStatus.active
+      status: BasicStatus.active,
     };
     if (query.search) filter.search = query.search;
     if (query.type) filter.type = query.type;
@@ -33,5 +37,3 @@ export class PublicPartnerService extends BaseService<any, IPartnerRepository> {
     return result.data as any[];
   }
 }
-
-

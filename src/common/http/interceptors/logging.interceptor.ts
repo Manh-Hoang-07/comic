@@ -20,7 +20,7 @@ export class LoggingInterceptor implements NestInterceptor {
   constructor(
     private readonly logger: CustomLoggerService,
     private readonly reflector: Reflector,
-  ) { }
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     if (context.getType() !== 'http') return next.handle();
@@ -28,14 +28,15 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
 
-    const isAdmin = request.url.includes('/admin/') || request.url.startsWith('/admin');
+    const isAdmin =
+      request.url.includes('/admin/') || request.url.startsWith('/admin');
 
     // Resolve log config or use default for admin
     const logConfig = this.reflector.getAllAndOverride<LogRequestOptions>(
       LOG_REQUEST_KEY,
       [context.getHandler(), context.getClass()],
     );
-    
+
     if (!logConfig && !isAdmin) return next.handle();
 
     const tracker = RequestContext.get<CheckpointTracker>('tracker');
@@ -44,7 +45,12 @@ export class LoggingInterceptor implements NestInterceptor {
     const requestId = extractRequestId(request);
     response.setHeader('X-Request-ID', requestId);
 
-    const logTarget = logConfig ? resolveLogTarget(request, logConfig) : { filePath: undefined, fileBaseName: isAdmin ? 'admin_access' : undefined };
+    const logTarget = logConfig
+      ? resolveLogTarget(request, logConfig)
+      : {
+          filePath: undefined,
+          fileBaseName: isAdmin ? 'admin_access' : undefined,
+        };
     const logFileOptions = logTarget.filePath
       ? { filePath: logTarget.filePath }
       : logTarget.fileBaseName

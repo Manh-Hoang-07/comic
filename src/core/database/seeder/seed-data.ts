@@ -61,7 +61,7 @@ export class SeedService {
     private readonly seedComicComments: SeedComicComments,
 
     private readonly seedLocations: SeedLocations,
-  ) { }
+  ) {}
 
   async seedAll(): Promise<void> {
     try {
@@ -151,4 +151,3 @@ export class SeedService {
     await this.clearAll(includeLocations);
   }
 }
-

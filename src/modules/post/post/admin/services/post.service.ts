@@ -1,7 +1,10 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Post } from '@prisma/client';
 import { verifyGroupOwnership } from '@/common/shared/utils';
-import { IPostRepository, POST_REPOSITORY } from '@/modules/post/post/domain/post.repository';
+import {
+  IPostRepository,
+  POST_REPOSITORY,
+} from '@/modules/post/post/domain/post.repository';
 import { BaseContentService } from '@/common/core/services';
 import { SlugHelper } from '@/common/core/utils/slug.helper';
 import { toPrimaryKey } from '@/common/core/utils/primary-key.util';
@@ -54,7 +57,9 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     payload.slug = await SlugHelper.uniqueSlug(payload.title, this.postRepo);
 
     // Normalize Fields
-    payload.primary_postcategory_id = toPrimaryKey(payload.primary_postcategory_id);
+    payload.primary_postcategory_id = toPrimaryKey(
+      payload.primary_postcategory_id,
+    );
     payload.published_at = normalizeDate(payload.published_at);
     if (payload.group_id) payload.group_id = toPrimaryKey(payload.group_id);
 
@@ -75,11 +80,13 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
       payload.slug = await SlugHelper.uniqueSlug(
         payload.slug || payload.title || '',
         this.postRepo,
-        id
+        id,
       );
     }
 
-    payload.primary_postcategory_id = toPrimaryKey(payload.primary_postcategory_id);
+    payload.primary_postcategory_id = toPrimaryKey(
+      payload.primary_postcategory_id,
+    );
     payload.published_at = normalizeDate(payload.published_at);
 
     // Relations handled in update() override
@@ -117,5 +124,3 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
     return p;
   }
 }
-
-

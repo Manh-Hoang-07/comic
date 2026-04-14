@@ -6,7 +6,7 @@ import { Permission } from '@/common/auth/decorators';
 
 @Controller('partners')
 export class PublicPartnerController {
-  constructor(private readonly partnerService: PublicPartnerService) { }
+  constructor(private readonly partnerService: PublicPartnerService) {}
 
   @Permission('public')
   @Get()
@@ -26,5 +26,3 @@ export class PublicPartnerController {
     return this.partnerService.getOne(id);
   }
 }
-
-

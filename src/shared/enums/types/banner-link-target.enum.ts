@@ -11,4 +11,3 @@ export const BannerLinkTargetLabels: Record<BannerLinkTarget, string> = {
   [BannerLinkTarget.SELF]: 'Cùng tab',
   [BannerLinkTarget.BLANK]: 'Tab mới',
 };
-

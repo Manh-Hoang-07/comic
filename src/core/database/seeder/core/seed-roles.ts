@@ -5,13 +5,24 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedRoles {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'core');
-    const rolesData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'roles.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'core',
+    );
+    const rolesData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'roles.json'), 'utf8'),
+    );
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'systemadmin' },
+    });
     const defaultUserId = adminUser ? adminUser.id : BigInt(1);
 
     const createdRoles: Map<string, any> = new Map();
@@ -37,8 +48,12 @@ export class SeedRoles {
     await this.assignRolesToContexts(createdRoles);
   }
 
-  private async assignPermissionsToRoles(createdRoles: Map<string, any>): Promise<void> {
-    const allPermissions = await this.prisma.permission.findMany({ where: { status: 'active' } });
+  private async assignPermissionsToRoles(
+    createdRoles: Map<string, any>,
+  ): Promise<void> {
+    const allPermissions = await this.prisma.permission.findMany({
+      where: { status: 'active' },
+    });
 
     const roleConfigs = [
       {
@@ -56,12 +71,24 @@ export class SeedRoles {
       {
         code: 'group_editor',
         filter: (p: any) =>
-          ['comic.create', 'comic.update', 'comic.view', 'chapter.create', 'chapter.view', 'profile.view'].includes(p.code),
+          [
+            'comic.create',
+            'comic.update',
+            'comic.view',
+            'chapter.create',
+            'chapter.view',
+            'profile.view',
+          ].includes(p.code),
       },
       {
         code: 'group_uploader',
         filter: (p: any) =>
-          ['chapter.create', 'chapter.update', 'chapter.view', 'profile.view'].includes(p.code),
+          [
+            'chapter.create',
+            'chapter.update',
+            'chapter.view',
+            'profile.view',
+          ].includes(p.code),
       },
     ];
 
@@ -69,17 +96,28 @@ export class SeedRoles {
       const role = createdRoles.get(config.code);
       if (role) {
         const perms = allPermissions.filter(config.filter);
-        await this.prisma.roleHasPermission.deleteMany({ where: { role_id: role.id } });
+        await this.prisma.roleHasPermission.deleteMany({
+          where: { role_id: role.id },
+        });
         await this.prisma.roleHasPermission.createMany({
-          data: perms.map(perm => ({ role_id: role.id, permission_id: perm.id })),
+          data: perms.map((perm) => ({
+            role_id: role.id,
+            permission_id: perm.id,
+          })),
         });
       }
     }
   }
 
-  private async assignRolesToContexts(createdRoles: Map<string, any>): Promise<void> {
-    const systemContext = await this.prisma.context.findFirst({ where: { code: 'system' } });
-    const groupContext = await this.prisma.context.findFirst({ where: { code: 'group' } });
+  private async assignRolesToContexts(
+    createdRoles: Map<string, any>,
+  ): Promise<void> {
+    const systemContext = await this.prisma.context.findFirst({
+      where: { code: 'system' },
+    });
+    const groupContext = await this.prisma.context.findFirst({
+      where: { code: 'group' },
+    });
 
     if (!systemContext || !groupContext) return;
 
@@ -120,4 +158,3 @@ export class SeedRoles {
     await this.prisma.role.deleteMany({});
   }
 }
-

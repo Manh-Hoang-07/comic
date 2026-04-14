@@ -10,5 +10,4 @@ import { PartnerRepositoryModule } from '@/modules/introduction/partner/partner.
   providers: [PublicPartnerService],
   exports: [PublicPartnerService],
 })
-export class PublicPartnerModule { }
-
+export class PublicPartnerModule {}

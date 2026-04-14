@@ -6,7 +6,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
 } from '@nestjs/common';
 import { CommentsService } from '../services/comments.service';
@@ -15,7 +14,7 @@ import { Permission } from '@/common/auth/decorators/rbac.decorators';
 
 @Controller('admin/comic-comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) { }
+  constructor(private readonly commentsService: CommentsService) {}
 
   @Permission('comic.manage')
   @Get()
@@ -46,7 +45,8 @@ export class CommentsController {
   @Put(':id')
   async update(
     @Param('id') id: any,
-    @Body(ValidationPipe) body: { content?: string; status?: 'visible' | 'hidden' },
+    @Body(ValidationPipe)
+    body: { content?: string; status?: 'visible' | 'hidden' },
   ) {
     return this.commentsService.update(id, body);
   }
@@ -68,5 +68,3 @@ export class CommentsController {
     return this.commentsService.delete(id);
   }
 }
-
-

@@ -6,13 +6,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { PartnerRepositoryModule } from '@/modules/introduction/partner/partner.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    PartnerRepositoryModule,
-  ],
+  imports: [RbacModule, PartnerRepositoryModule],
   controllers: [PartnerController],
   providers: [PartnerService],
   exports: [PartnerService],
 })
-export class AdminPartnerModule { }
-
+export class AdminPartnerModule {}

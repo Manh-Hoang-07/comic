@@ -26,4 +26,3 @@ export class GetTagsDto {
   @IsString()
   sort?: string = 'created_at:DESC';
 }
-

@@ -11,7 +11,11 @@ import { ContextRepositoryModule } from '@/modules/core/context/context.reposito
 import { RbacRepositoryModule } from './rbac.repository.module';
 
 @Module({
-  imports: [ContextRepositoryModule, RbacRepositoryModule, forwardRef(() => AdminGroupModule)],
+  imports: [
+    ContextRepositoryModule,
+    RbacRepositoryModule,
+    forwardRef(() => AdminGroupModule),
+  ],
   providers: [
     RbacService,
     RbacCacheService,
@@ -20,10 +24,6 @@ import { RbacRepositoryModule } from './rbac.repository.module';
     RbacAuthorizationOrchestrator,
   ],
   controllers: [RbacController],
-  exports: [
-    RbacService,
-    RbacCacheService,
-    RbacAuthorizationOrchestrator,
-  ],
+  exports: [RbacService, RbacCacheService, RbacAuthorizationOrchestrator],
 })
-export class RbacModule { }
+export class RbacModule {}

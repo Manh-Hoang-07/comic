@@ -5,41 +5,42 @@ import { PrismaRepository } from '@/common/core/repositories';
 import { IFaqRepository, FaqFilter } from '../../domain/faq.repository';
 
 @Injectable()
-export class FaqRepositoryImpl extends PrismaRepository<
+export class FaqRepositoryImpl
+  extends PrismaRepository<
     Faq,
     Prisma.FaqWhereInput,
     Prisma.FaqCreateInput,
     Prisma.FaqUpdateInput,
     Prisma.FaqOrderByWithRelationInput
-> implements IFaqRepository {
-    constructor(private readonly prisma: PrismaService) {
-        super(prisma.faq as unknown as any, 'sort_order:asc');
+  >
+  implements IFaqRepository
+{
+  constructor(private readonly prisma: PrismaService) {
+    super(prisma.faq as unknown as any, 'sort_order:asc');
+  }
+
+  protected buildWhere(filter: FaqFilter): Prisma.FaqWhereInput {
+    const where: Prisma.FaqWhereInput = {};
+
+    if (filter.search) {
+      where.OR = [
+        { question: { contains: filter.search } },
+        { answer: { contains: filter.search } },
+      ];
     }
 
-    protected buildWhere(filter: FaqFilter): Prisma.FaqWhereInput {
-        const where: Prisma.FaqWhereInput = {};
-
-        if (filter.search) {
-            where.OR = [
-                { question: { contains: filter.search } },
-                { answer: { contains: filter.search } },
-            ];
-        }
-
-        if (filter.status) {
-            where.status = filter.status as any;
-        }
-
-        return where;
+    if (filter.status) {
+      where.status = filter.status as any;
     }
 
-    async incrementViewCount(id: any): Promise<Faq> {
-        return this.update(id, { view_count: { increment: 1 } });
-    }
+    return where;
+  }
 
-    async incrementHelpfulCount(id: any): Promise<Faq> {
-        return this.update(id, { helpful_count: { increment: 1 } });
-    }
+  async incrementViewCount(id: any): Promise<Faq> {
+    return this.update(id, { view_count: { increment: 1 } });
+  }
+
+  async incrementHelpfulCount(id: any): Promise<Faq> {
+    return this.update(id, { helpful_count: { increment: 1 } });
+  }
 }
-
-

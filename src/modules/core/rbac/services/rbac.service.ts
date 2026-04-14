@@ -7,7 +7,9 @@ import { NullableRbacId, RbacId } from '@/modules/core/rbac/rbac.types';
 import { RequestContext } from '@/common/shared/utils';
 
 function toAssignedSet(codes: Iterable<string>): Set<string> {
-  return new Set(Array.from(codes).filter((c) => typeof c === 'string' && c.length > 0));
+  return new Set(
+    Array.from(codes).filter((c) => typeof c === 'string' && c.length > 0),
+  );
 }
 
 @Injectable()
@@ -16,17 +18,27 @@ export class RbacService {
     private readonly rbacCache: RbacCacheService,
     private readonly permissionIndexService: RbacPermissionIndexService,
     private readonly roleAssignmentService: RbacRoleAssignmentService,
-  ) { }
+  ) {}
 
   private readonly refreshInFlight = new Map<string, Promise<Set<string>>>();
 
-  async hasPermissions(userId: RbacId, groupId: NullableRbacId, required: string[]): Promise<boolean> {
+  async hasPermissions(
+    userId: RbacId,
+    groupId: NullableRbacId,
+    required: string[],
+  ): Promise<boolean> {
     await this.prepare();
     const assigned = await this.getPermissions(userId, groupId);
-    return this.permissionIndexService.hasAnyRequiredFromAssigned(assigned, required);
+    return this.permissionIndexService.hasAnyRequiredFromAssigned(
+      assigned,
+      required,
+    );
   }
 
-  async getPermissions(userId: RbacId, groupId: NullableRbacId): Promise<Set<string>> {
+  async getPermissions(
+    userId: RbacId,
+    groupId: NullableRbacId,
+  ): Promise<Set<string>> {
     const requestCacheKey = `rbac:perm:${this.scopeKey(userId, groupId)}`;
     const reqCached = RequestContext.get<Set<string>>(requestCacheKey);
     if (reqCached) {
@@ -44,7 +56,10 @@ export class RbacService {
     return refreshed;
   }
 
-  async refreshPermissions(userId: RbacId, groupId: NullableRbacId): Promise<Set<string>> {
+  async refreshPermissions(
+    userId: RbacId,
+    groupId: NullableRbacId,
+  ): Promise<Set<string>> {
     const key = this.scopeKey(userId, groupId);
     const pending = this.refreshInFlight.get(key);
     if (pending) {
@@ -55,7 +70,10 @@ export class RbacService {
 
     const refreshPromise = (async () => {
       await this.prepare();
-      const codes = await this.roleAssignmentService.getActivePermissionCodes(userId, groupId);
+      const codes = await this.roleAssignmentService.getActivePermissionCodes(
+        userId,
+        groupId,
+      );
       const set = toAssignedSet(codes);
       await this.rbacCache.setPermissions(userId, groupId, Array.from(set));
       return set;
@@ -70,13 +88,27 @@ export class RbacService {
     }
   }
 
-  async assignRoleToUser(userId: RbacId, roleId: RbacId, groupId: RbacId): Promise<void> {
+  async assignRoleToUser(
+    userId: RbacId,
+    roleId: RbacId,
+    groupId: RbacId,
+  ): Promise<void> {
     await this.roleAssignmentService.assignRoleToUser(userId, roleId, groupId);
     await this.refreshPermissions(userId, groupId);
   }
 
-  async syncRolesInGroup(userId: RbacId, groupId: RbacId, roleIds: RbacId[], skipValidation = false): Promise<void> {
-    await this.roleAssignmentService.syncRolesInGroup(userId, groupId, roleIds, skipValidation);
+  async syncRolesInGroup(
+    userId: RbacId,
+    groupId: RbacId,
+    roleIds: RbacId[],
+    skipValidation = false,
+  ): Promise<void> {
+    await this.roleAssignmentService.syncRolesInGroup(
+      userId,
+      groupId,
+      roleIds,
+      skipValidation,
+    );
     await this.refreshPermissions(userId, groupId);
   }
 

@@ -8,16 +8,27 @@ import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()
 export class SeedUsers {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'core');
-    const usersData: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'users.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'core',
+    );
+    const usersData: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'users.json'), 'utf8'),
+    );
 
     const hashedPassword = await bcrypt.hash('12345678', 10);
 
     for (const userData of usersData) {
-      let user = await this.prisma.user.findFirst({ where: { email: userData.email } });
+      let user = await this.prisma.user.findFirst({
+        where: { email: userData.email },
+      });
       if (!user) {
         user = await this.prisma.user.create({
           data: {
@@ -31,28 +42,47 @@ export class SeedUsers {
       } else {
         user = await this.prisma.user.update({
           where: { id: user.id },
-          data: { password: hashedPassword, status: userData.status as UserStatus },
+          data: {
+            password: hashedPassword,
+            status: userData.status as UserStatus,
+          },
         });
       }
 
       if (userData.group_code && userData.role_code) {
-        await this.assignUserToGroup(user, userData.group_code, userData.role_code);
+        await this.assignUserToGroup(
+          user,
+          userData.group_code,
+          userData.role_code,
+        );
       }
     }
 
-    const systemAdmin = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
+    const systemAdmin = await this.prisma.user.findFirst({
+      where: { username: 'systemadmin' },
+    });
     if (systemAdmin) {
-      const systemGroup = await this.prisma.group.findFirst({ where: { code: 'system' } });
-      if (systemGroup && toPrimaryKey(systemGroup.owner_id).toString() !== toPrimaryKey(systemAdmin.id).toString()) {
+      const systemGroup = await this.prisma.group.findFirst({
+        where: { code: 'system' },
+      });
+      if (
+        systemGroup &&
+        toPrimaryKey(systemGroup.owner_id).toString() !==
+          toPrimaryKey(systemAdmin.id).toString()
+      ) {
         await this.prisma.group.update({
           where: { id: systemGroup.id },
-          data: { owner_id: toPrimaryKey(systemAdmin.id) }
+          data: { owner_id: toPrimaryKey(systemAdmin.id) },
         });
       }
     }
   }
 
-  private async assignUserToGroup(user: any, groupCode: string, roleCode: string): Promise<void> {
+  private async assignUserToGroup(
+    user: any,
+    groupCode: string,
+    roleCode: string,
+  ): Promise<void> {
     const [group, role] = await Promise.all([
       this.prisma.group.findFirst({ where: { code: groupCode } }),
       this.prisma.role.findFirst({ where: { code: roleCode } }),
@@ -66,7 +96,13 @@ export class SeedUsers {
     });
 
     await this.prisma.userRoleAssignment.upsert({
-      where: { user_id_role_id_group_id: { user_id: user.id, role_id: role.id, group_id: group.id } },
+      where: {
+        user_id_role_id_group_id: {
+          user_id: user.id,
+          role_id: role.id,
+          group_id: group.id,
+        },
+      },
       update: {},
       create: { user_id: user.id, role_id: role.id, group_id: group.id },
     });

@@ -6,9 +6,18 @@ import {
 } from '@nestjs/common';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { IUserRepository, USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
-import { IRoleRepository, ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
-import { IRoleContextRepository, ROLE_CONTEXT_REPOSITORY } from '@/modules/core/rbac/role-context/domain/role-context.repository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@/modules/core/user/domain/user.repository';
+import {
+  IRoleRepository,
+  ROLE_REPOSITORY,
+} from '@/modules/core/iam/role/domain/role.repository';
+import {
+  IRoleContextRepository,
+  ROLE_CONTEXT_REPOSITORY,
+} from '@/modules/core/rbac/role-context/domain/role-context.repository';
 import { PolicyService } from './policy.service';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { isSysCtx } from '@/common/shared/utils/request-group-context.util';
@@ -19,7 +28,13 @@ import {
 
 export type { RbacUiGroup };
 
-type RbacUiRole = { id: string; code: string; name: string | null; status: string; parentId: string | null };
+type RbacUiRole = {
+  id: string;
+  code: string;
+  name: string | null;
+  status: string;
+  parentId: string | null;
+};
 
 /**
  * Gán / xem role của user (tree, batch sync).
@@ -37,7 +52,7 @@ export class UserRolesService {
     private readonly policy: PolicyService,
     private readonly rbacService: RbacService,
     private readonly roleScope: UserRoleScopeService,
-  ) { }
+  ) {}
 
   async getUserRoles(id: PrimaryKey, _groupIds?: string) {
     await this.policy.assertAccess(id);
@@ -47,10 +62,19 @@ export class UserRolesService {
       return [];
     }
 
-    const assignments = await this.userRepo.findAssignments(id, assignmentGroupPks);
+    const assignments = await this.userRepo.findAssignments(
+      id,
+      assignmentGroupPks,
+    );
     const grouped = new Map<
       any,
-      { group_id: any; group_code: any; group_name: any; roles: any[]; seenRole: Set<string> }
+      {
+        group_id: any;
+        group_code: any;
+        group_name: any;
+        roles: any[];
+        seenRole: Set<string>;
+      }
     >();
 
     for (const assignment of assignments) {
@@ -76,34 +100,46 @@ export class UserRolesService {
       });
     }
 
-    return Array.from(grouped.values()).map(({ seenRole: _s, ...rest }) => rest);
+    return Array.from(grouped.values()).map(
+      ({ seenRole: _s, ...rest }) => rest,
+    );
   }
 
   async getUserRolesTree(id: PrimaryKey, _groupIds?: string) {
     const user = await this.userRepo.findById(id);
     if (!user) throw new NotFoundException('User not found');
 
-    const { groups, assignmentGroupPks, groupRows } = await this.roleScope.resolveRoleUi(id);
+    const { groups, assignmentGroupPks, groupRows } =
+      await this.roleScope.resolveRoleUi(id);
     if (groups.length === 0) return [];
 
     await this.policy.assertAccess(id);
 
-    const [assignments, allRoles] = await this.fetchAssignmentsAndAllRoles(id, assignmentGroupPks);
+    const [assignments, allRoles] = await this.fetchAssignmentsAndAllRoles(
+      id,
+      assignmentGroupPks,
+    );
     const groupDetailRows = groupRows;
 
-    const groupRowMap = new Map(groupDetailRows.map((r: any) => [String(toPrimaryKey(r.id)), r]));
+    const groupRowMap = new Map(
+      groupDetailRows.map((r: any) => [String(toPrimaryKey(r.id)), r]),
+    );
     const roleMap = new Map(allRoles.map((r) => [r.id, r]));
 
-    const { rolesByContextMap, rolesByTypeCodeMap } = await this.fetchRoleContextMappings(groups, groupRowMap);
+    const { rolesByContextMap, rolesByTypeCodeMap } =
+      await this.fetchRoleContextMappings(groups, groupRowMap);
 
     const assignedByGroupMap = this.groupAssignments(assignments);
 
     return groups.map((g) => {
       const detail = groupRowMap.get(g.id);
-      const ctxId = detail?.context_id ? String(toPrimaryKey(detail.context_id)) : g.contextId;
-      const tcKey = (detail?.context?.type && detail?.context?.code)
-        ? `${detail.context.type}\0${detail.context.code}`
-        : null;
+      const ctxId = detail?.context_id
+        ? String(toPrimaryKey(detail.context_id))
+        : g.contextId;
+      const tcKey =
+        detail?.context?.type && detail?.context?.code
+          ? `${detail.context.type}\0${detail.context.code}`
+          : null;
 
       const roleIdsFromCatalog = new Set([
         ...(ctxId ? (rolesByContextMap.get(ctxId) ?? []) : []),
@@ -112,11 +148,19 @@ export class UserRolesService {
 
       const assignedRoleIds = assignedByGroupMap.get(g.id) ?? new Set<string>();
 
-      return this.buildGroupNode(g, roleIdsFromCatalog, assignedRoleIds, roleMap);
+      return this.buildGroupNode(
+        g,
+        roleIdsFromCatalog,
+        assignedRoleIds,
+        roleMap,
+      );
     });
   }
 
-  private fetchAssignmentsAndAllRoles(id: PrimaryKey, assignmentGroupPks: PrimaryKey[]) {
+  private fetchAssignmentsAndAllRoles(
+    id: PrimaryKey,
+    assignmentGroupPks: PrimaryKey[],
+  ) {
     return Promise.all([
       this.userRepo.findAssignments(id, assignmentGroupPks),
       this.loadAllActiveRoles(),
@@ -134,17 +178,23 @@ export class UserRolesService {
     }));
   }
 
-  private async fetchRoleContextMappings(groups: any[], groupRowMap: Map<string, any>) {
+  private async fetchRoleContextMappings(
+    groups: any[],
+    groupRowMap: Map<string, any>,
+  ) {
     const contextIds = new Set<string>();
     const typeCodePairs: { type: string; code: string }[] = [];
 
     for (const g of groups) {
       const detail = groupRowMap.get(g.id);
-      const ctxId = detail?.context_id ? String(toPrimaryKey(detail.context_id)) : g.contextId;
+      const ctxId = detail?.context_id
+        ? String(toPrimaryKey(detail.context_id))
+        : g.contextId;
       if (ctxId) contextIds.add(ctxId);
 
       const c = detail?.context;
-      if (c?.type && c?.code) typeCodePairs.push({ type: c.type, code: c.code });
+      if (c?.type && c?.code)
+        typeCodePairs.push({ type: c.type, code: c.code });
     }
 
     const [rolesByContextMap, rolesByTypeCodeMap] = await Promise.all([
@@ -155,8 +205,14 @@ export class UserRolesService {
     return { rolesByContextMap, rolesByTypeCodeMap };
   }
 
-  private async loadRoleIdsMapForContexts(contextIds: readonly string[]): Promise<Map<string, string[]>> {
-    const unique = [...new Set(contextIds.filter((x) => x && x !== 'undefined' && x !== 'null'))];
+  private async loadRoleIdsMapForContexts(
+    contextIds: readonly string[],
+  ): Promise<Map<string, string[]>> {
+    const unique = [
+      ...new Set(
+        contextIds.filter((x) => x && x !== 'undefined' && x !== 'null'),
+      ),
+    ];
     const out = new Map<string, string[]>();
     if (unique.length === 0) return out;
 
@@ -178,7 +234,8 @@ export class UserRolesService {
       const sorted = [...new Set(v)].sort((a, b) => {
         const na = Number(a);
         const nb = Number(b);
-        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb)
+          return na - nb;
         return a.localeCompare(b);
       });
       out.set(k, sorted);
@@ -224,7 +281,8 @@ export class UserRolesService {
       const sorted = [...new Set(v)].sort((a, b) => {
         const na = Number(a);
         const nb = Number(b);
-        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb)
+          return na - nb;
         return a.localeCompare(b);
       });
       out.set(k, sorted);
@@ -242,10 +300,18 @@ export class UserRolesService {
     return map;
   }
 
-  private buildGroupNode(g: any, roleIdsFromCatalog: Set<string>, assignedRoleIds: Set<string>, roleMap: Map<string, any>) {
+  private buildGroupNode(
+    g: any,
+    roleIdsFromCatalog: Set<string>,
+    assignedRoleIds: Set<string>,
+    roleMap: Map<string, any>,
+  ) {
     const sortedIds = [...roleIdsFromCatalog].sort((a, b) => {
-      const na = Number(a), nb = Number(b);
-      return (Number.isFinite(na) && Number.isFinite(nb)) ? na - nb : a.localeCompare(b);
+      const na = Number(a),
+        nb = Number(b);
+      return Number.isFinite(na) && Number.isFinite(nb)
+        ? na - nb
+        : a.localeCompare(b);
     });
 
     let checkedCount = 0;
@@ -268,14 +334,19 @@ export class UserRolesService {
     };
   }
 
-  async batchSyncUserRoles(id: PrimaryKey, items: Array<{ group_id: PrimaryKey; role_ids: PrimaryKey[] }>) {
+  async batchSyncUserRoles(
+    id: PrimaryKey,
+    items: Array<{ group_id: PrimaryKey; role_ids: PrimaryKey[] }>,
+  ) {
     const user = await this.userRepo.findById(id);
     if (!user) throw new NotFoundException('User not found');
 
     await this.policy.assertAccess(id);
 
     if (!Array.isArray(items)) {
-      throw new BadRequestException('Body must be a JSON array of { group_id, role_ids }');
+      throw new BadRequestException(
+        'Body must be a JSON array of { group_id, role_ids }',
+      );
     }
 
     this.roleScope.guardBatchGroups(items);
@@ -288,19 +359,29 @@ export class UserRolesService {
         throw new BadRequestException('Each item must include group_id');
       }
       if (!Array.isArray(raw.role_ids)) {
-        throw new BadRequestException('Each item must include role_ids as an array');
+        throw new BadRequestException(
+          'Each item must include role_ids as an array',
+        );
       }
     }
 
     const sys = isSysCtx();
-    const lastByGroup = new Map<string, { group_id: PrimaryKey; role_ids: PrimaryKey[] }>();
+    const lastByGroup = new Map<
+      string,
+      { group_id: PrimaryKey; role_ids: PrimaryKey[] }
+    >();
     for (const it of items) {
       lastByGroup.set(String(toPrimaryKey(it.group_id)), it);
     }
 
     await Promise.all(
       [...lastByGroup.values()].map((it) =>
-        this.rbacService.syncRolesInGroup(id, it.group_id, it.role_ids ?? [], sys),
+        this.rbacService.syncRolesInGroup(
+          id,
+          it.group_id,
+          it.role_ids ?? [],
+          sys,
+        ),
       ),
     );
 

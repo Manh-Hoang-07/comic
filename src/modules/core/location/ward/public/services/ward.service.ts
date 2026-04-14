@@ -5,11 +5,10 @@ import { Ward } from '@prisma/client';
 
 @Injectable()
 export class WardService extends BaseService<Ward, IWardRepository> {
-    constructor(
-        @Inject('IWardRepository')
-        protected readonly repository: IWardRepository,
-    ) {
-        super(repository);
-    }
+  constructor(
+    @Inject('IWardRepository')
+    protected readonly repository: IWardRepository,
+  ) {
+    super(repository);
+  }
 }
-

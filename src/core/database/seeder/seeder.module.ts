@@ -73,5 +73,4 @@ import { SeedLocations } from '@/core/database/seeder/core/seed-locations';
   ],
   exports: [SeedService],
 })
-export class SeederModule { }
-
+export class SeederModule {}

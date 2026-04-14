@@ -1,11 +1,17 @@
-import { Controller, Get, Param, Query, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  NotFoundException,
+} from '@nestjs/common';
 import { PublicProjectService } from '@/modules/introduction/project/public/services/project.service';
 import { prepareQuery } from '@/common/core/utils';
 import { Permission } from '@/common/auth/decorators';
 
 @Controller('projects')
 export class PublicProjectController {
-  constructor(private readonly projectService: PublicProjectService) { }
+  constructor(private readonly projectService: PublicProjectService) {}
 
   @Permission('public')
   @Get()
@@ -29,5 +35,3 @@ export class PublicProjectController {
     return project;
   }
 }
-
-

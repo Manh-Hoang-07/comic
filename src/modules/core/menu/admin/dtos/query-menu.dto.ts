@@ -1,4 +1,12 @@
-import { IsOptional, IsInt, IsString, IsEnum, IsBoolean, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  IsString,
+  IsEnum,
+  IsBoolean,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPrimaryKey } from '@/common/shared/decorators';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';

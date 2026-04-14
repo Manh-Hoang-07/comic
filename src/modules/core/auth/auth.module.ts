@@ -39,7 +39,8 @@ import { ContentTemplateAdminModule } from '@/modules/core/content-template/admi
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('jwt.secret'),
         signOptions: {
-          expiresIn: (configService.get<string>('jwt.expiresIn') || '60m') as any,
+          expiresIn: (configService.get<string>('jwt.expiresIn') ||
+            '60m') as any,
           issuer: configService.get<string>('jwt.issuer'),
           audience: configService.get<string>('jwt.audience'),
         },
@@ -60,5 +61,4 @@ import { ContentTemplateAdminModule } from '@/modules/core/content-template/admi
   ],
   exports: [AuthService, TokenService],
 })
-export class AuthModule { }
-
+export class AuthModule {}

@@ -9,4 +9,4 @@ import { ContactRepositoryModule } from '../contact.repository.module';
   providers: [ContactService],
   exports: [ContactService],
 })
-export class AdminContactModule { }
+export class AdminContactModule {}

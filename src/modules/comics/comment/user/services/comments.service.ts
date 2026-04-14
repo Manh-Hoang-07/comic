@@ -1,13 +1,25 @@
-import { Injectable, Inject, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ComicComment } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
-import { ICommentRepository, COMMENT_REPOSITORY } from '../../domain/comment.repository';
+import {
+  ICommentRepository,
+  COMMENT_REPOSITORY,
+} from '../../domain/comment.repository';
 import { ComicNotificationService } from '@/modules/comics/shared/services/comic-notification.service';
 import { getCurrentUserId } from '@/common/auth/utils/auth-context.helper';
 import { COMMENT_TREE_INCLUDE } from '../../utils/comment-query.helper';
 
 @Injectable()
-export class UserCommentsService extends BaseService<ComicComment, ICommentRepository> {
+export class UserCommentsService extends BaseService<
+  ComicComment,
+  ICommentRepository
+> {
   constructor(
     @Inject(COMMENT_REPOSITORY)
     protected readonly commentRepository: ICommentRepository,
@@ -74,7 +86,9 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
       const parent = await this.repository.findById(payload.parent_id);
       if (!parent) throw new NotFoundException('Parent comment not found');
       if (String(parent.comic_id) !== String(payload.comic_id)) {
-        throw new BadRequestException('Parent comment must be from the same comic');
+        throw new BadRequestException(
+          'Parent comment must be from the same comic',
+        );
       }
     }
 
@@ -86,11 +100,8 @@ export class UserCommentsService extends BaseService<ComicComment, ICommentRepos
       await this.notificationService.notifyCommentReply(
         entity.id,
         entity.parent_id,
-        entity.user_id
+        entity.user_id,
       );
     }
   }
-
 }
-
-

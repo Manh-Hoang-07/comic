@@ -1,9 +1,18 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { toPlain } from '@/common/shared/utils';
 import { createPaginationMeta } from '@/common/core/utils';
-import { IReadingHistoryRepository, READING_HISTORY_REPOSITORY } from '../../../reading-history/domain/reading-history.repository';
-import { IFollowRepository, FOLLOW_REPOSITORY } from '../../../follow/domain/follow.repository';
-import { IBookmarkRepository, BOOKMARK_REPOSITORY } from '../../../bookmark/domain/bookmark.repository';
+import {
+  IReadingHistoryRepository,
+  READING_HISTORY_REPOSITORY,
+} from '../../../reading-history/domain/reading-history.repository';
+import {
+  IFollowRepository,
+  FOLLOW_REPOSITORY,
+} from '../../../follow/domain/follow.repository';
+import {
+  IBookmarkRepository,
+  BOOKMARK_REPOSITORY,
+} from '../../../bookmark/domain/bookmark.repository';
 
 @Injectable()
 export class UserStatsService {
@@ -14,13 +23,20 @@ export class UserStatsService {
     private readonly followRepository: IFollowRepository,
     @Inject(BOOKMARK_REPOSITORY)
     private readonly bookmarkRepository: IBookmarkRepository,
-  ) { }
+  ) {}
 
   /**
    * Lấy dashboard data cho user
    */
   async getDashboard(userId: any) {
-    const [readingHistory, follows, bookmarks, readingCount, followCount, bookmarkCount] = await Promise.all([
+    const [
+      readingHistory,
+      follows,
+      bookmarks,
+      readingCount,
+      followCount,
+      bookmarkCount,
+    ] = await Promise.all([
       this.readingHistoryRepository.findMany({ user_id: userId }, {
         include: { comic: true, chapter: true },
         sort: 'updated_at:DESC',
@@ -57,23 +73,25 @@ export class UserStatsService {
    * Lấy library (tất cả comics user đã đọc/follow)
    */
   async getLibrary(userId: any, page: number = 1, limit: number = 20) {
-    const { data: history, meta } = await this.readingHistoryRepository.findAll({
-      filter: { user_id: userId },
-      include: { comic: true, chapter: true },
-      sort: 'updated_at:DESC',
-      page,
-      limit,
-    } as any);
+    const { data: history, meta } = await this.readingHistoryRepository.findAll(
+      {
+        filter: { user_id: userId },
+        include: { comic: true, chapter: true },
+        sort: 'updated_at:DESC',
+        page,
+        limit,
+      } as any,
+    );
 
     return {
-      data: toPlain(history.map((h: any) => ({
-        comic: h.comic,
-        last_read_chapter: h.chapter,
-        last_read_at: h.updated_at,
-      }))),
+      data: toPlain(
+        history.map((h: any) => ({
+          comic: h.comic,
+          last_read_chapter: h.chapter,
+          last_read_at: h.updated_at,
+        })),
+      ),
       meta,
     };
   }
 }
-
-

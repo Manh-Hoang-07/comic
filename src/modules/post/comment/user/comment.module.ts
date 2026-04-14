@@ -7,13 +7,9 @@ import { PostRepositoryModule } from '@/modules/post/post.repository.module';
 import { NotificationRepositoryModule } from '@/modules/core/notification/notification.repository.module';
 
 @Module({
-    imports: [
-        RbacModule,
-        PostRepositoryModule,
-        NotificationRepositoryModule,
-    ],
-    controllers: [UserPostCommentsController],
-    providers: [UserPostCommentsService, PostNotificationService],
-    exports: [UserPostCommentsService],
+  imports: [RbacModule, PostRepositoryModule, NotificationRepositoryModule],
+  controllers: [UserPostCommentsController],
+  providers: [UserPostCommentsService, PostNotificationService],
+  exports: [UserPostCommentsService],
 })
-export class UserPostCommentsModule { }
+export class UserPostCommentsModule {}

@@ -6,15 +6,26 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedProjects {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
-    if (await this.prisma.project.count() > 0) return;
+    if ((await this.prisma.project.count()) > 0) return;
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'introduction');
-    const projects: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'projects.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'introduction',
+    );
+    const projects: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'projects.json'), 'utf8'),
+    );
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'systemadmin' },
+    });
     const defaultUserId = adminUser ? BigInt(adminUser.id) : null;
 
     for (const project of projects) {

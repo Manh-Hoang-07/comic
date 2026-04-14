@@ -16,105 +16,143 @@ export class FileValidationService {
   private readonly maxFileSize: number;
 
   constructor(private readonly configService: ConfigService) {
-    this.maxFileSize = this.configService.get<number>('storage.maxFileSize', 10485760); // 10MB default
-    
+    this.maxFileSize = this.configService.get<number>(
+      'storage.maxFileSize',
+      10485760,
+    ); // 10MB default
+
     // Define allowed file types with their MIME types and magic bytes
     this.allowedFileTypes = new Map([
       // Images
-      ['image', {
-        // NOTE: SVG intentionally excluded because it can embed scripts and cause XSS when served as image/svg+xml.
-        extensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.ico'],
-        mimeTypes: [
-          'image/jpeg',
-          'image/png',
-          'image/gif',
-          'image/webp',
-          'image/bmp',
-          'image/x-icon',
-          'image/vnd.microsoft.icon',
-        ],
-        magicBytes: [
-          [0xFF, 0xD8, 0xFF], // JPEG
-          [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // PNG
-          [0x47, 0x49, 0x46, 0x38], // GIF
-          [0x52, 0x49, 0x46, 0x46], // WEBP (RIFF)
-          [0x42, 0x4D], // BMP
-        ],
-      }],
+      [
+        'image',
+        {
+          // NOTE: SVG intentionally excluded because it can embed scripts and cause XSS when served as image/svg+xml.
+          extensions: [
+            '.jpg',
+            '.jpeg',
+            '.png',
+            '.gif',
+            '.webp',
+            '.bmp',
+            '.ico',
+          ],
+          mimeTypes: [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/bmp',
+            'image/x-icon',
+            'image/vnd.microsoft.icon',
+          ],
+          magicBytes: [
+            [0xff, 0xd8, 0xff], // JPEG
+            [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], // PNG
+            [0x47, 0x49, 0x46, 0x38], // GIF
+            [0x52, 0x49, 0x46, 0x46], // WEBP (RIFF)
+            [0x42, 0x4d], // BMP
+          ],
+        },
+      ],
       // Documents
-      ['document', {
-        extensions: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv'],
-        mimeTypes: [
-          'application/pdf',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'application/vnd.ms-powerpoint',
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-          'text/plain',
-          'text/csv',
-        ],
-        magicBytes: [
-          [0x25, 0x50, 0x44, 0x46], // PDF
-          [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1], // MS Office (doc, xls, ppt)
-          [0x50, 0x4B, 0x03, 0x04], // Office 2007+ (docx, xlsx, pptx) - ZIP signature
-        ],
-      }],
+      [
+        'document',
+        {
+          extensions: [
+            '.pdf',
+            '.doc',
+            '.docx',
+            '.xls',
+            '.xlsx',
+            '.ppt',
+            '.pptx',
+            '.txt',
+            '.csv',
+          ],
+          mimeTypes: [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'text/csv',
+          ],
+          magicBytes: [
+            [0x25, 0x50, 0x44, 0x46], // PDF
+            [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1], // MS Office (doc, xls, ppt)
+            [0x50, 0x4b, 0x03, 0x04], // Office 2007+ (docx, xlsx, pptx) - ZIP signature
+          ],
+        },
+      ],
       // Archives
-      ['archive', {
-        extensions: ['.zip', '.rar', '.7z', '.tar', '.gz'],
-        mimeTypes: [
-          'application/zip',
-          'application/x-rar-compressed',
-          'application/x-7z-compressed',
-          'application/x-tar',
-          'application/gzip',
-        ],
-        magicBytes: [
-          [0x50, 0x4B, 0x03, 0x04], // ZIP
-          [0x52, 0x61, 0x72, 0x21, 0x1A, 0x07], // RAR
-          [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C], // 7Z
-        ],
-      }],
+      [
+        'archive',
+        {
+          extensions: ['.zip', '.rar', '.7z', '.tar', '.gz'],
+          mimeTypes: [
+            'application/zip',
+            'application/x-rar-compressed',
+            'application/x-7z-compressed',
+            'application/x-tar',
+            'application/gzip',
+          ],
+          magicBytes: [
+            [0x50, 0x4b, 0x03, 0x04], // ZIP
+            [0x52, 0x61, 0x72, 0x21, 0x1a, 0x07], // RAR
+            [0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c], // 7Z
+          ],
+        },
+      ],
       // Videos
-      ['video', {
-        extensions: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'],
-        mimeTypes: [
-          'video/mp4',
-          'video/x-msvideo',
-          'video/quicktime',
-          'video/x-ms-wmv',
-          'video/x-flv',
-          'video/webm',
-          'video/x-matroska',
-        ],
-        magicBytes: [
-          [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], // MP4
-          [0x1A, 0x45, 0xDF, 0xA3], // MKV/WebM
-        ],
-      }],
+      [
+        'video',
+        {
+          extensions: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'],
+          mimeTypes: [
+            'video/mp4',
+            'video/x-msvideo',
+            'video/quicktime',
+            'video/x-ms-wmv',
+            'video/x-flv',
+            'video/webm',
+            'video/x-matroska',
+          ],
+          magicBytes: [
+            [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], // MP4
+            [0x1a, 0x45, 0xdf, 0xa3], // MKV/WebM
+          ],
+        },
+      ],
       // Audio
-      ['audio', {
-        extensions: ['.mp3', '.wav', '.ogg', '.m4a', '.aac'],
-        mimeTypes: [
-          'audio/mpeg',
-          'audio/wav',
-          'audio/ogg',
-          'audio/mp4',
-          'audio/aac',
-        ],
-        magicBytes: [
-          [0xFF, 0xFB], // MP3
-          [0xFF, 0xF3], // MP3
-          [0xFF, 0xF2], // MP3
-          [0x52, 0x49, 0x46, 0x46], // WAV (RIFF)
-        ],
-      }],
+      [
+        'audio',
+        {
+          extensions: ['.mp3', '.wav', '.ogg', '.m4a', '.aac'],
+          mimeTypes: [
+            'audio/mpeg',
+            'audio/wav',
+            'audio/ogg',
+            'audio/mp4',
+            'audio/aac',
+          ],
+          magicBytes: [
+            [0xff, 0xfb], // MP3
+            [0xff, 0xf3], // MP3
+            [0xff, 0xf2], // MP3
+            [0x52, 0x49, 0x46, 0x46], // WAV (RIFF)
+          ],
+        },
+      ],
     ]);
 
     // Allow custom file types from config
-    const customFileTypes = this.configService.get<string>('storage.allowedFileTypes');
+    const customFileTypes = this.configService.get<string>(
+      'storage.allowedFileTypes',
+    );
     if (customFileTypes) {
       try {
         const custom = JSON.parse(customFileTypes);
@@ -130,19 +168,24 @@ export class FileValidationService {
   /**
    * Validate file extension
    */
-  private validateExtension(filename: string): { extension: string; category: string } {
+  private validateExtension(filename: string): {
+    extension: string;
+    category: string;
+  } {
     const ext = this.getExtension(filename).toLowerCase();
-    
+
     for (const [category, config] of this.allowedFileTypes.entries()) {
       if (config.extensions.includes(ext)) {
         return { extension: ext, category };
       }
     }
-    
+
     throw new BadRequestException(
-      `File type not allowed. Allowed types: ${Array.from(this.allowedFileTypes.values())
-        .flatMap(c => c.extensions)
-        .join(', ')}`
+      `File type not allowed. Allowed types: ${Array.from(
+        this.allowedFileTypes.values(),
+      )
+        .flatMap((c) => c.extensions)
+        .join(', ')}`,
     );
   }
 
@@ -156,7 +199,7 @@ export class FileValidationService {
     }
     if (!allowedMimeTypes.includes(mimeType)) {
       throw new BadRequestException(
-        `MIME type '${mimeType}' is not allowed for this file type`
+        `MIME type '${mimeType}' is not allowed for this file type`,
       );
     }
   }
@@ -164,7 +207,10 @@ export class FileValidationService {
   /**
    * Validate file content using magic bytes
    */
-  private validateMagicBytes(buffer: Buffer, allowedMagicBytes: number[][]): boolean {
+  private validateMagicBytes(
+    buffer: Buffer,
+    allowedMagicBytes: number[][],
+  ): boolean {
     if (!allowedMagicBytes || allowedMagicBytes.length === 0) {
       return true; // No magic bytes defined, skip validation
     }
@@ -173,7 +219,7 @@ export class FileValidationService {
       if (buffer.length < signature.length) {
         continue;
       }
-      
+
       let matches = true;
       for (let i = 0; i < signature.length; i++) {
         if (buffer[i] !== signature[i]) {
@@ -181,12 +227,12 @@ export class FileValidationService {
           break;
         }
       }
-      
+
       if (matches) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -200,22 +246,22 @@ export class FileValidationService {
       .replace(/\.\./g, '') // Remove parent directory references
       .replace(/[<>:"|?*]/g, '') // Remove Windows forbidden characters
       .trim();
-    
+
     // Remove leading dots and spaces
     sanitized = sanitized.replace(/^[.\s]+/, '');
-    
+
     // Ensure filename is not empty
     if (!sanitized || sanitized.length === 0) {
       sanitized = 'file';
     }
-    
+
     // Limit filename length
     if (sanitized.length > 255) {
       const ext = this.getExtension(sanitized);
       const nameWithoutExt = sanitized.slice(0, 255 - ext.length);
       sanitized = nameWithoutExt + ext;
     }
-    
+
     return sanitized;
   }
 
@@ -242,7 +288,7 @@ export class FileValidationService {
     if (file.size > this.maxFileSize) {
       const maxSizeMB = (this.maxFileSize / 1024 / 1024).toFixed(2);
       throw new BadRequestException(
-        `File size exceeds maximum allowed size of ${maxSizeMB}MB`
+        `File size exceeds maximum allowed size of ${maxSizeMB}MB`,
       );
     }
 
@@ -265,10 +311,13 @@ export class FileValidationService {
 
     // 6. Validate magic bytes (content validation)
     if (fileTypeConfig.magicBytes && fileTypeConfig.magicBytes.length > 0) {
-      const isValidContent = this.validateMagicBytes(file.buffer, fileTypeConfig.magicBytes);
+      const isValidContent = this.validateMagicBytes(
+        file.buffer,
+        fileTypeConfig.magicBytes,
+      );
       if (!isValidContent) {
         throw new BadRequestException(
-          `File content does not match the declared file type. Possible file type mismatch or corrupted file.`
+          `File content does not match the declared file type. Possible file type mismatch or corrupted file.`,
         );
       }
     }
@@ -281,9 +330,7 @@ export class FileValidationService {
    */
   getAllowedFileTypes(): string[] {
     return Array.from(this.allowedFileTypes.values())
-      .flatMap(config => config.extensions)
+      .flatMap((config) => config.extensions)
       .sort();
   }
 }
-
-

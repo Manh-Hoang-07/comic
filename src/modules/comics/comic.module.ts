@@ -79,13 +79,7 @@ import { ComicViewCronService } from '@/modules/comics/cron/comic-view-cron.serv
     NotificationRepositoryModule,
     ComicRepositoryModule,
   ],
-  providers: [
-    ComicNotificationService,
-    ComicViewCronService,
-  ],
-  exports: [
-    ComicNotificationService,
-  ],
+  providers: [ComicNotificationService, ComicViewCronService],
+  exports: [ComicNotificationService],
 })
-export class ComicsModule { }
-
+export class ComicsModule {}

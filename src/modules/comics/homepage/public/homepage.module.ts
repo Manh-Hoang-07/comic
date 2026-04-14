@@ -16,4 +16,3 @@ import { PublicComicCategoriesModule } from '../../comic-category/public/comic-c
   exports: [HomepageService],
 })
 export class HomepageModule {}
-

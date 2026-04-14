@@ -6,16 +6,16 @@ import { GroupRepositoryImpl } from './group/infrastructure/repositories/group.r
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: CONTEXT_REPOSITORY,
-            useClass: ContextRepositoryImpl,
-        },
-        {
-            provide: GROUP_REPOSITORY,
-            useClass: GroupRepositoryImpl,
-        },
-    ],
-    exports: [CONTEXT_REPOSITORY, GROUP_REPOSITORY],
+  providers: [
+    {
+      provide: CONTEXT_REPOSITORY,
+      useClass: ContextRepositoryImpl,
+    },
+    {
+      provide: GROUP_REPOSITORY,
+      useClass: GroupRepositoryImpl,
+    },
+  ],
+  exports: [CONTEXT_REPOSITORY, GROUP_REPOSITORY],
 })
-export class ContextRepositoryModule { }
+export class ContextRepositoryModule {}

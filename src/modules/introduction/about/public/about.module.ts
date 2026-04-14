@@ -9,5 +9,4 @@ import { AboutRepositoryModule } from '@/modules/introduction/about/about.reposi
   providers: [PublicAboutService],
   exports: [PublicAboutService],
 })
-export class PublicAboutModule { }
-
+export class PublicAboutModule {}

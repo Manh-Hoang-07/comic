@@ -11,7 +11,11 @@ import { RequestContext } from '@/common/shared/utils';
 
 describe('UserRolesService', () => {
   let service: UserRolesService;
-  let userRepo: { findById: jest.Mock; findAssignments: jest.Mock; findMemberGroupIds: jest.Mock };
+  let userRepo: {
+    findById: jest.Mock;
+    findAssignments: jest.Mock;
+    findMemberGroupIds: jest.Mock;
+  };
   let policy: { assertAccess: jest.Mock; roleScope: jest.Mock };
   let roleRepo: { findMany: jest.Mock };
   let roleContextRepo: { findMany: jest.Mock };
@@ -73,14 +77,25 @@ describe('UserRolesService', () => {
     });
 
     it('propagates Forbidden from scope resolution', async () => {
-      roleScope.resolveRoleUi.mockRejectedValue(new ForbiddenException('No context'));
+      roleScope.resolveRoleUi.mockRejectedValue(
+        new ForbiddenException('No context'),
+      );
 
       await expect(service.getUserRoles(1)).rejects.toThrow(ForbiddenException);
     });
 
     it('loads assignments for scoped groups and dedupes roles', async () => {
       roleScope.resolveRoleUi.mockResolvedValue({
-        groups: [{ id: '1', code: 'g', type: 't', name: 'G', status: 'active', contextId: '1' }],
+        groups: [
+          {
+            id: '1',
+            code: 'g',
+            type: 't',
+            name: 'G',
+            status: 'active',
+            contextId: '1',
+          },
+        ],
         assignmentGroupPks: [1n],
         groupRows: [],
       });
@@ -111,7 +126,10 @@ describe('UserRolesService', () => {
       expect(userRepo.findAssignments).toHaveBeenCalledWith(5, [1n]);
       expect(result).toHaveLength(1);
       expect(result[0].roles).toHaveLength(2);
-      expect(result[0].roles.map((r: any) => r.role_code)).toEqual(['r1', 'r2']);
+      expect(result[0].roles.map((r: any) => r.role_code)).toEqual([
+        'r1',
+        'r2',
+      ]);
     });
   });
 
@@ -119,7 +137,9 @@ describe('UserRolesService', () => {
     it('throws NotFound when user missing', async () => {
       userRepo.findById.mockResolvedValue(null);
 
-      await expect(service.getUserRolesTree(99)).rejects.toThrow(NotFoundException);
+      await expect(service.getUserRolesTree(99)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(policy.assertAccess).not.toHaveBeenCalled();
     });
 
@@ -172,8 +192,20 @@ describe('UserRolesService', () => {
         return [];
       });
       roleRepo.findMany.mockResolvedValue([
-        { id: 100n, code: 'a', name: 'R100', status: 'active', parent_id: null },
-        { id: 101n, code: 'b', name: 'R101', status: 'active', parent_id: null },
+        {
+          id: 100n,
+          code: 'a',
+          name: 'R100',
+          status: 'active',
+          parent_id: null,
+        },
+        {
+          id: 101n,
+          code: 'b',
+          name: 'R101',
+          status: 'active',
+          parent_id: null,
+        },
       ]);
       userRepo.findAssignments.mockResolvedValue([
         { group_id: 10n, role_id: 100n, role: {}, group: {} },
@@ -185,8 +217,12 @@ describe('UserRolesService', () => {
       expect(result[0].group_id).toBe(10);
       expect(result[0].checked).toBe(false);
       expect(result[0].indeterminate).toBe(true);
-      expect(result[0].roles.find((r: any) => r.role_id === 100)?.checked).toBe(true);
-      expect(result[0].roles.find((r: any) => r.role_id === 101)?.checked).toBe(false);
+      expect(result[0].roles.find((r: any) => r.role_id === 100)?.checked).toBe(
+        true,
+      );
+      expect(result[0].roles.find((r: any) => r.role_id === 101)?.checked).toBe(
+        false,
+      );
     });
   });
 
@@ -194,13 +230,17 @@ describe('UserRolesService', () => {
     it('throws NotFound when user missing', async () => {
       userRepo.findById.mockResolvedValue(null);
 
-      await expect(service.batchSyncUserRoles(1, [])).rejects.toThrow(NotFoundException);
+      await expect(service.batchSyncUserRoles(1, [])).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('rejects non-array body', async () => {
       userRepo.findById.mockResolvedValue({ id: 1 });
 
-      await expect(service.batchSyncUserRoles(1, null as any)).rejects.toThrow('JSON array');
+      await expect(service.batchSyncUserRoles(1, null as any)).rejects.toThrow(
+        'JSON array',
+      );
     });
 
     it('calls syncRolesInGroup per group (dedup last wins)', async () => {
@@ -216,13 +256,20 @@ describe('UserRolesService', () => {
       ]);
 
       expect(rbacService.syncRolesInGroup).toHaveBeenCalledTimes(1);
-      expect(rbacService.syncRolesInGroup).toHaveBeenCalledWith(1, 2, [2, 3], true);
+      expect(rbacService.syncRolesInGroup).toHaveBeenCalledWith(
+        1,
+        2,
+        [2, 3],
+        true,
+      );
     });
 
     it('delegates batch group guard to UserRoleScopeService', async () => {
       userRepo.findById.mockResolvedValue({ id: 1 });
       roleScope.guardBatchGroups.mockImplementation(() => {
-        throw new ForbiddenException('group_id is not allowed in the current context');
+        throw new ForbiddenException(
+          'group_id is not allowed in the current context',
+        );
       });
 
       await expect(

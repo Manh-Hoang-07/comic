@@ -12,8 +12,3 @@ export const UserStatusLabels: Record<UserStatus, string> = {
   [UserStatus.pending]: 'Chờ xác nhận',
   [UserStatus.inactive]: 'Đã khóa',
 };
-
-
-
-
-

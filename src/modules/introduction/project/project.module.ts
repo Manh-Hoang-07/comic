@@ -17,5 +17,4 @@ import { ProjectRepositoryModule } from './project.repository.module';
   ],
   exports: [],
 })
-export class ProjectModule { }
-
+export class ProjectModule {}

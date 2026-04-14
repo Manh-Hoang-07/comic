@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  
   ValidationPipe,
   UploadedFiles,
   UseInterceptors,
@@ -26,7 +25,7 @@ export class ChapterController {
   constructor(
     private readonly chapterService: ChapterService,
     private readonly uploadService: UploadService,
-  ) { }
+  ) {}
 
   @Permission('comic.manage')
   @Get()
@@ -98,7 +97,8 @@ export class ChapterController {
   @Put(':id/pages')
   async updatePages(
     @Param('id') id: any,
-    @Body(ValidationPipe) body: {
+    @Body(ValidationPipe)
+    body: {
       pages: Array<{
         image_url: string;
         width?: any;
@@ -109,8 +109,4 @@ export class ChapterController {
   ) {
     return this.chapterService.updatePages(id, body.pages);
   }
-
-
 }
-
-

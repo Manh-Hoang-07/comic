@@ -21,7 +21,12 @@ import { EncryptionService } from './encryption/encryption.service';
     EncryptionModule,
   ],
   providers: [AuthService, CacheService, EncryptionService],
-  exports: [AuthService, CacheService, ContextModule, EncryptionModule, EncryptionService],
+  exports: [
+    AuthService,
+    CacheService,
+    ContextModule,
+    EncryptionModule,
+    EncryptionService,
+  ],
 })
-export class CommonModule { }
-
+export class CommonModule {}

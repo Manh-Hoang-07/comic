@@ -11,29 +11,29 @@ import { QueueWorkerModule } from './queue/queue.module';
 import { LocationModule } from './location/location.module';
 
 @Module({
-    imports: [
-        AuthModule,
-        RbacModule,
-        ContextModule,
-        NotificationModule,
-        IamModule,
-        MenuModule,
-        SystemConfigModule,
-        ContentTemplateModule,
-        QueueWorkerModule,
-        LocationModule,
-    ],
-    exports: [
-        AuthModule,
-        RbacModule,
-        ContextModule,
-        NotificationModule,
-        IamModule,
-        MenuModule,
-        SystemConfigModule,
-        ContentTemplateModule,
-        QueueWorkerModule,
-        LocationModule,
-    ],
+  imports: [
+    AuthModule,
+    RbacModule,
+    ContextModule,
+    NotificationModule,
+    IamModule,
+    MenuModule,
+    SystemConfigModule,
+    ContentTemplateModule,
+    QueueWorkerModule,
+    LocationModule,
+  ],
+  exports: [
+    AuthModule,
+    RbacModule,
+    ContextModule,
+    NotificationModule,
+    IamModule,
+    MenuModule,
+    SystemConfigModule,
+    ContentTemplateModule,
+    QueueWorkerModule,
+    LocationModule,
+  ],
 })
-export class CoreModulesModule { }
+export class CoreModulesModule {}

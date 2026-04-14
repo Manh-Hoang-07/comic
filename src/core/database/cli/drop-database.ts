@@ -32,23 +32,25 @@ async function bootstrap() {
     database: 'postgres',
     password: configParams.password,
     port: configParams.port ? parseInt(configParams.port, 10) : 5432,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
   });
 
   try {
     await client.connect();
-    logger.log(`Connected to PostgreSQL server at ${configParams.host || 'localhost'}`);
+    logger.log(
+      `Connected to PostgreSQL server at ${configParams.host || 'localhost'}`,
+    );
 
     // Check if database exists
     const res = await client.query(
       'SELECT 1 FROM pg_database WHERE datname = $1',
-      [databaseName]
+      [databaseName],
     );
 
     const dbExists = res.rowCount !== null && res.rowCount > 0;
 
     if (dbExists) {
-      // Drop database - PostgreSQL doesn't allow dropping the database you're connected to, 
+      // Drop database - PostgreSQL doesn't allow dropping the database you're connected to,
       // but we're connected to 'postgres' so it's fine.
       // We also need to terminate other connections to that DB first in a real scenario,
       // but for CLI this should be enough.
@@ -66,8 +68,4 @@ async function bootstrap() {
   }
 }
 
-
 bootstrap();
-
-
-

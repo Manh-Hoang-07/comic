@@ -5,13 +5,9 @@ import { RbacModule } from '@/modules/core/rbac/rbac.module';
 import { GalleryRepositoryModule } from '@/modules/introduction/gallery/gallery.repository.module';
 
 @Module({
-  imports: [
-    RbacModule,
-    GalleryRepositoryModule,
-  ],
+  imports: [RbacModule, GalleryRepositoryModule],
   controllers: [GalleryController],
   providers: [GalleryService],
   exports: [GalleryService],
 })
-export class AdminGalleryModule { }
-
+export class AdminGalleryModule {}

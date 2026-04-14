@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
-import { IUploadStrategy, UploadResult } from '../interfaces/upload-strategy.interface';
+import {
+  IUploadStrategy,
+  UploadResult,
+} from '../interfaces/upload-strategy.interface';
 
 @Injectable()
 export class LocalStorageStrategy implements IUploadStrategy {
@@ -21,10 +24,11 @@ export class LocalStorageStrategy implements IUploadStrategy {
         fs.mkdirSync(this.destination, { recursive: true });
       }
     } catch (error) {
-      console.warn(`[LocalStorageStrategy] Could not create local storage directory at ${this.destination}: ${error.message}`);
+      console.warn(
+        `[LocalStorageStrategy] Could not create local storage directory at ${this.destination}: ${error.message}`,
+      );
     }
   }
-
 
   async upload(file: Express.Multer.File): Promise<UploadResult> {
     this.ensureDirectoryExists();
@@ -47,7 +51,9 @@ export class LocalStorageStrategy implements IUploadStrategy {
     });
 
     // Tạo URL để truy cập file (đảm bảo baseUrl không có trailing slash)
-    const baseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const baseUrl = this.baseUrl.endsWith('/')
+      ? this.baseUrl.slice(0, -1)
+      : this.baseUrl;
     const url = `${baseUrl}/${filename}`;
 
     return {
@@ -59,4 +65,3 @@ export class LocalStorageStrategy implements IUploadStrategy {
     };
   }
 }
-

@@ -5,15 +5,26 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedContacts {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
-    if (await this.prisma.contact.count() > 0) return;
+    if ((await this.prisma.contact.count()) > 0) return;
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'marketing');
-    const contacts: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'contacts.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'marketing',
+    );
+    const contacts: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'contacts.json'), 'utf8'),
+    );
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'systemadmin' },
+    });
     const defaultUserId = adminUser ? Number(adminUser.id) : 1;
 
     for (const data of contacts) {

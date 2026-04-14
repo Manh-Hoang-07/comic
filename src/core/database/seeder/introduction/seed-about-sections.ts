@@ -6,15 +6,26 @@ import * as path from 'path';
 
 @Injectable()
 export class SeedAboutSections {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
-    if (await this.prisma.aboutSection.count() > 0) return;
+    if ((await this.prisma.aboutSection.count()) > 0) return;
 
-    const baseDir = path.join(process.cwd(), 'src', 'core', 'database', 'json', 'introduction');
-    const sections: any[] = JSON.parse(fs.readFileSync(path.join(baseDir, 'about-sections.json'), 'utf8'));
+    const baseDir = path.join(
+      process.cwd(),
+      'src',
+      'core',
+      'database',
+      'json',
+      'introduction',
+    );
+    const sections: any[] = JSON.parse(
+      fs.readFileSync(path.join(baseDir, 'about-sections.json'), 'utf8'),
+    );
 
-    const adminUser = await this.prisma.user.findFirst({ where: { username: 'systemadmin' } });
+    const adminUser = await this.prisma.user.findFirst({
+      where: { username: 'systemadmin' },
+    });
     const defaultUserId = adminUser ? BigInt(adminUser.id) : null;
 
     for (const section of sections) {

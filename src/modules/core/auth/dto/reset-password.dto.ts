@@ -38,4 +38,3 @@ export class ResetPasswordDto {
   @MinLength(6, { message: 'Xác nhận mật khẩu phải có ít nhất 6 ký tự.' })
   confirmPassword: string;
 }
-

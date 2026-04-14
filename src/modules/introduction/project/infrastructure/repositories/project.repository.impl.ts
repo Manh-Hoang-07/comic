@@ -2,52 +2,56 @@ import { Injectable } from '@nestjs/common';
 import { Project, Prisma } from '@prisma/client';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 import { PrismaRepository } from '@/common/core/repositories';
-import { IProjectRepository, ProjectFilter } from '../../domain/project.repository';
+import {
+  IProjectRepository,
+  ProjectFilter,
+} from '../../domain/project.repository';
 
 @Injectable()
-export class ProjectRepositoryImpl extends PrismaRepository<
+export class ProjectRepositoryImpl
+  extends PrismaRepository<
     Project,
     Prisma.ProjectWhereInput,
     Prisma.ProjectCreateInput,
     Prisma.ProjectUpdateInput,
     Prisma.ProjectOrderByWithRelationInput
-> implements IProjectRepository {
-    constructor(private readonly prisma: PrismaService) {
-        super(prisma.project as unknown as any, 'sort_order:asc');
+  >
+  implements IProjectRepository
+{
+  constructor(private readonly prisma: PrismaService) {
+    super(prisma.project as unknown as any, 'sort_order:asc');
+  }
+
+  protected buildWhere(filter: ProjectFilter): Prisma.ProjectWhereInput {
+    const where: Prisma.ProjectWhereInput = {};
+
+    if (filter.slug) {
+      where.slug = filter.slug;
     }
 
-    protected buildWhere(filter: ProjectFilter): Prisma.ProjectWhereInput {
-        const where: Prisma.ProjectWhereInput = {};
-
-        if (filter.slug) {
-            where.slug = filter.slug;
-        }
-
-        if (filter.search) {
-            where.OR = [
-                { name: { contains: filter.search } },
-                { slug: { contains: filter.search } },
-            ];
-        }
-
-        if (filter.status) {
-            where.status = filter.status as any;
-        }
-
-        if (filter.isFeatured !== undefined) {
-            where.featured = filter.isFeatured;
-        }
-
-        return where;
+    if (filter.search) {
+      where.OR = [
+        { name: { contains: filter.search } },
+        { slug: { contains: filter.search } },
+      ];
     }
 
-    async findBySlug(slug: string): Promise<Project | null> {
-        return this.findOne({ slug });
+    if (filter.status) {
+      where.status = filter.status as any;
     }
 
-    async incrementViewCount(id: any): Promise<Project> {
-        return this.update(id, { view_count: { increment: 1 } });
+    if (filter.isFeatured !== undefined) {
+      where.featured = filter.isFeatured;
     }
+
+    return where;
+  }
+
+  async findBySlug(slug: string): Promise<Project | null> {
+    return this.findOne({ slug });
+  }
+
+  async incrementViewCount(id: any): Promise<Project> {
+    return this.update(id, { view_count: { increment: 1 } });
+  }
 }
-
-

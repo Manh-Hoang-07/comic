@@ -4,12 +4,12 @@ import { ProjectRepositoryImpl } from './infrastructure/repositories/project.rep
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: PROJECT_REPOSITORY,
-            useClass: ProjectRepositoryImpl,
-        },
-    ],
-    exports: [PROJECT_REPOSITORY],
+  providers: [
+    {
+      provide: PROJECT_REPOSITORY,
+      useClass: ProjectRepositoryImpl,
+    },
+  ],
+  exports: [PROJECT_REPOSITORY],
 })
-export class ProjectRepositoryModule { }
+export class ProjectRepositoryModule {}

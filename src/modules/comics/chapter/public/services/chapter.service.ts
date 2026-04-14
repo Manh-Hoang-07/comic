@@ -1,15 +1,26 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { BaseService } from '@/common/core/services/base.service';
 import { Chapter } from '@prisma/client';
-import { IChapterRepository, CHAPTER_REPOSITORY } from '../../domain/chapter.repository';
+import {
+  IChapterRepository,
+  CHAPTER_REPOSITORY,
+} from '../../domain/chapter.repository';
 import { PUBLIC_CHAPTER_STATUSES } from '@/shared/enums';
-import { IChapterPageRepository, CHAPTER_PAGE_REPOSITORY } from '../../domain/chapter-page.repository';
+import {
+  IChapterPageRepository,
+  CHAPTER_PAGE_REPOSITORY,
+} from '../../domain/chapter-page.repository';
 
 @Injectable()
-export class PublicChaptersService extends BaseService<Chapter, IChapterRepository> {
+export class PublicChaptersService extends BaseService<
+  Chapter,
+  IChapterRepository
+> {
   constructor(
-    @Inject(CHAPTER_REPOSITORY) protected readonly repository: IChapterRepository,
-    @Inject(CHAPTER_PAGE_REPOSITORY) private readonly pageRepository: IChapterPageRepository,
+    @Inject(CHAPTER_REPOSITORY)
+    protected readonly repository: IChapterRepository,
+    @Inject(CHAPTER_PAGE_REPOSITORY)
+    private readonly pageRepository: IChapterPageRepository,
   ) {
     super(repository);
   }
@@ -53,7 +64,7 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
           width: true,
           height: true,
           file_size: true,
-        }
+        },
       },
     };
 
@@ -63,25 +74,27 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
     };
   }
 
-
   /**
    * Lấy danh sách pages của chapter
    */
   async getPages(chapterId: any) {
     const chapter = await this.repository.findOne({
       id: chapterId,
-      status: { in: PUBLIC_CHAPTER_STATUSES }
+      status: { in: PUBLIC_CHAPTER_STATUSES },
     });
 
     if (!chapter) {
       throw new NotFoundException('Chapter not found');
     }
 
-    const pages = await this.pageRepository.findMany({
-      chapter_id: chapterId,
-    }, {
-      sort: 'page_number:ASC'
-    });
+    const pages = await this.pageRepository.findMany(
+      {
+        chapter_id: chapterId,
+      },
+      {
+        sort: 'page_number:ASC',
+      },
+    );
 
     return pages;
   }
@@ -124,7 +137,3 @@ export class PublicChaptersService extends BaseService<Chapter, IChapterReposito
     return prev ? this.transform(prev) : null;
   }
 }
-
-
-
-

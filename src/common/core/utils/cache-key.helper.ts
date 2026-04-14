@@ -4,7 +4,9 @@
  */
 export function stableObjectJsonForCache(input: any): string {
   const raw =
-    input && typeof input === 'object' && !Array.isArray(input) ? { ...input } : {};
+    input && typeof input === 'object' && !Array.isArray(input)
+      ? { ...input }
+      : {};
   const sorted: Record<string, unknown> = {};
   for (const k of Object.keys(raw).sort()) {
     sorted[k] = raw[k];

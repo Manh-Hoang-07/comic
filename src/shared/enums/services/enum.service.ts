@@ -48,7 +48,7 @@ export class EnumService {
    * Xây dựng giá trị enum chỉ với value và label
    */
   private buildEnumValues(config: any): { value: string; label: string }[] {
-    return Object.values(config.enum).map((value: string | number) => {
+    return (Object.values(config.enum) as (string | number)[]).map((value) => {
       const stringValue = String(value);
       return {
         id: stringValue,

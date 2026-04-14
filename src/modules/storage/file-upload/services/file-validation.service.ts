@@ -279,7 +279,7 @@ export class FileValidationService {
   /**
    * Main validation method
    */
-  validateFile(file: Express.Multer.File): { sanitizedOriginalName: string } {
+  validateFile(file: any): { sanitizedOriginalName: string } {
     if (!file) {
       throw new BadRequestException('File is required');
     }

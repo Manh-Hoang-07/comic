@@ -74,7 +74,7 @@ export class ChapterController {
   @UseInterceptors(FilesInterceptor('files', 100))
   async uploadPages(
     @Param('id') id: any,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles() files: any[],
   ) {
     // Validate images
     ImageValidator.validateMultiple(files);

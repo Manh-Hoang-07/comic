@@ -100,7 +100,7 @@ export class RedisCacheStrategy implements ICacheStrategy {
     if (!this.client) return;
     try {
       await this.client.rename(oldKey, newKey);
-    } catch (e) {
+    } catch (e: any) {
       if (e.message !== 'ERR no such key') throw e;
     }
   }

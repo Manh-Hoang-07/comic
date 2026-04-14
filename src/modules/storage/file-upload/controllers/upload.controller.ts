@@ -33,7 +33,7 @@ export class UploadController {
     }),
   )
   async uploadFile(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
   ): Promise<UploadResponseDto> {
     if (!file) {
       throw new BadRequestException('File is required');
@@ -60,7 +60,7 @@ export class UploadController {
     }),
   )
   async uploadFiles(
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles() files: any[],
   ): Promise<UploadResponseDto[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('Files are required');

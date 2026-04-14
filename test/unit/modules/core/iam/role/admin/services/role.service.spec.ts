@@ -62,7 +62,7 @@ describe('RoleService', () => {
         code: 'NEW',
         parent_id: 10,
       });
-      expect(payload.created_user_id).toBe(1);
+      expect(payload.created_user_id).toBe(1n);
       expect(payload.parent_id).toBe(10n);
     });
   });
@@ -75,7 +75,7 @@ describe('RoleService', () => {
 
       await service.create({ code: 'NEW', context_ids: [1, 2] });
 
-      expect(roleRepo.syncContexts).toHaveBeenCalledWith(5, [1, 2]);
+      expect(roleRepo.syncContexts).toHaveBeenCalledWith(5n, [1, 2]);
     });
   });
 
@@ -130,15 +130,15 @@ describe('RoleService', () => {
         ],
       };
       const result = (service as any).transform(mockRole);
-      expect(result.id).toBe(1);
+      expect(result.id).toBe(1n);
       expect(result.parent).toEqual({
-        id: 2,
+        id: 2n,
         code: 'P1',
         name: 'Parent',
         status: 'active',
       });
       expect(result.children[0]).toEqual({
-        id: 3,
+        id: 3n,
         code: 'C1',
         name: 'Child',
         status: 'active',

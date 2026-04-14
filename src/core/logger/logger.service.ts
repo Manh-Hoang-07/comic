@@ -162,7 +162,7 @@ export class CustomLoggerService implements LoggerService {
     for (const strategy of this.strategies) {
       try {
         strategy.write(level, entry, options);
-      } catch (e) {
+      } catch (e: any) {
         // Fallback console if strategy fails
         console.error(`Logger Strategy Error: ${e.message}`);
       }

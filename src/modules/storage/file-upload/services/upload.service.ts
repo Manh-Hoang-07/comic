@@ -10,7 +10,7 @@ export class UploadService {
     @Inject('UPLOAD_STRATEGY') private readonly strategy: IUploadStrategy,
   ) {}
 
-  async uploadFile(file: Express.Multer.File): Promise<UploadResult> {
+  async uploadFile(file: any): Promise<UploadResult> {
     if (!file) {
       throw new Error('File is required');
     }
@@ -18,7 +18,7 @@ export class UploadService {
     return this.strategy.upload(file);
   }
 
-  async uploadFiles(files: Express.Multer.File[]): Promise<UploadResult[]> {
+  async uploadFiles(files: any[]): Promise<UploadResult[]> {
     if (!files || files.length === 0) {
       throw new Error('Files are required');
     }

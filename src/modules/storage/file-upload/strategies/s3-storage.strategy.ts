@@ -36,7 +36,7 @@ export class S3StorageStrategy implements IUploadStrategy {
     this.baseUrl = rawBaseUrl.replace(/\/$/, '');
   }
 
-  async upload(file: Express.Multer.File): Promise<UploadResult> {
+  async upload(file: any): Promise<UploadResult> {
     if (!this.bucket) {
       throw new Error('S3 bucket is not configured');
     }
@@ -57,7 +57,7 @@ export class S3StorageStrategy implements IUploadStrategy {
 
     try {
       await this.s3Client.send(command);
-    } catch (error) {
+    } catch (error: any) {
       // Bắt các lỗi cụ thể từ AWS SDK để trả về message dễ hiểu hơn
       if (
         error.name === 'DeserializationError' ||

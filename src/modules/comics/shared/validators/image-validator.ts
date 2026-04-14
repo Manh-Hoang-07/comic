@@ -14,7 +14,7 @@ export class ImageValidator {
 
   private static readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-  static validate(file: Express.Multer.File): void {
+  static validate(file: any): void {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -44,7 +44,7 @@ export class ImageValidator {
     }
   }
 
-  static validateMultiple(files: Express.Multer.File[]): void {
+  static validateMultiple(files: any[]): void {
     if (!files || files.length === 0) {
       throw new BadRequestException('Files are required');
     }

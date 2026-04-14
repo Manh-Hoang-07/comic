@@ -14,13 +14,12 @@
 | 1 | Patch/Minor trong semver range | THẤP | 5 phút | **DONE** |
 | 2 | Dependencies độc lập (helmet, joi, supertest, nodemailer, class-validator...) | THẤP → TB-CAO | 1-2 giờ | **DONE** |
 | 3 | ESLint 8→10 + flat config | TRUNG BÌNH | 30-60 phút | Làm trên branch riêng |
-| 4 | NestJS 10→11 (toàn bộ ecosystem) | CAO | 2-4 giờ | Research kỹ trước |
+| 4 | NestJS 10→11 (toàn bộ ecosystem) | CAO | 2-4 giờ | **IN PROGRESS (Core DONE)** |
 | 5 | TypeScript 6 + Jest 30 | CAO | 1-2 giờ | Hoãn Jest 30 |
 
 ---
 
 ## Phase 1: Patch/Minor an toàn
-
 **Trạng thái: HOÀN THÀNH** | Rủi ro: THẤP | Không có breaking changes, nằm trong semver range.
 
 | Package | Current | Target | Loại |
@@ -287,12 +286,20 @@ npm install eslint@latest @typescript-eslint/eslint-plugin@latest @typescript-es
 ```
 
 Sau đó xóa `.eslintrc.js`, tạo `eslint.config.mjs` như trên.
-
 **Verify:** `npx eslint .`
 
 ---
 
-## Phase 4: NestJS 10 → 11
+## Phase 4: NestJS 10→11 -- **IN PROGRESS**
+
+Nâng cấp core framework và toàn bộ module đi kèm.
+
+> [!IMPORTANT]
+> - Đã nâng cấp core `@nestjs/*` lên v11.
+> - Đã nâng cấp `reflect-metadata` lên v0.2.2.
+> - **Lưu ý:** Hiện tại build đã thông, nhưng Unit Test đang gặp lỗi `BigInt serialization` khi chạy nhiều workers do Jest không hỗ trợ serialize BigInt trong báo cáo lỗi. Cần điều chỉnh test hoặc dùng `--runInBand`.
+
+---
 
 **Rủi ro: CAO** — Thay đổi lớn nhất. Tạo branch riêng bắt buộc.
 

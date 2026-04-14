@@ -19,11 +19,17 @@
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    "strictPropertyInitialization": false,
     "paths": {
       "@/*": [
         "src/*"
       ]
-    }
+    },
+    "ignoreDeprecations": "6.0",
+    "types": [
+      "jest",
+      "node"
+    ]
   },
   "include": [
     "src/**/*",

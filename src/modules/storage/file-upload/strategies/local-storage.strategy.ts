@@ -23,14 +23,14 @@ export class LocalStorageStrategy implements IUploadStrategy {
       if (!fs.existsSync(this.destination)) {
         fs.mkdirSync(this.destination, { recursive: true });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn(
         `[LocalStorageStrategy] Could not create local storage directory at ${this.destination}: ${error.message}`,
       );
     }
   }
 
-  async upload(file: Express.Multer.File): Promise<UploadResult> {
+  async upload(file: any): Promise<UploadResult> {
     this.ensureDirectoryExists();
     // Tạo tên file unique
     const timestamp = Date.now();

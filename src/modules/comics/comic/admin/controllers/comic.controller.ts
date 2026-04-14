@@ -74,7 +74,7 @@ export class ComicController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadCover(
     @Param('id') id: any,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
   ) {
     // Validate image
     ImageValidator.validate(file);

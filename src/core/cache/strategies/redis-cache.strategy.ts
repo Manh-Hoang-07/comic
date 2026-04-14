@@ -3,27 +3,29 @@ import { ConfigService } from '@nestjs/config';
 import Redis, { Redis as RedisClient, ChainableCommander } from 'ioredis';
 import { ICacheStrategy } from '../interfaces/cache-strategy.interface';
 
+let globalRedisClient: RedisClient | null = null;
+
 @Injectable()
 export class RedisCacheStrategy implements ICacheStrategy {
   private client: RedisClient | null = null;
-  private subClient: RedisClient | null = null;
   private readonly url: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
     this.url = this.configService.get<string>('REDIS_URL');
 
     if (this.url) {
-      const options = {
-        lazyConnect: true,
-        maxRetriesPerRequest: 1,
-        retryStrategy: () => null,
-        ...(this.url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
-      };
-      this.client = new Redis(this.url, options);
-      this.subClient = new Redis(this.url, options);
-
-      this.client.on('error', () => {});
-      this.subClient.on('error', () => {});
+      if (!globalRedisClient) {
+        const options = {
+          lazyConnect: true,
+          maxRetriesPerRequest: 1,
+          enableReadyCheck: false,
+          retryStrategy: () => null,
+          ...(this.url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+        };
+        globalRedisClient = new Redis(this.url, options);
+        globalRedisClient.on('error', () => { });
+      }
+      this.client = globalRedisClient;
     }
   }
 
@@ -34,23 +36,19 @@ export class RedisCacheStrategy implements ICacheStrategy {
   async onModuleInit(): Promise<void> {
     if (!this.client) return;
     try {
-      const tasks: Promise<void>[] = [this.client.connect()];
-      if (this.subClient) tasks.push(this.subClient.connect());
-      await Promise.all(tasks);
+      // In serverless, it might already be connected
+      if (this.client.status === 'wait') {
+        await this.client.connect();
+      }
     } catch {
       // Redis is optional
     }
   }
 
   async onModuleDestroy(): Promise<void> {
-    if (this.client) {
-      try { await this.client.quit(); } catch { }
-      this.client = null;
-    }
-    if (this.subClient) {
-      try { await this.subClient.quit(); } catch { }
-      this.subClient = null;
-    }
+    // We don't quit the global client in serverless to keep it warm for next invocation
+    // only set local reference to null
+    this.client = null;
   }
 
   async get(key: string): Promise<string | null> {
@@ -162,11 +160,8 @@ export class RedisCacheStrategy implements ICacheStrategy {
   }
 
   async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
-    if (!this.subClient) return;
-    await this.subClient.subscribe(channel);
-    this.subClient.on('message', (chan, msg) => {
-      if (chan === channel) callback(msg);
-    });
+    // subClient removed to optimize connection usage in serverless.
+    // Pub/Sub listening is not supported in this strategy for now.
   }
 
   async lock(key: string, ttlSeconds: number, token = 'locked'): Promise<boolean> {

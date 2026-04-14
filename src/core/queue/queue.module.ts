@@ -15,15 +15,21 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                 }
 
                 if (redisUrl) {
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    const Redis = require('ioredis');
+                    const globalBullRedisClients: Record<string, any> = (global as any)._bullRedisClients || {};
+                    (global as any)._bullRedisClients = globalBullRedisClients;
+
                     return {
-                        createClient: () => {
-                            // eslint-disable-next-line @typescript-eslint/no-var-requires
-                            const Redis = require('ioredis');
-                            return new Redis(redisUrl, {
-                                maxRetriesPerRequest: null,
-                                enableReadyCheck: false,
-                                ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
-                            });
+                        createClient: (type: string) => {
+                            if (!globalBullRedisClients[type]) {
+                                globalBullRedisClients[type] = new Redis(redisUrl, {
+                                    maxRetriesPerRequest: type === 'client' ? 1 : null,
+                                    enableReadyCheck: false,
+                                    ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+                                });
+                            }
+                            return globalBullRedisClients[type];
                         },
                     };
                 }

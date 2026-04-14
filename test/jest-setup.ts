@@ -1,6 +1,5 @@
-
 // Add BigInt serialization support for Jest reports
-if (!BigInt.prototype.hasOwnProperty('toJSON')) {
+if (!Object.prototype.hasOwnProperty.call(BigInt.prototype, 'toJSON')) {
   (BigInt.prototype as any).toJSON = function () {
     return this.toString();
   };

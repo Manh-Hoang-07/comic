@@ -32,9 +32,7 @@ export class UploadController {
       },
     }),
   )
-  async uploadFile(
-    @UploadedFile() file: any,
-  ): Promise<UploadResponseDto> {
+  async uploadFile(@UploadedFile() file: any): Promise<UploadResponseDto> {
     if (!file) {
       throw new BadRequestException('File is required');
     }

@@ -72,10 +72,7 @@ export class ComicController {
   @Permission('comic.manage')
   @Post(':id/cover')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadCover(
-    @Param('id') id: any,
-    @UploadedFile() file: any,
-  ) {
+  async uploadCover(@Param('id') id: any, @UploadedFile() file: any) {
     // Validate image
     ImageValidator.validate(file);
 

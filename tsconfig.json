@@ -33,7 +33,11 @@
   },
   "include": [
     "src/**/*",
-    "test/**/*"
+    "test/**/*",
+    "api/**/*",
+    "scripts/**/*",
+    "loadtest/**/*",
+    "prisma.config.ts"
   ],
   "exclude": [
     "node_modules",

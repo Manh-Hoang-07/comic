@@ -43,7 +43,7 @@ export abstract class BaseContentService<
 
     // 4. Kiểm tra trùng lặp trong DB qua repository.findOne
     // Build filter trừ ID hiện tại
-    const filter: Record<string, any> = { [slugField]: normalizedSlug };
+    // const filter: Record<string, any> = { [slugField]: normalizedSlug }; // Removed unused filter
     // Lưu ý: Repository implementation phải biết xử lý NOT id nếu cần,
     // hoặc chúng ta dùng findMany/findFirst với where phức tạp hơn.
 
@@ -98,7 +98,7 @@ export abstract class BaseContentService<
       try {
         return await this.update(id, { featured: featured });
       } catch (e) {
-        throw new Error('Model này không hỗ trợ tính năng Featured.');
+        throw new Error('Model này không hỗ trợ tính năng Featured.', { cause: e });
       }
     }
   }

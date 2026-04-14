@@ -72,10 +72,7 @@ export class ChapterController {
   @Permission('comic.manage')
   @Post(':id/pages')
   @UseInterceptors(FilesInterceptor('files', 100))
-  async uploadPages(
-    @Param('id') id: any,
-    @UploadedFiles() files: any[],
-  ) {
+  async uploadPages(@Param('id') id: any, @UploadedFiles() files: any[]) {
     // Validate images
     ImageValidator.validateMultiple(files);
 

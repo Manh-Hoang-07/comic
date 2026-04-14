@@ -13,6 +13,7 @@ export function registerShutdown(
       );
       await app.close();
     } catch {
+      // Ignore errors during app.close() to ensure process.exit runs
     } finally {
       process.exit(reason === 'SIGTERM' || reason === 'SIGINT' ? 0 : 1);
     }

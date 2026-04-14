@@ -31,6 +31,7 @@ describe('RbacGuard', () => {
         {
           provide: RbacService,
           useValue: {
+            prepare: jest.fn().mockResolvedValue(undefined),
             hasPermissions: jest.fn(),
           },
         },

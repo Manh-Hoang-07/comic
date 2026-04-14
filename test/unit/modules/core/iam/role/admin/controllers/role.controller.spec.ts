@@ -20,7 +20,7 @@ describe('RoleController', () => {
         };
 
         auth = {
-            id: jest.fn().mockReturnValue(1),
+            id: jest.fn().mockReturnValue(BigInt(1)),
             isLogin: jest.fn().mockReturnValue(true),
         };
 
@@ -48,14 +48,14 @@ describe('RoleController', () => {
 
         it('should throw error if not authenticated', async () => {
             auth.id.mockReturnValue(null);
-            await expect(controller.create({})).rejects.toThrow('User not authenticated');
+            await expect(controller.create({})).rejects.toThrow('User not logged in');
         });
     });
 
     describe('assignPermissions', () => {
         it('should call service.assignPermissions', async () => {
-            await controller.assignPermissions(1, { permission_ids: [10, 20] });
-            expect(service.assignPermissions).toHaveBeenCalledWith(1, [10, 20]);
+            await controller.assignPermissions(BigInt(1), { permission_ids: [BigInt(10), BigInt(20)] });
+            expect(service.assignPermissions).toHaveBeenCalledWith(BigInt(1), [BigInt(10), BigInt(20)]);
         });
     });
 });

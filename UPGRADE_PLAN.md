@@ -11,8 +11,8 @@
 
 | Phase | Nội dung | Rủi ro | Effort | Khuyến nghị |
 |:-----:|----------|:------:|:------:|:-----------:|
-| 1 | Patch/Minor trong semver range | THẤP | 5 phút | Làm ngay |
-| 2 | Dependencies độc lập (helmet, joi, supertest, nodemailer, class-validator...) | THẤP → TB-CAO | 1-2 giờ | Làm trên branch riêng |
+| 1 | Patch/Minor trong semver range | THẤP | 5 phút | **DONE** |
+| 2 | Dependencies độc lập (helmet, joi, supertest, nodemailer, class-validator...) | THẤP → TB-CAO | 1-2 giờ | **DONE** |
 | 3 | ESLint 8→10 + flat config | TRUNG BÌNH | 30-60 phút | Làm trên branch riêng |
 | 4 | NestJS 10→11 (toàn bộ ecosystem) | CAO | 2-4 giờ | Research kỹ trước |
 | 5 | TypeScript 6 + Jest 30 | CAO | 1-2 giờ | Hoãn Jest 30 |
@@ -21,7 +21,7 @@
 
 ## Phase 1: Patch/Minor an toàn
 
-**Rủi ro: THẤP** | Không có breaking changes, nằm trong semver range.
+**Trạng thái: HOÀN THÀNH** | Rủi ro: THẤP | Không có breaking changes, nằm trong semver range.
 
 | Package | Current | Target | Loại |
 |---------|---------|--------|------|
@@ -53,9 +53,12 @@ npm run build && npm test
 
 ---
 
-## Phase 2: Dependencies độc lập
+## Phase 2: Dependencies độc lập -- **HOÀN THÀNH**
 
 Nâng từng package riêng lẻ, không phụ thuộc NestJS core. Thứ tự từ rủi ro thấp đến cao.
+
+> [!NOTE]
+> Đã xử lý các lỗi unit test phát sinh do không khớp kiểu BigInt và thiếu dependency injection trong môi trường test.
 
 ---
 

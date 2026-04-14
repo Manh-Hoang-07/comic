@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheService } from '@/common/cache/services/cache.service';
 import { RedisUtil } from '@/core/utils/redis.util';
+import { ConfigService } from '@nestjs/config';
 
 describe('CacheService', () => {
     let service: CacheService;
@@ -28,6 +29,10 @@ describe('CacheService', () => {
                 CacheService,
                 { provide: CACHE_MANAGER, useValue: cacheManager },
                 { provide: RedisUtil, useValue: redisUtil },
+                {
+                    provide: ConfigService,
+                    useValue: { get: jest.fn().mockReturnValue('memory') },
+                },
             ],
         }).compile();
 

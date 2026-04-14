@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx nest:*)",
+      "Bash(npm view:*)",
+      "Bash(npm search:*)",
+      "Bash(timeout 10 node -e \":*)",
+      "Bash(npm list:*)",
+      "Bash(node -e \":*)",
+      "Bash(timeout 15 node -e \":*)"
+    ]
+  }
+}

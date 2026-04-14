@@ -97,9 +97,9 @@ export abstract class BaseContentService<
       try {
         return await this.update(id, { featured: featured });
       } catch (e) {
-        throw new Error('Model này không hỗ trợ tính năng Featured.', {
-          cause: e,
-        });
+        const err = new Error('Model này không hỗ trợ tính năng Featured.');
+        (err as any).cause = e;
+        throw err;
       }
     }
   }

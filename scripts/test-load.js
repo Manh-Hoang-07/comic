@@ -14,14 +14,11 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8000';
 const HTTP_TIMEOUT_MS = '120s';
 
 /**
- * Log lỗi transport (status=0): error_code / error từ k6.
- * Mặc định 1 = log (gần như) mọi lần; load lớn → K6_NET_ERROR_SAMPLE=0.02
+ * Log lỗi transport (status=0)
+ * 1 = log mọi lần; 0.05 = sample 5% để tránh spam terminal khi tải cao.
  */
-const _sampleRaw = parseFloat(__ENV.K6_NET_ERROR_SAMPLE ?? '1');
-const K6_NET_ERROR_SAMPLE = Math.min(
-  1,
-  Math.max(0, Number.isFinite(_sampleRaw) ? _sampleRaw : 1),
-);
+const K6_NET_ERROR_SAMPLE = 1; 
+
 
 const codes = [200, 408, 429, 500, 502, 503, 504];
 const endpoints = ['homepage', 'comics'];

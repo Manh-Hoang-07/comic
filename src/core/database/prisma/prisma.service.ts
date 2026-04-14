@@ -22,21 +22,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     super({
       adapter,
       log: [
-        { emit: 'event', level: 'query' },
         { emit: 'stdout', level: 'error' },
         { emit: 'stdout', level: 'warn' },
       ],
-    });
-
-    // Option to log query details
-    (this as any).$on('query', (e: any) => {
-      this.logger.log(`[SQL] ${e.query} | Params: ${e.params} | Duration: ${e.duration}ms`);
     });
   }
 
   async onModuleInit() {
     await this.$connect();
-    // Pre-warm connection pool to avoid 400ms delay on first request
     await this.$queryRaw`SELECT 1`.catch(() => undefined);
   }
 

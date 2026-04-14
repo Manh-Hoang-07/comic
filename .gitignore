@@ -45,7 +45,7 @@ lerna-debug.log*
 *.db
 
 # Storage
-/storage/uploads
+# /storage/uploads
 
 
 src/generated/prisma

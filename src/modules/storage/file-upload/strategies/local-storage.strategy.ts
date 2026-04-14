@@ -13,8 +13,9 @@ export class LocalStorageStrategy implements IUploadStrategy {
     const storageConfig = this.configService.get('storage.local');
     this.destination = storageConfig.destination;
     this.baseUrl = storageConfig.baseUrl;
+  }
 
-    // Tạo thư mục nếu chưa tồn tại (tránh crash trên Vercel/Serverless)
+  private ensureDirectoryExists(): void {
     try {
       if (!fs.existsSync(this.destination)) {
         fs.mkdirSync(this.destination, { recursive: true });
@@ -24,7 +25,9 @@ export class LocalStorageStrategy implements IUploadStrategy {
     }
   }
 
+
   async upload(file: Express.Multer.File): Promise<UploadResult> {
+    this.ensureDirectoryExists();
     // Tạo tên file unique
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);

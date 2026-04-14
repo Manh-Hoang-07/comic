@@ -145,7 +145,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
 
   protected override async executeGetList(queryOrOptions: any = {}) {
     const tracker = RequestContext.get<CheckpointTracker>('tracker');
-    
+
     // The super.executeGetList already handles everything, we just wrap it with checkpoints
     // but we can't easily wrap it, so we reimplement the logic here for better tracing
     const { filter, options } = prepareQuery(queryOrOptions);
@@ -162,7 +162,6 @@ export class RoleService extends BaseService<any, IRoleRepository> {
     // Bỏ qua bước COUNT để kiểm tra xem có phải do độ trễ của 2 câu lệnh SQL riêng biệt không
     const result = await this.roleRepo.findAll({ ...normalized, skipCount: true } as any);
     const endDb = performance.now();
-    this.logger.log(`[PERF] RoleRepository.findAll (skipCount: true) took: ${(endDb - startDb).toFixed(2)}ms`);
 
     tracker?.addCheckpoint('controller_db_query_end');
 

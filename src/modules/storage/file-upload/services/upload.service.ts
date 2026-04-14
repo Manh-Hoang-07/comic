@@ -1,22 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { LocalStorageStrategy } from '../strategies/local-storage.strategy';
-import { S3StorageStrategy } from '../strategies/s3-storage.strategy';
-import { UploadResult } from '../interfaces/upload-strategy.interface';
+import { Injectable, Inject } from '@nestjs/common';
+import { IUploadStrategy, UploadResult } from '../interfaces/upload-strategy.interface';
 
 @Injectable()
 export class UploadService {
-  private strategy: LocalStorageStrategy | S3StorageStrategy;
-
   constructor(
-    private readonly configService: ConfigService,
-    private readonly localStorageStrategy: LocalStorageStrategy,
-    private readonly s3StorageStrategy: S3StorageStrategy,
-  ) {
-    // Chọn strategy dựa trên config
-    const storageType = this.configService.get<string>('storage.type', 'local');
-    this.strategy = storageType === 's3' ? this.s3StorageStrategy : this.localStorageStrategy;
-  }
+    @Inject('UPLOAD_STRATEGY') private readonly strategy: IUploadStrategy,
+  ) {}
+
 
   async uploadFile(file: Express.Multer.File): Promise<UploadResult> {
     if (!file) {

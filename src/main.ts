@@ -43,7 +43,9 @@ async function bootstrap() {
   // Set process timezone (best effort; DB timezone configured separately)
   try {
     process.env.TZ = appConfig.timezone;
-  } catch {}
+  } catch {
+    /* intentionally empty */
+  }
 
   // Configure logging based on environment
   setupLogging(appConfig.environment);
@@ -60,7 +62,9 @@ async function bootstrap() {
   // Trust proxy (needed when running behind reverse proxy to get correct req.ip)
   try {
     (app as any).set('trust proxy', true);
-  } catch {}
+  } catch {
+    /* intentionally empty */
+  }
 
   // Set global prefix
   app.setGlobalPrefix(appConfig.globalPrefix);

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RbacPermissionIndexService } from '@/modules/core/rbac/services/rbac-permission-index.service';

@@ -75,7 +75,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
   protected override async beforeCreate(data: any) {
-    const { context_ids, ...payload } = data;
+    const { context_ids: _context_ids, ...payload } = data;
     payload.created_user_id = getCurrentUserId();
 
     if (payload.code && (await this.roleRepo.findByCode(payload.code))) {
@@ -109,7 +109,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
 
   protected override async beforeUpdate(id: any, data: any) {
     const current = await this.verifyRoleExistence(id);
-    const { context_ids, ...payload } = data;
+    const { context_ids: _context_ids, ...payload } = data;
     payload.updated_user_id = getCurrentUserId();
 
     if (payload.code && payload.code !== current.code) {
@@ -134,7 +134,7 @@ export class RoleService extends BaseService<any, IRoleRepository> {
   async update(id: any, data: any) {
     const { context_ids } = data;
     const contextIds = normalizeIdArray(context_ids);
-    const role = await super.update(id, data);
+    const _role = await super.update(id, data);
 
     if (contextIds !== null) {
       await this.roleRepo.syncContexts(id, contextIds);
@@ -196,13 +196,13 @@ export class RoleService extends BaseService<any, IRoleRepository> {
         ? preparedFilters
         : filter;
 
-    const startDb = performance.now();
+    const _startDb = performance.now();
     // Bỏ qua bước COUNT để kiểm tra xem có phải do độ trễ của 2 câu lệnh SQL riêng biệt không
     const result = await this.roleRepo.findAll({
       ...normalized,
       skipCount: true,
     } as any);
-    const endDb = performance.now();
+    const _endDb = performance.now();
 
     tracker?.addCheckpoint('controller_db_query_end');
 

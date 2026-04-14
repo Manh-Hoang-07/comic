@@ -7,7 +7,6 @@ import {
 import {
   IPostCommentRepository,
   POST_COMMENT_REPOSITORY,
-  PostCommentFilter,
 } from '@/modules/post/comment/domain/post-comment.repository';
 import {
   POST_REPOSITORY,

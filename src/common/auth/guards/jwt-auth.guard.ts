@@ -122,7 +122,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     try {
       RequestContext.set('user', null);
       RequestContext.set('userId', null);
-    } catch {}
+    } catch {
+      /* intentionally empty */
+    }
   }
 
   /** Store authenticated user in the shared request context. */
@@ -130,7 +132,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     try {
       RequestContext.set('user', user);
       RequestContext.set('userId', user.id);
-    } catch {}
+    } catch {
+      /* intentionally empty */
+    }
   }
 
   /**

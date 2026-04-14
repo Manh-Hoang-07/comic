@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Param, Query } from '@nestjs/common';
 import { PublicFaqService } from '@/modules/introduction/faq/public/services/faq.service';
-import { prepareQuery } from '@/common/core/utils';
 import { Permission } from '@/common/auth/decorators';
 
 @Controller('faqs')

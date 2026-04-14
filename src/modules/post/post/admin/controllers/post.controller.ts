@@ -14,7 +14,6 @@ import { PostService } from '@/modules/post/post/admin/services/post.service';
 import { CreatePostDto } from '@/modules/post/post/admin/dtos/create-post.dto';
 import { UpdatePostDto } from '@/modules/post/post/admin/dtos/update-post.dto';
 import { GetPostsDto } from '@/modules/post/post/admin/dtos/get-posts.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { CacheInterceptor, CacheEvict } from '@/common/cache';

@@ -132,9 +132,7 @@ export class QueryFailedFilter implements ExceptionFilter {
       );
     }
 
-    // Log the database error (avoid leaking sensitive parameters in production)
-    const isProd = (process.env.NODE_ENV || '').toLowerCase() === 'production';
-
+    // Log the database error
     this.logger.error(
       `Database Error: ${message}`,
       JSON.stringify({

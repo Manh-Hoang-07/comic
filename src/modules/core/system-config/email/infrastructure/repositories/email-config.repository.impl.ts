@@ -23,7 +23,7 @@ export class EmailConfigRepositoryImpl
   }
 
   protected buildWhere(
-    filter: EmailConfigFilter,
+    _filter: EmailConfigFilter,
   ): Prisma.EmailConfigWhereInput {
     const where: Prisma.EmailConfigWhereInput = {};
     return where;

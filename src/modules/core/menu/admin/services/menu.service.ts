@@ -105,7 +105,7 @@ export class MenuService extends BaseService<any, IMenuRepository> {
       status: BasicStatus.active,
     };
 
-    const { rows: allMenus, fromCache } =
+    const { rows: allMenus, fromCache: _fromCache } =
       await this.findAllWithChildrenCachedWithMeta(dbFilter);
     const menus = (allMenus as any[]).filter((m) => m.show_in_menu);
 

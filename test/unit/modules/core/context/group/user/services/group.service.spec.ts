@@ -8,11 +8,7 @@ import { ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository'
 import { USER_REPOSITORY } from '@/modules/core/user/domain/user.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
-import {
-  ForbiddenException,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { ForbiddenException, BadRequestException } from '@nestjs/common';
 
 describe('UserGroupService', () => {
   let service: UserGroupService;

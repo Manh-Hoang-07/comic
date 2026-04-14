@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ContentTemplateController } from './controllers/content-template.controller';
 import { ContentTemplateService } from './services/content-template.service';
 import { ContentTemplateRepositoryModule } from '../content-template.repository.module';

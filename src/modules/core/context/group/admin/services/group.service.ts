@@ -66,7 +66,9 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
       if (cached) {
         try {
           return JSON.parse(cached);
-        } catch {}
+        } catch {
+          // intentionally empty
+        }
       }
 
       const group = await this.groupRepo.findByIdForContext(id);
@@ -80,7 +82,9 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     if (cached) {
       try {
         return JSON.parse(cached);
-      } catch (e) {}
+      } catch (_e) {
+        // intentionally empty
+      }
     }
 
     const entity = await this.groupRepo.findById(id);
@@ -91,7 +95,7 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     return transformed;
   }
 
-  async createGroup(data: any, requesterUserId: any) {
+  async createGroup(data: any, _requesterUserId: any) {
     const context = RequestContext.get<any>('context');
     if (context?.type !== 'system') {
       throw new ForbiddenException(

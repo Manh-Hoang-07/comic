@@ -2,12 +2,8 @@ import {
   IsString,
   IsOptional,
   IsArray,
-  IsNumber,
   IsBoolean,
   IsEnum,
-  IsDateString,
-  IsInt,
-  Min,
   MaxLength,
   ValidateIf,
 } from 'class-validator';

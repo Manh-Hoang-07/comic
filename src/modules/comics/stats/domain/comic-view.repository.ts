@@ -12,4 +12,4 @@ export interface ComicViewFilter {
   group_id?: any;
 }
 
-export interface IComicViewRepository extends IRepository<ComicView> {}
+export type IComicViewRepository = IRepository<ComicView>;

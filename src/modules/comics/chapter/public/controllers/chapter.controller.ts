@@ -5,7 +5,6 @@ import {
   Param,
   Query,
   ValidationPipe,
-  Body,
   Req,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';

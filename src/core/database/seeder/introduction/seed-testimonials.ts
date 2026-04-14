@@ -37,7 +37,7 @@ export class SeedTestimonials {
         data.project_index !== undefined
           ? (projects[data.project_index] ?? null)
           : null;
-      const { project_index, ...rest } = data;
+      const { project_index: _project_index, ...rest } = data;
       await this.prisma.testimonial.create({
         data: {
           ...rest,

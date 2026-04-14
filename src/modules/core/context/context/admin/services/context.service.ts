@@ -69,7 +69,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return this.transform(context);
   }
 
-  async createContext(data: any, requesterUserId: any) {
+  async createContext(data: any, _requesterUserId: any) {
     const context = RequestContext.get<any>('context');
     if (context?.type !== 'system') {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
@@ -107,7 +107,7 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     this.systemContextCache = null;
   }
 
-  async updateContext(id: any, data: any, requesterUserId: any) {
+  async updateContext(id: any, data: any, _requesterUserId: any) {
     const context = RequestContext.get<any>('context');
     if (context?.type !== 'system') {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');

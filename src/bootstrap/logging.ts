@@ -12,7 +12,7 @@ export function setupLogging(environment: string) {
       // Keep console.error for critical errors even in production
       // (console as any).error = noop; // Uncomment if you want to suppress all console outputs
     } catch {
-      // Ignore console modification errors
+      /* intentionally empty */
     }
   }
 }

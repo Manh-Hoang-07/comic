@@ -63,7 +63,7 @@ export class EnumLoader {
             labels,
           });
         }
-      } catch (error) {
+      } catch (_error) {
         // Error loading enum - silently continue
       }
     }

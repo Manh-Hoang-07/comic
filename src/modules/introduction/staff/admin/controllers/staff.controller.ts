@@ -13,7 +13,6 @@ import {
 import { StaffService } from '@/modules/introduction/staff/admin/services/staff.service';
 import { CreateStaffDto } from '@/modules/introduction/staff/admin/dtos/create-staff.dto';
 import { UpdateStaffDto } from '@/modules/introduction/staff/admin/dtos/update-staff.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

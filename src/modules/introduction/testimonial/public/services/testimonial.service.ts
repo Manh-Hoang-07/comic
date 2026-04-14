@@ -56,7 +56,7 @@ export class PublicTestimonialService extends BaseService<
   protected transform(testimonial: any) {
     if (!testimonial) return testimonial;
     const item = super.transform(testimonial) as any;
-    // if (item.project_id) item.project_id = item.project_id; // Cleaned redundant assignment
+    if (item.project_id) item.project_id = toPrimaryKey(item.project_id);
     if (item.project) {
       item.project = {
         id: toPrimaryKey(item.project.id),

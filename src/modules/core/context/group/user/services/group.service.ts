@@ -31,7 +31,7 @@ import {
   IUserRepository,
   USER_REPOSITORY,
 } from '@/modules/core/user/domain/user.repository';
-import { RbacPermission, PERM } from '@/modules/core/rbac/rbac.constants';
+import { PERM } from '@/modules/core/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 import { RequestContext } from '@/common/shared/utils';
 import { RedisUtil } from '@/core/utils/redis.util';

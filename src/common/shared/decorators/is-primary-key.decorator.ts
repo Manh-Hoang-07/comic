@@ -9,7 +9,7 @@ import { getDbIdType } from '@/common/core/utils/primary-key.util';
 
 @ValidatorConstraint({ name: 'isPrimaryKey', async: false })
 export class IsPrimaryKeyConstraint implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  validate(value: any, _args: ValidationArguments) {
     if (value === null || value === undefined) return true; // Let @IsNotEmpty handle this
 
     const idType = getDbIdType();

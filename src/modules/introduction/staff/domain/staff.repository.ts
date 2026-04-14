@@ -9,4 +9,4 @@ export interface StaffFilter {
   department?: string;
 }
 
-export interface IStaffRepository extends IRepository<Staff> {}
+export type IStaffRepository = IRepository<Staff>;

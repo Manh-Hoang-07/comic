@@ -52,7 +52,7 @@ export class PublicGalleryService extends BaseService<any, IGalleryRepository> {
       if (typeof item.images === 'string') {
         try {
           item.images = JSON.parse(item.images);
-        } catch (e) {
+        } catch (_e) {
           item.images = [];
         }
       }

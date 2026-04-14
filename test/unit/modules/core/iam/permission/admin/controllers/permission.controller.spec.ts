@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PermissionController } from '@/modules/core/iam/permission/admin/controllers/permission.controller';
 import { PermissionService } from '@/modules/core/iam/permission/admin/services/permission.service';
-import { Auth } from '@/common/auth/utils';
 
 jest.mock('@/common/auth/utils', () => ({
   Auth: {

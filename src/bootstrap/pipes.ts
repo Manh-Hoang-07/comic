@@ -8,7 +8,7 @@ import { ResponseUtil } from '@/common/shared/utils';
 
 export function applyGlobalPipes(
   app: INestApplication,
-  options: { production: boolean },
+  _options: { production: boolean },
 ) {
   app.useGlobalPipes(
     new ValidationPipe({

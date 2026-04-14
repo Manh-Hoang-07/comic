@@ -8,4 +8,4 @@ export interface ReadingHistoryFilter {
   comic_id?: any;
 }
 
-export interface IReadingHistoryRepository extends IRepository<ReadingHistory> {}
+export type IReadingHistoryRepository = IRepository<ReadingHistory>;

@@ -2,7 +2,6 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
   IAboutRepository,
   ABOUT_REPOSITORY,
-  AboutFilter,
 } from '@/modules/introduction/about/domain/about.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { AboutSectionType } from '@/shared/enums/types/about-section-type.enum';

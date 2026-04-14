@@ -1,4 +1,4 @@
-import { Controller, Get, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Permission } from '@/common/auth/decorators';
 import { RedisUtil } from '@/core/utils/redis.util';

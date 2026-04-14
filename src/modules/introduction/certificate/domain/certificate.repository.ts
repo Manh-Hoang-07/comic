@@ -8,4 +8,4 @@ export interface CertificateFilter {
   status?: string;
 }
 
-export interface ICertificateRepository extends IRepository<Certificate> {}
+export type ICertificateRepository = IRepository<Certificate>;

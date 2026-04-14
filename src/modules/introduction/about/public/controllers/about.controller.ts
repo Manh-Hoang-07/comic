@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { PublicAboutService } from '@/modules/introduction/about/public/services/about.service';
 import { AboutSectionType } from '@/shared/enums/types/about-section-type.enum';
-import { prepareQuery } from '@/common/core/utils';
 import { Permission } from '@/common/auth/decorators';
 
 @Controller('about-sections')

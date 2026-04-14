@@ -1,6 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { toPlain } from '@/common/shared/utils';
-import { createPaginationMeta } from '@/common/core/utils';
 import {
   IReadingHistoryRepository,
   READING_HISTORY_REPOSITORY,

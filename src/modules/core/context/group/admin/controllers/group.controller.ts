@@ -12,7 +12,6 @@ import {
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';
 import { AdminGroupService } from '../services/group.service';
-import { prepareQuery } from '@/common/core/utils';
 import { RequestContext } from '@/common/shared/utils';
 
 /**

@@ -3,7 +3,7 @@ import { RoleService } from '@/modules/core/iam/role/admin/services/role.service
 import { ROLE_REPOSITORY } from '@/modules/core/iam/role/domain/role.repository';
 import { USER_ROLE_ASSIGNMENT_REPOSITORY } from '@/modules/core/rbac/user-role-assignment/domain/user-role-assignment.repository';
 import { RbacCacheService } from '@/modules/core/rbac/services/rbac-cache.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import * as authContextHelper from '@/common/auth/utils/auth-context.helper';
 
 jest.mock('@/common/auth/utils/auth-context.helper');

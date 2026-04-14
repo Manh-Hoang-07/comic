@@ -16,7 +16,6 @@ import { CreateProjectDto } from '@/modules/introduction/project/admin/dtos/crea
 import { UpdateProjectDto } from '@/modules/introduction/project/admin/dtos/update-project.dto';
 import { GetProjectsDto } from '@/modules/introduction/project/admin/dtos/get-projects.dto';
 import { ProjectStatus } from '@/shared/enums/types/project-status.enum';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

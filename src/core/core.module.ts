@@ -10,8 +10,6 @@ import jwtConfig from '@/core/config/jwt.config';
 import mailConfig from '@/core/config/mail.config';
 import storageConfig from '@/core/config/storage.config';
 import googleOAuthConfig from '@/core/config/google-oauth.config';
-import { ModuleRef } from '@nestjs/core';
-
 // Infrastructure modules
 import { PrismaModule } from '@/core/database/prisma/prisma.module';
 import { SeederModule } from '@/core/database/seeder/seeder.module';

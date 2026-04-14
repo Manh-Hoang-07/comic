@@ -12,7 +12,6 @@ import {
 import { ContactService } from '@/modules/marketing/contact/admin/services/contact.service';
 import { CreateContactDto } from '@/modules/marketing/contact/admin/dtos/create-contact.dto';
 import { UpdateContactDto } from '@/modules/marketing/contact/admin/dtos/update-contact.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { AuthService } from '@/common/auth/services';

@@ -23,7 +23,7 @@ export class GeneralConfigRepositoryImpl
   }
 
   protected buildWhere(
-    filter: GeneralConfigFilter,
+    _filter: GeneralConfigFilter,
   ): Prisma.GeneralConfigWhereInput {
     const where: Prisma.GeneralConfigWhereInput = {};
     return where;

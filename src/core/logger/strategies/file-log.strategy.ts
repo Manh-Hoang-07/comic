@@ -43,7 +43,7 @@ export class FileLogStrategy implements ILogStrategy {
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
       }
-    } catch (e) {
+    } catch (_e) {
       // Ignore filesystem errors (e.g. read-only on Vercel)
     }
   }
@@ -52,7 +52,7 @@ export class FileLogStrategy implements ILogStrategy {
     this.ensureDir(path.dirname(filePath));
     try {
       fs.appendFileSync(filePath, line + '\n', { encoding: 'utf8' });
-    } catch (e) {
+    } catch (_e) {
       // Ignore
     }
   }

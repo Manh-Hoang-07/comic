@@ -3,7 +3,6 @@ import { MenuService } from '@/modules/core/menu/admin/services/menu.service';
 import { MENU_REPOSITORY } from '@/modules/core/menu/domain/menu.repository';
 import { RbacService } from '@/modules/core/rbac/services/rbac.service';
 import { RedisUtil } from '@/core/utils/redis.util';
-import { RequestContext } from '@/common/shared/utils';
 import { BadRequestException } from '@nestjs/common';
 import * as menuHelper from '@/modules/core/menu/utils/menu.helper';
 

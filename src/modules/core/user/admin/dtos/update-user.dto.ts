@@ -1,5 +1,4 @@
 import {
-  IsArray,
   IsEmail,
   IsOptional,
   IsString,

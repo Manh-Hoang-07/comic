@@ -51,7 +51,7 @@ export class RbacGuard implements CanActivate {
     const preparePromise = this.rbac.prepare();
     const groupPromise = this.rbacAuthz.resolveActiveGroupScopeForRbac();
 
-    const [_, groupId] = await Promise.all([preparePromise, groupPromise]);
+    const [, groupId] = await Promise.all([preparePromise, groupPromise]);
     tracker?.addCheckpoint('rbac_guard_resolve_group_end');
 
     if (await this.rbac.hasPermissions(userId, groupId, permissions)) {

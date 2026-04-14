@@ -7,11 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import {
-  CACHE_KEY_METADATA,
-  CACHE_TTL_METADATA,
-  CacheOptions,
-} from '@/common/cache/decorators';
+import { CACHE_TTL_METADATA, CacheOptions } from '@/common/cache/decorators';
 import { RedisUtil } from '@/core/utils/redis.util';
 
 @Injectable()
@@ -94,7 +90,7 @@ export class CacheInterceptor implements NestInterceptor {
             JSON.stringify(data),
             cacheOptions.ttl,
           );
-        } catch (error) {
+        } catch (_error) {
           // Log error but don't fail the request
         }
       }),

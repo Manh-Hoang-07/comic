@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { BannerLocationService } from '@/modules/marketing/banner-location/admin/services/banner-location.service';
 import { BANNER_LOCATION_REPOSITORY } from '@/modules/marketing/banner-location/domain/banner-location.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';

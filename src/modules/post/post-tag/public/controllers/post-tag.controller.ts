@@ -3,7 +3,6 @@ import { PostTagService } from '@/modules/post/post-tag/public/services/post-tag
 import { GetTagsDto } from '@/modules/post/post-tag/public/dtos/get-tags.dto';
 import { GetTagDto } from '@/modules/post/post-tag/public/dtos/get-tag.dto';
 import { Permission } from '@/common/auth/decorators';
-import { prepareQuery } from '@/common/core/utils';
 
 @Controller('public/post-tags')
 export class PostTagController {

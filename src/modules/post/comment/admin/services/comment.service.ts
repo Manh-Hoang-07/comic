@@ -5,7 +5,6 @@ import {
   POST_COMMENT_REPOSITORY,
 } from '@/modules/post/comment/domain/post-comment.repository';
 import { BaseContentService } from '@/common/core/services';
-import { IPaginationOptions } from '@/common/core/repositories';
 import {
   POST_COMMENT_TREE_INCLUDE,
   normalizePostCommentFilters,

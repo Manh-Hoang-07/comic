@@ -39,7 +39,7 @@ export class SeedGroups {
       const context = contextMap.get(data.context_code);
       if (!context) continue;
 
-      const { context_code, ...groupData } = data;
+      const { context_code: _context_code, ...groupData } = data;
 
       let group = await this.prisma.group.findFirst({
         where: { code: data.code },

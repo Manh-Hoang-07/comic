@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  Inject,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, ConflictException, Inject } from '@nestjs/common';
 import {
   IBannerLocationRepository,
   BANNER_LOCATION_REPOSITORY,

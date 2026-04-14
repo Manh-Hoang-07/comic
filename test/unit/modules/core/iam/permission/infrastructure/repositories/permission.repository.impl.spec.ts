@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PermissionRepositoryImpl } from '@/modules/core/iam/permission/infrastructure/repositories/permission.repository.impl';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
-import { PrismaRepository } from '@/common/core/repositories';
 
 describe('PermissionRepositoryImpl', () => {
   let repo: PermissionRepositoryImpl;

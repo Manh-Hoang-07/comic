@@ -16,7 +16,6 @@ import { NotificationService } from '@/modules/core/notification/admin/services/
 import { CreateNotificationDto } from '@/modules/core/notification/admin/dtos/create-notification.dto';
 import { UpdateNotificationDto } from '@/modules/core/notification/admin/dtos/update-notification.dto';
 import { GetNotificationsDto } from '@/modules/core/notification/admin/dtos/get-notifications.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 
 @Controller('admin/notifications')

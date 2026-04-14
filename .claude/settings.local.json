@@ -9,7 +9,9 @@
       "Bash(node -e \":*)",
       "Bash(timeout 15 node -e \":*)",
       "Bash(xargs grep:*)",
-      "Bash(grep -v \"^\\\\.\\\\.$\\\\|^\\\\.git\")"
+      "Bash(grep -v \"^\\\\.\\\\.$\\\\|^\\\\.git\")",
+      "Bash(npx eslint:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

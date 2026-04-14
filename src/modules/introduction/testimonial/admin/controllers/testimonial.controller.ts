@@ -14,7 +14,6 @@ import {
 import { TestimonialService } from '@/modules/introduction/testimonial/admin/services/testimonial.service';
 import { CreateTestimonialDto } from '@/modules/introduction/testimonial/admin/dtos/create-testimonial.dto';
 import { UpdateTestimonialDto } from '@/modules/introduction/testimonial/admin/dtos/update-testimonial.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

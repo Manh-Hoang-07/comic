@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
 import { verifyGroupOwnership } from '@/common/shared/utils';
 import {
@@ -43,7 +43,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
 
   async update(id: any, data: any): Promise<Post> {
     const payload = await this.beforeUpdate(id, data);
-    const entity = await this.repository.update(id, payload);
+    const _entity = await this.repository.update(id, payload);
     await this.actionService.syncRelations(id, data);
     return this.getOne(id);
   }
@@ -71,7 +71,7 @@ export class PostService extends BaseContentService<Post, IPostRepository> {
   }
 
   protected override async beforeUpdate(id: any, data: any) {
-    const current = await this.getOne(id); // Includes ownership check
+    const _current = await this.getOne(id); // Includes ownership check
 
     const payload = { ...data };
 

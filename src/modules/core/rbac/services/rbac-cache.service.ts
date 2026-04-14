@@ -46,7 +46,9 @@ export class RbacCacheService implements OnModuleInit {
             this.version = version;
             this.versionLastFetch = Date.now();
           }
-        } catch (e) {}
+        } catch (_e) {
+          // intentionally empty
+        }
       });
     }
   }

@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsEmail,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail, MaxLength } from 'class-validator';
 
 export class CreateContactDto {
   @IsString()

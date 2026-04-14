@@ -53,7 +53,7 @@ export class PublicGeneralConfigService extends BaseService<
       if (typeof item.contact_channels === 'string') {
         try {
           item.contact_channels = JSON.parse(item.contact_channels);
-        } catch (e) {
+        } catch (_e) {
           item.contact_channels = [];
         }
       }

@@ -13,6 +13,7 @@ export function registerShutdown(
       );
       await app.close();
     } catch {
+      /* intentionally empty */
     } finally {
       process.exit(reason === 'SIGTERM' || reason === 'SIGINT' ? 0 : 1);
     }
@@ -20,7 +21,7 @@ export function registerShutdown(
 
   process.on(
     'unhandledRejection',
-    (reason: unknown, promise: Promise<unknown>) => {
+    (reason: unknown, _promise: Promise<unknown>) => {
       logger.error('Unhandled Rejection', undefined, { extra: { reason } });
       shutdown('unhandledRejection', reason as any);
     },

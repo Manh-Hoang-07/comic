@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PublicProjectService } from '@/modules/introduction/project/public/services/project.service';
-import { prepareQuery } from '@/common/core/utils';
 import { Permission } from '@/common/auth/decorators';
 
 @Controller('projects')

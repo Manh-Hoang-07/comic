@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 
 @Module({
   imports: [
@@ -21,7 +22,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         }
 
         if (redisUrl) {
-          const Redis = require('ioredis');
           const globalBullRedisClients: Record<string, any> =
             (global as any)._bullRedisClients || {};
           (global as any)._bullRedisClients = globalBullRedisClients;

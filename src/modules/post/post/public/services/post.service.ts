@@ -3,9 +3,7 @@ import { Post } from '@prisma/client';
 import {
   IPostRepository,
   POST_REPOSITORY,
-  PostFilter,
 } from '@/modules/post/post/domain/post.repository';
-import { GetPostsDto } from '../dtos/get-posts.dto';
 import { BaseContentService } from '@/common/core/services';
 
 @Injectable()

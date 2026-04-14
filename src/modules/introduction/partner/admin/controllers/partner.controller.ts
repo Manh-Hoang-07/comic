@@ -13,7 +13,6 @@ import {
 import { PartnerService } from '@/modules/introduction/partner/admin/services/partner.service';
 import { CreatePartnerDto } from '@/modules/introduction/partner/admin/dtos/create-partner.dto';
 import { UpdatePartnerDto } from '@/modules/introduction/partner/admin/dtos/update-partner.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

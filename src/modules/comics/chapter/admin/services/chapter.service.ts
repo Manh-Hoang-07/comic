@@ -30,7 +30,7 @@ export class ChapterService extends BaseService<Chapter, IChapterRepository> {
   // ── Extended Operations ────────────────────────────────────────────────────
 
   async updatePages(id: any, pages: any[]) {
-    const chapter = await this.getOne(id); // Check exists & ownership
+    await this.getOne(id); // Check exists & ownership
     await this.actionService.syncPages(toPrimaryKey(id), pages);
     return this.getOne(id);
   }

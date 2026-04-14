@@ -8,7 +8,6 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { Auth } from '@/common/auth/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { PermissionService } from '@/modules/core/iam/permission/admin/services/permission.service';

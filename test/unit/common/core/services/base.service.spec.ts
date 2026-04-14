@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { BaseService } from '@/common/core/services/base.service';
 import { IRepository } from '@/common/core/repositories/repository.interface';
 import { NotFoundException } from '@nestjs/common';
@@ -81,7 +80,7 @@ describe('BaseService', () => {
 
       jest.spyOn(RequestContext, 'get').mockReturnValue(123);
 
-      const result = await service.create({ name: 'New Item' });
+      const _result = await service.create({ name: 'New Item' });
 
       expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({

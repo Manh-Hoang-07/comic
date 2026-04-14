@@ -14,7 +14,6 @@ import { BannerService } from '@/modules/marketing/banner/admin/services/banner.
 import { CreateBannerDto } from '@/modules/marketing/banner/admin/dtos/create-banner.dto';
 import { UpdateBannerDto } from '@/modules/marketing/banner/admin/dtos/update-banner.dto';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

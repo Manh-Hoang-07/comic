@@ -12,7 +12,6 @@ import {
 import { PostCategoryService } from '@/modules/post/post-category/admin/services/post-category.service';
 import { CreatePostCategoryDto } from '@/modules/post/post-category/admin/dtos/create-post-category.dto';
 import { UpdatePostCategoryDto } from '@/modules/post/post-category/admin/dtos/update-post-category.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 

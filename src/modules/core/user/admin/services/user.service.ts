@@ -94,7 +94,7 @@ export class UserService extends BaseService<any, IUserRepository> {
 
   protected override transform(user: any) {
     if (!user) return user;
-    const { password, ...u } = user;
+    const { password: _password, ...u } = user;
     return u;
   }
 }

@@ -2,9 +2,7 @@ import {
   ExecutionContext,
   Injectable,
   HttpException,
-  HttpStatus,
   Logger,
-  Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -163,7 +161,7 @@ export class SecurityGuard extends AuthGuard('jwt') {
       if (typeof (result as any)?.toPromise === 'function')
         return await (result as any).toPromise();
       return result as boolean;
-    } catch (err) {
+    } catch (_err) {
       return false;
     }
   }

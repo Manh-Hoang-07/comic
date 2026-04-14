@@ -8,4 +8,4 @@ export interface ContactFilter {
   status?: string;
 }
 
-export interface IContactRepository extends IRepository<Contact> {}
+export type IContactRepository = IRepository<Contact>;

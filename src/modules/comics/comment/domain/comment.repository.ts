@@ -12,4 +12,4 @@ export interface CommentFilter {
   group_id?: any;
 }
 
-export interface ICommentRepository extends IRepository<ComicComment> {}
+export type ICommentRepository = IRepository<ComicComment>;

@@ -1,20 +1,4 @@
 /**
- * Helper to check if a string is a valid UUID.
- */
-function isUUID(id: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    id,
-  );
-}
-
-/**
- * Helper to check if a string is a valid MongoDB ObjectId.
- */
-function isObjectId(id: string): boolean {
-  return /^[0-9a-fA-F]{24}$/.test(id);
-}
-
-/**
  * DB_ID_TYPE controls how primary keys are handled:
  *  - 'bigint'   : numeric string/number → BigInt (default, PostgreSQL autoincrement)
  *  - 'uuid'     : string as-is (PostgreSQL gen_random_uuid / @default(uuid()))

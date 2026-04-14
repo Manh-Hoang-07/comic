@@ -62,7 +62,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         if ('profile' in parsed) {
           return parsed;
         }
-      } catch (e) {
+      } catch (_e) {
         // Skip and reload from DB on parse error
       }
     }

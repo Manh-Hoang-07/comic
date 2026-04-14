@@ -6,7 +6,7 @@ import {
   COMIC_REPOSITORY,
 } from '../../domain/comic.repository';
 import { RequestContext } from '@/common/shared/utils';
-import { PUBLIC_COMIC_STATUSES, ComicStatus } from '@/shared/enums';
+import { PUBLIC_COMIC_STATUSES } from '@/shared/enums';
 import {
   IFollowRepository,
   FOLLOW_REPOSITORY,

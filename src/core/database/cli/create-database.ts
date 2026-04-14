@@ -42,7 +42,7 @@ async function createDatabaseIfNotExists() {
 
     await client.end();
     process.exit(0);
-  } catch (error: any) {
+  } catch (_error: any) {
     process.exit(1);
   }
 }

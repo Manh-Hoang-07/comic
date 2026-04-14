@@ -5,7 +5,6 @@ import {
   IsInt,
   Min,
   IsEnum,
-  IsDateString,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';

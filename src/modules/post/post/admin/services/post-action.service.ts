@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Post } from '@prisma/client';
 import { IPostRepository, POST_REPOSITORY } from '../../domain/post.repository';
 import { normalizeIdArray } from '@/common/core/utils/data.helper';
 import { toPrimaryKey } from '@/common/core/utils/primary-key.util';

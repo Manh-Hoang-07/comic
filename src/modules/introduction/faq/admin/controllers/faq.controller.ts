@@ -13,7 +13,6 @@ import {
 import { FaqService } from '@/modules/introduction/faq/admin/services/faq.service';
 import { CreateFaqDto } from '@/modules/introduction/faq/admin/dtos/create-faq.dto';
 import { UpdateFaqDto } from '@/modules/introduction/faq/admin/dtos/update-faq.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

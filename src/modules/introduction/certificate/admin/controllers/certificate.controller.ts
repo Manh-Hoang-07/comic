@@ -13,7 +13,6 @@ import {
 import { CertificateService } from '@/modules/introduction/certificate/admin/services/certificate.service';
 import { CreateCertificateDto } from '@/modules/introduction/certificate/admin/dtos/create-certificate.dto';
 import { UpdateCertificateDto } from '@/modules/introduction/certificate/admin/dtos/update-certificate.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

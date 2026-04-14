@@ -2,7 +2,6 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
   IStaffRepository,
   STAFF_REPOSITORY,
-  StaffFilter,
 } from '@/modules/introduction/staff/domain/staff.repository';
 import { BaseContentService } from '@/common/core/services';
 import { Staff } from '@prisma/client';

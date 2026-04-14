@@ -31,7 +31,7 @@ export class SeedBanners {
       });
       if (existingBanner) continue;
 
-      const { location_code, ...rest } = bannerData;
+      const { location_code: _location_code, ...rest } = bannerData;
       await this.prisma.banner.create({
         data: {
           ...rest,

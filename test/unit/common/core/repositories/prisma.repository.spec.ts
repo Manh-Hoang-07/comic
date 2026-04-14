@@ -1,8 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  PrismaRepository,
-  PrismaDelegate,
-} from '@/common/core/repositories/prisma.repository';
+import { PrismaRepository } from '@/common/core/repositories/prisma.repository';
 
 // Mock Delegate
 const mockDelegate: any = {

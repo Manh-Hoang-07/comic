@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { PublicTestimonialService } from '@/modules/introduction/testimonial/public/services/testimonial.service';
-import { prepareQuery } from '@/common/core/utils';
 import { Permission } from '@/common/auth/decorators';
 
 @Controller('testimonials')

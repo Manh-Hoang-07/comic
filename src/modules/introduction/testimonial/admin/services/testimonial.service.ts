@@ -2,7 +2,6 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import {
   ITestimonialRepository,
   TESTIMONIAL_REPOSITORY,
-  TestimonialFilter,
 } from '@/modules/introduction/testimonial/domain/testimonial.repository';
 import {
   IProjectRepository,

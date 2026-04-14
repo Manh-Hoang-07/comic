@@ -65,7 +65,7 @@ export function verifyContextOwnership(entity: GroupOwnedEntity): void {
  * Nếu là system context (quản trị toàn cục) thì không ép lọc theo group_id (trả về {})
  * Ngược lại, ép chặt vào groupId hiện hành trả về { group_id: groupId }
  */
-export function getGroupFilter(currentFilter?: any): {
+export function getGroupFilter(_currentFilter?: any): {
   group_id?: any;
   groupId?: any;
 } {

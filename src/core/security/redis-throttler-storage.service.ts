@@ -93,7 +93,7 @@ export class RedisThrottlerStorageService implements ThrottlerStorage {
         isBlocked: false,
         timeToBlockExpire: 0,
       };
-    } catch (error) {
+    } catch (_error) {
       // On error, allow the request (fail open)
       return {
         totalHits: 0,

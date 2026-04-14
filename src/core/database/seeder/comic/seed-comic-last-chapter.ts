@@ -7,39 +7,35 @@ export class SeedComicLastChapter {
   constructor(private readonly prisma: PrismaService) {}
 
   async seed(): Promise<void> {
-    try {
-      const comics = await this.prisma.comic.findMany({
-        where: {},
-        select: { id: true, title: true },
-        orderBy: { id: 'asc' },
-      });
+    const comics = await this.prisma.comic.findMany({
+      where: {},
+      select: { id: true, title: true },
+      orderBy: { id: 'asc' },
+    });
 
-      if (comics.length === 0) return;
+    if (comics.length === 0) return;
 
-      for (const comic of comics) {
-        try {
-          const lastChapter = await this.prisma.chapter.findFirst({
-            where: {
-              comic_id: comic.id,
-              status: { in: PUBLIC_CHAPTER_STATUSES },
-            },
-            orderBy: { created_at: 'desc' },
-            select: { id: true, created_at: true },
-          });
+    for (const comic of comics) {
+      try {
+        const lastChapter = await this.prisma.chapter.findFirst({
+          where: {
+            comic_id: comic.id,
+            status: { in: PUBLIC_CHAPTER_STATUSES },
+          },
+          orderBy: { created_at: 'desc' },
+          select: { id: true, created_at: true },
+        });
 
-          await this.prisma.comic.update({
-            where: { id: comic.id },
-            data: {
-              last_chapter_id: lastChapter?.id || null,
-              last_chapter_updated_at: lastChapter?.created_at || null,
-            },
-          });
-        } catch (error) {
-          // Ignore error for individual comic
-        }
+        await this.prisma.comic.update({
+          where: { id: comic.id },
+          data: {
+            last_chapter_id: lastChapter?.id || null,
+            last_chapter_updated_at: lastChapter?.created_at || null,
+          },
+        });
+      } catch (_error) {
+        // Ignore error for individual comic
       }
-    } catch (error) {
-      throw error;
     }
   }
 }

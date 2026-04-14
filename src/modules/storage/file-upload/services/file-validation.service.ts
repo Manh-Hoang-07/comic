@@ -159,7 +159,7 @@ export class FileValidationService {
         Object.entries(custom).forEach(([key, value]) => {
           this.allowedFileTypes.set(key, value as FileTypeConfig);
         });
-      } catch (e) {
+      } catch (_e) {
         // Invalid config, use defaults
       }
     }
@@ -242,7 +242,7 @@ export class FileValidationService {
   private sanitizeFilename(filename: string): string {
     // Remove path separators and dangerous characters
     let sanitized = filename
-      .replace(/[\/\\]/g, '') // Remove path separators
+      .replace(/[/\\]/g, '') // Remove path separators
       .replace(/\.\./g, '') // Remove parent directory references
       .replace(/[<>:"|?*]/g, '') // Remove Windows forbidden characters
       .trim();

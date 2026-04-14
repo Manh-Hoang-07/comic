@@ -4,14 +4,12 @@ import {
   Query,
   Param,
   ValidationPipe,
-  NotFoundException,
   UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from '@/modules/post/post/public/services/post.service';
 import { GetPostsDto } from '@/modules/post/post/public/dtos/get-posts.dto';
 import { GetPostDto } from '@/modules/post/post/public/dtos/get-post.dto';
 import { Permission } from '@/common/auth/decorators';
-import { prepareQuery } from '@/common/core/utils';
 import { CacheInterceptor, Cacheable } from '@/common/cache';
 
 @Controller('public/posts')

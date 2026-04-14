@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Comic } from '@prisma/client';
 import { BaseService } from '@/common/core/services';
 import {
@@ -71,7 +71,7 @@ export class ComicService extends BaseService<Comic, IComicRepository> {
     id: any,
     data: UpdateComicDto,
   ): Promise<any> {
-    const entity = await this.getOne(id); // Already includes ownership check
+    await this.getOne(id); // Already includes ownership check
 
     const payload = { ...data };
 

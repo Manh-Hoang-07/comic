@@ -19,7 +19,7 @@ export class ParseIdPipe implements PipeTransform<
 
     try {
       return BigInt(value);
-    } catch (error) {
+    } catch (_error) {
       throw new BadRequestException(
         'Validation failed (BigInt string is expected for ID)',
       );

@@ -9,4 +9,4 @@ export interface BookmarkFilter {
   chapter_id?: any;
 }
 
-export interface IBookmarkRepository extends IRepository<Bookmark> {}
+export type IBookmarkRepository = IRepository<Bookmark>;

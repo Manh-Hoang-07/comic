@@ -1,7 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Auth } from '@/common/auth/utils/auth.util';
 import { RequestContext } from '@/common/shared/utils';
-import { AuthUser } from '@/common/auth/interfaces';
 
 jest.mock('@/common/shared/utils', () => ({
   RequestContext: {

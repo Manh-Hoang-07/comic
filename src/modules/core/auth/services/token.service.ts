@@ -121,7 +121,9 @@ export class TokenService {
         const key = this.buildRefreshKey(userId, refreshJti);
         await this.redis.set(key, '1', this.getRefreshTtlSec());
       }
-    } catch {}
+    } catch {
+      // intentionally empty
+    }
     return { accessToken, refreshToken, accessTtlSec } as const;
   }
 

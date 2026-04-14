@@ -1,4 +1,4 @@
-import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { CountryService } from '../services/country.service';
 import { Permission } from '@/common/auth/decorators/rbac.decorators';
 

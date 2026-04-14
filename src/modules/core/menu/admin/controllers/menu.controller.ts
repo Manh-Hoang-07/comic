@@ -15,7 +15,6 @@ import { MenuService } from '@/modules/core/menu/admin/services/menu.service';
 import { CreateMenuDto } from '@/modules/core/menu/admin/dtos/create-menu.dto';
 import { UpdateMenuDto } from '@/modules/core/menu/admin/dtos/update-menu.dto';
 import { QueryMenuDto } from '@/modules/core/menu/admin/dtos/query-menu.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 
 @Controller('admin/menus')

@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsNumber,
   IsArray,
   IsEnum,
   MaxLength,

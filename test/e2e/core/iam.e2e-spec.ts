@@ -111,7 +111,7 @@ describe('IAM User Admin (Functional)', () => {
         },
       });
 
-      const response = await request(helper.getApp().getHttpServer())
+      const _response = await request(helper.getApp().getHttpServer())
         .put(`/api/admin/users/${user?.id}/roles`)
         .set('Authorization', `Bearer ${adminToken}`)
         .set('X-Group-Id', group?.id.toString() || '') // Custom header for GroupInterceptor

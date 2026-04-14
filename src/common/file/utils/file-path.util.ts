@@ -102,7 +102,7 @@ export function transformFilePaths(
             const parsed = JSON.parse(value);
             transformed[key] = transformFilePaths(parsed, baseUrl, pathFields);
             continue;
-          } catch (e) {
+          } catch (_e) {
             // Not valid JSON, treat as regular path string
           }
         }

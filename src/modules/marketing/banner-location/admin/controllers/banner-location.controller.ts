@@ -14,7 +14,6 @@ import { BannerLocationService } from '@/modules/marketing/banner-location/admin
 import { CreateBannerLocationDto } from '@/modules/marketing/banner-location/admin/dtos/create-banner-location.dto';
 import { UpdateBannerLocationDto } from '@/modules/marketing/banner-location/admin/dtos/update-banner-location.dto';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 import { JwtAuthGuard } from '@/common/auth/guards';

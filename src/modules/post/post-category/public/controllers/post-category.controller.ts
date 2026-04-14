@@ -3,7 +3,6 @@ import { PostCategoryService } from '@/modules/post/post-category/public/service
 import { GetCategoriesDto } from '@/modules/post/post-category/public/dtos/get-categories.dto';
 import { GetCategoryDto } from '@/modules/post/post-category/public/dtos/get-category.dto';
 import { Permission } from '@/common/auth/decorators';
-import { prepareQuery } from '@/common/core/utils';
 
 @Controller('public/post-categories')
 export class PostCategoryController {

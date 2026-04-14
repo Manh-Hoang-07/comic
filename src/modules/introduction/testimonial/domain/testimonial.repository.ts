@@ -9,4 +9,4 @@ export interface TestimonialFilter {
   projectId?: any;
 }
 
-export interface ITestimonialRepository extends IRepository<Testimonial> {}
+export type ITestimonialRepository = IRepository<Testimonial>;

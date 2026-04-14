@@ -2,7 +2,6 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
   IProjectRepository,
   PROJECT_REPOSITORY,
-  ProjectFilter,
 } from '@/modules/introduction/project/domain/project.repository';
 import { ProjectStatus } from '@/shared/enums/types/project-status.enum';
 import { BaseContentService } from '@/common/core/services';
@@ -59,7 +58,7 @@ export class PublicProjectService extends BaseContentService<
       if (typeof item.images === 'string') {
         try {
           item.images = JSON.parse(item.images);
-        } catch (e) {
+        } catch (_e) {
           item.images = [];
         }
       }

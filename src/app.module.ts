@@ -16,7 +16,7 @@ import {
   PublicHttpCacheInterceptor,
 } from '@/common/http/interceptors';
 import { FilePathInterceptor } from '@/common/file/interceptors';
-import { JwtAuthGuard, RbacGuard, SecurityGuard } from '@/common/auth/guards';
+import { SecurityGuard } from '@/common/auth/guards';
 import {
   RequestContextMiddleware,
   GroupContextMiddleware,

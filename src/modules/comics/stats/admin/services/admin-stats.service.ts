@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import {
   IComicRepository,
   COMIC_REPOSITORY,
@@ -12,7 +11,6 @@ import {
   IComicViewRepository,
   COMIC_VIEW_REPOSITORY,
 } from '../../domain/comic-view.repository';
-import { RequestContext } from '@/common/shared/utils';
 import { getGroupFilter } from '@/common/shared/utils/group-ownership.util';
 import { PrismaService } from '@/core/database/prisma/prisma.service';
 

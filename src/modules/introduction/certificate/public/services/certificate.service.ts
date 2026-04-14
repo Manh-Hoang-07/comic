@@ -3,7 +3,6 @@ import { Certificate } from '@prisma/client';
 import {
   ICertificateRepository,
   CERTIFICATE_REPOSITORY,
-  CertificateFilter,
 } from '@/modules/introduction/certificate/domain/certificate.repository';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { CertificateType } from '@/shared/enums/types/certificate-type.enum';

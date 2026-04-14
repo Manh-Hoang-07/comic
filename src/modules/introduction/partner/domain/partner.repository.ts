@@ -9,4 +9,4 @@ export interface PartnerFilter {
   type?: string;
 }
 
-export interface IPartnerRepository extends IRepository<Partner> {}
+export type IPartnerRepository = IRepository<Partner>;

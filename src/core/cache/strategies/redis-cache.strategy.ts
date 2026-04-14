@@ -172,8 +172,8 @@ export class RedisCacheStrategy implements ICacheStrategy {
   }
 
   async subscribe(
-    channel: string,
-    callback: (message: string) => void,
+    _channel: string,
+    _callback: (message: string) => void,
   ): Promise<void> {
     // subClient removed to optimize connection usage in serverless.
     // Pub/Sub listening is not supported in this strategy for now.

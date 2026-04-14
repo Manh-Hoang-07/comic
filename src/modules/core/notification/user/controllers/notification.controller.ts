@@ -14,7 +14,6 @@ import { Permission } from '@/common/auth/decorators';
 import { NotificationService } from '@/modules/core/notification/admin/services/notification.service';
 import { GetNotificationsDto } from '@/modules/core/notification/user/dtos/get-notifications.dto';
 import { AuthUser } from '@/common/auth/interfaces';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 

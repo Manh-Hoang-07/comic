@@ -12,7 +12,6 @@ import {
 import { PostTagService } from '@/modules/post/post-tag/admin/services/post-tag.service';
 import { CreatePostTagDto } from '@/modules/post/post-tag/admin/dtos/create-post-tag.dto';
 import { UpdatePostTagDto } from '@/modules/post/post-tag/admin/dtos/update-post-tag.dto';
-import { prepareQuery } from '@/common/core/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 

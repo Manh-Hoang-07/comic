@@ -2,7 +2,6 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
   IContactRepository,
   CONTACT_REPOSITORY,
-  ContactFilter,
 } from '@/modules/marketing/contact/domain/contact.repository';
 import { ContactStatus } from '@/shared/enums/types/contact-status.enum';
 import { CreateContactDto } from '@/modules/marketing/contact/public/dtos/create-contact.dto';

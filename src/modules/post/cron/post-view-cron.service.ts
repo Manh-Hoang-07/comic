@@ -62,7 +62,7 @@ export class PostViewCronService {
             postIdStr, // Keep string for hdel
             count: parseInt(countStr, 10),
           };
-        } catch (e) {
+        } catch (_e) {
           return null;
         }
       })

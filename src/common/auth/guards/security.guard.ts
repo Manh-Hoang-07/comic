@@ -55,6 +55,11 @@ export class SecurityGuard extends AuthGuard('jwt') {
       if (token) {
         // Optional login for public routes (e.g., to record user_id)
         await this.handlePassportAuth(context).catch(() => true);
+        // Re-sync RequestContext (passport callback may lose AsyncLocalStorage context)
+        if (request.user) {
+          RequestContext.set('user', request.user);
+          RequestContext.set('userId', request.user.id ?? null);
+        }
       }
       tracker?.addCheckpoint('security_guard_end');
       return true;
@@ -66,6 +71,8 @@ export class SecurityGuard extends AuthGuard('jwt') {
     );
 
     // Parallelize all checks to minimize latency
+    this.logger.warn(`[JWT-DEBUG] url=${request.url} token=${token ? 'YES' : 'NO'} perms=${JSON.stringify(permissions)}`);
+
     const authPromise = this.handlePassportAuth(context);
     const blacklistPromise =
       token && this.tokenBlacklist
@@ -86,14 +93,25 @@ export class SecurityGuard extends AuthGuard('jwt') {
       preparePromise,
     ]);
 
+    // Re-sync RequestContext after passport callback (passport may run
+    // handleRequest outside the AsyncLocalStorage context, so the
+    // RequestContext.set() inside handleRequest/setAuthContext can be lost).
+    if (request.user) {
+      RequestContext.set('user', request.user);
+      RequestContext.set('userId', request.user.id ?? null);
+    }
+
+    this.logger.warn(`[JWT-DEBUG] isAuthOk=${isAuthOk} isBlocked=${isBlocked} request.user=${request.user ? 'id=' + request.user.id : 'NULL'}`);
     tracker?.addCheckpoint('security_auth_parallel_end');
 
     // 4. Validate Results
     if (!isAuthOk) {
+      this.logger.warn(`[JWT-DEBUG] REJECTED: isAuthOk=false for ${request.url}`);
       throw new HttpException(ResponseUtil.unauthorized('Auth required'), 401);
     }
 
     if (isBlocked) {
+      this.logger.warn(`[JWT-DEBUG] REJECTED: token blacklisted for ${request.url}`);
       this.clearAuth(request);
       throw new HttpException(
         ResponseUtil.unauthorized('Token is blacklisted'),

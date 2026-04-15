@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  Optional,
   Patch,
   Req,
   UnauthorizedException,
@@ -12,7 +11,6 @@ import type { Request } from 'express';
 import { ProfileService } from '../services/profile.service';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
 import { UserChangePasswordDto } from '../dtos/user-change-password.dto';
-import { Auth } from '@/common/auth/utils';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
 
@@ -27,20 +25,20 @@ export class ProfileController {
   @ApiOperation({ summary: 'Lấy thông tin cá nhân' })
   @Permission('user')
   @Get()
-  async getMe(@Optional() @Req() req?: Request) {
-    const userId = Auth.id();
+  async getMe(@Req() req: Request) {
+    const userId = (req.user as any)?.id;
     if (!userId) {
       throw new UnauthorizedException('Auth required');
     }
-    return this.service.getProfile(userId, req?.user);
+    return this.service.getProfile(userId, req.user);
   }
 
   @ApiOperation({ summary: 'Cập nhật thông tin cá nhân' })
   @Permission('user')
   @LogRequest({ fileBaseName: 'user_update_profile' })
   @Patch()
-  async updateMe(@Body() dto: UpdateProfileDto) {
-    const userId = Auth.id();
+  async updateMe(@Req() req: Request, @Body() dto: UpdateProfileDto) {
+    const userId = (req.user as any)?.id;
     return this.service.updateProfile(userId, dto);
   }
 
@@ -48,8 +46,8 @@ export class ProfileController {
   @Permission('user')
   @LogRequest({ fileBaseName: 'user_change_password' })
   @Patch('change-password')
-  async changePassword(@Body() dto: UserChangePasswordDto) {
-    const userId = Auth.id();
+  async changePassword(@Req() req: Request, @Body() dto: UserChangePasswordDto) {
+    const userId = (req.user as any)?.id;
     return this.service.changePassword(userId, dto.old_password, dto.password);
   }
 }

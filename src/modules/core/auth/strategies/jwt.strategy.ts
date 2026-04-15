@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -45,14 +45,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  private readonly log = new Logger('JwtStrategy');
+
   async validate(payload: JwtAccessPayload) {
+    this.log.warn(`[JWT-DEBUG] validate called, sub=${payload.sub}, email=${payload.email}`);
     const tracker = RequestContext.get<CheckpointTracker>('tracker');
     tracker?.addCheckpoint('jwt_strategy_validate_enter');
 
     const userId = payload.sub;
     const cacheKey = `user:profile:${userId}`;
 
-    const cachedUser = await this.redis.get(cacheKey);
+    let cachedUser: string | null = null;
+    try {
+      cachedUser = await this.redis.get(cacheKey);
+      this.log.warn(`[JWT-DEBUG] redis: ${cachedUser ? 'HIT' : 'MISS'}`);
+    } catch (redisErr: any) {
+      this.log.warn(`[JWT-DEBUG] redis ERROR: ${redisErr?.message}`);
+    }
     tracker?.addCheckpoint('jwt_strategy_cache_read_end');
 
     if (cachedUser) {
@@ -60,15 +69,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         const parsed = JSON.parse(cachedUser) as Record<string, unknown>;
         // Cache cũ (không có profile): coi như miss → load lại DB + ghi cache đầy đủ
         if ('profile' in parsed) {
+          this.log.warn(`[JWT-DEBUG] returning cached user, id=${parsed.id}`);
           return parsed;
         }
+        this.log.warn('[JWT-DEBUG] cache HIT but no profile key, falling to DB');
       } catch (_e) {
-        // Skip and reload from DB on parse error
+        this.log.warn('[JWT-DEBUG] cache parse error');
       }
     }
 
     const user = await this.userRepo.findById(userId);
     tracker?.addCheckpoint('jwt_strategy_db_read_end');
+    this.log.warn(`[JWT-DEBUG] DB lookup: ${user ? 'FOUND' : 'NOT FOUND'}`);
 
     if (!user) {
       return null;

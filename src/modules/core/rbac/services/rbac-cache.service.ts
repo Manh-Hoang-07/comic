@@ -6,6 +6,7 @@ import {
   decodeAssignedCodes,
   encodeAssignedCodes,
 } from '@/modules/core/rbac/services/rbac-assigned-codes.codec';
+import { NullableRbacId, RbacId } from '@/modules/core/rbac/rbac.types';
 
 /** Giá trị Redis cũ (bitmap) — gặp thì xóa key và refresh dạng danh sách mã. */
 const LEGACY_ASSIGNED_BITMAP_PREFIX = 'b64:v1:' as const;
@@ -75,8 +76,8 @@ export class RbacCacheService implements OnModuleInit {
   }
 
   private async buildCacheKey(
-    userId: any,
-    groupId: any | null,
+    userId: RbacId,
+    groupId: NullableRbacId,
   ): Promise<string> {
     const v = await this.ensureVersion();
     return groupId === null
@@ -88,8 +89,8 @@ export class RbacCacheService implements OnModuleInit {
    * `cached=true`: key tồn tại trên Redis (kể cả mảng rỗng). `cached=false`: miss.
    */
   async getPermissions(
-    userId: any,
-    groupId: any | null,
+    userId: RbacId,
+    groupId: NullableRbacId,
   ): Promise<{ codes: string[]; cached: boolean }> {
     const key = await this.buildCacheKey(userId, groupId);
 
@@ -116,7 +117,7 @@ export class RbacCacheService implements OnModuleInit {
     return { codes: [], cached: false };
   }
 
-  async setPermissions(userId: any, groupId: any | null, codes: string[]) {
+  async setPermissions(userId: RbacId, groupId: NullableRbacId, codes: string[]) {
     const key = await this.buildCacheKey(userId, groupId);
 
     if (!this.redis.isEnabled()) {
@@ -133,12 +134,12 @@ export class RbacCacheService implements OnModuleInit {
     );
   }
 
-  async clearUserCache(userId: any, groupId: any | null) {
+  async clearUserCache(userId: RbacId, groupId: NullableRbacId) {
     const key = await this.buildCacheKey(userId, groupId);
     await this.redis.del(key);
   }
 
-  async clearAllUserCaches(userId: any) {
+  async clearAllUserCaches(userId: RbacId) {
     if (!this.redis.isEnabled()) return;
     const keys = await this.redis.getTrackedKeys(Number(userId));
     for (const k of keys) {
@@ -151,7 +152,7 @@ export class RbacCacheService implements OnModuleInit {
     );
   }
 
-  async isCached(userId: any, groupId: any | null): Promise<boolean> {
+  async isCached(userId: RbacId, groupId: NullableRbacId): Promise<boolean> {
     if (!this.redis.isEnabled()) return false;
     const key = await this.buildCacheKey(userId, groupId);
     return await this.redis.exists(key);

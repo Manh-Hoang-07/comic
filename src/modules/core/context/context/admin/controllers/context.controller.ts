@@ -10,7 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { AdminContextService } from '../services/context.service';
 
 /**
@@ -19,10 +19,7 @@ import { AdminContextService } from '../services/context.service';
  */
 @Controller('admin/contexts')
 export class AdminContextController {
-  constructor(
-    private readonly contextService: AdminContextService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly contextService: AdminContextService) {}
 
   /**
    * Tạo context mới (chỉ system admin)
@@ -39,7 +36,7 @@ export class AdminContextController {
       status?: string;
     },
   ) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }
@@ -84,7 +81,7 @@ export class AdminContextController {
     @Param('id') id: any,
     @Body() body: Partial<{ name: string; code: string; status: string }>,
   ) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }
@@ -98,7 +95,7 @@ export class AdminContextController {
   @Permission('group.manage')
   @Delete(':id')
   async deleteContext(@Param('id') id: any) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }

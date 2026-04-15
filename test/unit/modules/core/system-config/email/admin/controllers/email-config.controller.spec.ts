@@ -1,21 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EmailConfigController } from '@/modules/core/system-config/email/admin/controllers/email-config.controller';
 import { EmailConfigService } from '@/modules/core/system-config/email/admin/services/email-config.service';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 
 describe('EmailConfigController', () => {
-  let auth: any;
   let controller: EmailConfigController;
   let service: any;
 
   beforeEach(async () => {
-    auth = { id: jest.fn().mockReturnValue(1) };
+    jest.spyOn(Auth, 'id').mockReturnValue(1);
     service = { getConfig: jest.fn(), updateConfig: jest.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [EmailConfigController],
       providers: [
         { provide: EmailConfigService, useValue: service },
-        { provide: AuthService, useValue: auth },
       ],
     }).compile();
     controller = module.get<EmailConfigController>(EmailConfigController);

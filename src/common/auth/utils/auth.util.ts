@@ -1,4 +1,5 @@
 import { ExecutionContext } from '@nestjs/common';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 import {
   getCurrentUser,
   getCurrentUserId,
@@ -18,7 +19,7 @@ export class Auth {
   }
 
   /** Get current user ID. */
-  static id(context?: ExecutionContext): any | null {
+  static id(context?: ExecutionContext): PrimaryKey | null {
     return getCurrentUserId(context);
   }
 
@@ -50,8 +51,8 @@ export class Auth {
     return getUserProperty<string>('status', context);
   }
 
-  /** Generic getter for any user field. */
-  static get<T = any>(key: string, context?: ExecutionContext): T | null {
+  /** Generic getter for user field. */
+  static get<T = unknown>(key: string, context?: ExecutionContext): T | null {
     return getUserProperty<T>(key, context);
   }
 }

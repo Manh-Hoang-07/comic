@@ -5,7 +5,7 @@
 export function extractBearerToken(
   authHeader: string | undefined,
 ): string | null {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) return null;
   const token = authHeader.substring(7).trim();
   return token.length > 0 ? token : null;
 }

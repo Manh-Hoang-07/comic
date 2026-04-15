@@ -2,6 +2,7 @@ import {
   ExecutionContext,
   Injectable,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,6 +21,8 @@ import { Auth } from '@/common/auth/utils';
 
 @Injectable()
 export class SecurityGuard extends AuthGuard('jwt') {
+  private readonly logger = new Logger(SecurityGuard.name);
+
   constructor(
     private readonly reflector: Reflector,
     private readonly tokenBlacklist: TokenBlacklistService,
@@ -52,7 +55,7 @@ export class SecurityGuard extends AuthGuard('jwt') {
     if (permissions.includes(PUBLIC_PERMISSION)) {
       if (token) {
         // Optional login for public routes (e.g., to record user_id)
-        await this.handlePassportAuth(context).catch(() => true);
+        await this.handlePassportAuth(context).catch(() => null);
         // Re-sync RequestContext (passport callback may lose AsyncLocalStorage context)
         if (request.user) {
           RequestContext.set('user', request.user);
@@ -171,7 +174,14 @@ export class SecurityGuard extends AuthGuard('jwt') {
       if (typeof (result as any)?.toPromise === 'function')
         return await (result as any).toPromise();
       return result as boolean;
-    } catch (_err) {
+    } catch (err) {
+      if (
+        !(err instanceof HttpException) &&
+        !(err as any)?.status &&
+        !(err as any)?.statusCode
+      ) {
+        this.logger.warn(`Passport auth unexpected error: ${(err as Error)?.message}`);
+      }
       return false;
     }
   }

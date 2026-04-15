@@ -10,16 +10,12 @@ import { GeneralConfigService } from '../services/general-config.service';
 import { UpdateGeneralConfigDto } from '../dtos/update-general-config.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
 import { CacheInterceptor, CacheEvict } from '@/common/cache';
 
 @Controller('admin/system-configs/general')
 @UseInterceptors(CacheInterceptor)
 export class GeneralConfigController {
-  constructor(
-    private readonly generalConfigService: GeneralConfigService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly generalConfigService: GeneralConfigService) {}
 
   /**
    * Lấy cấu hình chung

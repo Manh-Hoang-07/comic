@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { UserGroupService } from '../services/group.service';
 
 /**
@@ -9,10 +9,7 @@ import { UserGroupService } from '../services/group.service';
  */
 @Controller('user/groups')
 export class UserGroupController {
-  constructor(
-    private readonly groupService: UserGroupService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly groupService: UserGroupService) {}
 
   /**
    * ✅ MỚI: Lấy danh sách groups mà user hiện tại là member, kèm roles trong mỗi group
@@ -21,7 +18,7 @@ export class UserGroupController {
   @Permission('public')
   @Get()
   async getMyGroups() {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       return [];
     }

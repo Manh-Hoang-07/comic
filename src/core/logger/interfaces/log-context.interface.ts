@@ -1,7 +1,9 @@
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
+
 export interface LogContext {
   context?: string;
   trace?: string;
-  userId?: number | null;
+  userId?: PrimaryKey | null;
   username?: string | null;
   requestId?: string;
   method?: string;

@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GroupMemberController } from '@/modules/core/context/group/user/controllers/group-member.controller';
 import { UserGroupService } from '@/modules/core/context/group/user/services/group.service';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { ForbiddenException } from '@nestjs/common';
 
 describe('GroupMemberController', () => {
   let controller: GroupMemberController;
   let service: any;
-  let auth: any;
 
   beforeEach(async () => {
     service = {
@@ -16,13 +15,12 @@ describe('GroupMemberController', () => {
       removeMember: jest.fn(),
       getGroupMembers: jest.fn(),
     };
-    auth = { id: jest.fn().mockReturnValue(1) };
+    jest.spyOn(Auth, 'id').mockReturnValue(1);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [GroupMemberController],
       providers: [
         { provide: UserGroupService, useValue: service },
-        { provide: AuthService, useValue: auth },
       ],
     }).compile();
 
@@ -35,7 +33,7 @@ describe('GroupMemberController', () => {
 
   describe('addMember', () => {
     it('should throw ForbiddenException if no userId', async () => {
-      auth.id.mockReturnValue(null);
+      jest.spyOn(Auth, 'id').mockReturnValue(null);
       await expect(
         controller.addMember(10, { user_id: 5, role_ids: [] }),
       ).rejects.toThrow(ForbiddenException);

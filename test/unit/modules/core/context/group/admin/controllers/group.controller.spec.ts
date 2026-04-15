@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminGroupController } from '@/modules/core/context/group/admin/controllers/group.controller';
 import { AdminGroupService } from '@/modules/core/context/group/admin/services/group.service';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
+import { RequestContext } from '@/common/shared/utils';
 import { ForbiddenException } from '@nestjs/common';
 
 describe('AdminGroupController', () => {
   let controller: AdminGroupController;
   let service: any;
-  let auth: any;
 
   beforeEach(async () => {
     service = {
@@ -18,13 +18,12 @@ describe('AdminGroupController', () => {
       update: jest.fn(),
       deleteGroup: jest.fn(),
     };
-    auth = { id: jest.fn().mockReturnValue(1) };
+    jest.spyOn(Auth, 'id').mockReturnValue(1);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminGroupController],
       providers: [
         { provide: AdminGroupService, useValue: service },
-        { provide: AuthService, useValue: auth },
       ],
     }).compile();
 
@@ -37,7 +36,7 @@ describe('AdminGroupController', () => {
 
   describe('createGroup', () => {
     it('should throw ForbiddenException if no userId', async () => {
-      auth.id.mockReturnValue(null);
+      jest.spyOn(Auth, 'id').mockReturnValue(null);
       await expect(
         controller.createGroup({
           type: 'T',
@@ -68,6 +67,10 @@ describe('AdminGroupController', () => {
 
     it('should call update if system admin', async () => {
       service.isSystemAdmin.mockResolvedValue(true);
+      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
+        if (key === 'context') return { type: 'system' };
+        return undefined;
+      });
       await controller.updateGroup(10, { name: 'New' });
       expect(service.update).toHaveBeenCalledWith(10, { name: 'New' });
     });

@@ -1,23 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GeneralConfigController } from '@/modules/core/system-config/general/admin/controllers/general-config.controller';
 import { GeneralConfigService } from '@/modules/core/system-config/general/admin/services/general-config.service';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { RedisUtil } from '@/core/utils/redis.util';
 import { Reflector } from '@nestjs/core';
 
 describe('GeneralConfigController', () => {
-  let auth: any;
   let controller: GeneralConfigController;
   let service: any;
 
   beforeEach(async () => {
-    auth = { id: jest.fn().mockReturnValue(1) };
+    jest.spyOn(Auth, 'id').mockReturnValue(1);
     service = { getConfig: jest.fn(), updateConfig: jest.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [GeneralConfigController],
       providers: [
         { provide: GeneralConfigService, useValue: service },
-        { provide: AuthService, useValue: auth },
         {
           provide: RedisUtil,
           useValue: { isEnabled: jest.fn().mockReturnValue(false) },

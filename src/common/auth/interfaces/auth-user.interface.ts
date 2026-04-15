@@ -1,5 +1,7 @@
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
+
 export interface AuthUser {
-  id: any;
+  id: PrimaryKey;
   username?: string | null;
   email?: string | null;
   phone?: string | null;
@@ -9,5 +11,5 @@ export interface AuthUser {
   last_login_at?: Date | null;
   created_at: Date;
   updated_at: Date;
-  [key: string]: any;
+  [key: string]: unknown;
 }

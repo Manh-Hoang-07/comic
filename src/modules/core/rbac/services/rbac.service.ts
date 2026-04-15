@@ -27,7 +27,8 @@ export class RbacService {
     groupId: NullableRbacId,
     required: string[],
   ): Promise<boolean> {
-    await this.prepare();
+    // prepare() is already called by SecurityGuard before reaching here;
+    // the RequestContext marker ensures it's a no-op if already done.
     const assigned = await this.getPermissions(userId, groupId);
     return this.permissionIndexService.hasAnyRequiredFromAssigned(
       assigned,

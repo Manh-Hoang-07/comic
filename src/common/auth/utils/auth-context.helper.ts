@@ -1,12 +1,13 @@
 import { ExecutionContext } from '@nestjs/common';
 import { RequestContext } from '@/common/shared/utils';
+import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 
 export interface AuthenticatedUser {
-  id: any;
+  id: PrimaryKey;
   email?: string;
   username?: string;
   status?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -25,7 +26,7 @@ export function getCurrentUser(
 /**
  * Get current authenticated user ID.
  */
-export function getCurrentUserId(context?: ExecutionContext): any | null {
+export function getCurrentUserId(context?: ExecutionContext): PrimaryKey | null {
   const user = getCurrentUser(context);
   if (!user) return null;
   return user.id;
@@ -41,7 +42,7 @@ export function isAuthenticated(context?: ExecutionContext): boolean {
 /**
  * Get a specific property from the current user object.
  */
-export function getUserProperty<T = any>(
+export function getUserProperty<T = unknown>(
   key: keyof AuthenticatedUser | string,
   context?: ExecutionContext,
 ): T | null {

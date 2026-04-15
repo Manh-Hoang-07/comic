@@ -1,14 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { UserContextService } from '../services/context.service';
 
 @Controller('user/contexts')
 export class ContextController {
-  constructor(
-    private readonly contextService: UserContextService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly contextService: UserContextService) {}
 
   /**
    * Lấy các contexts được phép truy cập
@@ -18,7 +15,7 @@ export class ContextController {
   @Permission('public')
   @Get()
   async getUserContexts() {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       return [];
     }

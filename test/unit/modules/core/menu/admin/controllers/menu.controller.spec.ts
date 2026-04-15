@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminMenuController } from '@/modules/core/menu/admin/controllers/menu.controller';
 import { MenuService } from '@/modules/core/menu/admin/services/menu.service';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 
 describe('AdminMenuController', () => {
   let controller: AdminMenuController;
   let service: any;
-  let auth: any;
 
   beforeEach(async () => {
     service = {
@@ -18,13 +17,12 @@ describe('AdminMenuController', () => {
       updateById: jest.fn(),
       deleteById: jest.fn(),
     };
-    auth = { id: jest.fn().mockReturnValue(1) };
+    jest.spyOn(Auth, 'id').mockReturnValue(1);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminMenuController],
       providers: [
         { provide: MenuService, useValue: service },
-        { provide: AuthService, useValue: auth },
       ],
     }).compile();
 

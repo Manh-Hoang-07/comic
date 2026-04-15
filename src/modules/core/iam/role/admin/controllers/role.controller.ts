@@ -10,15 +10,12 @@ import {
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { LogRequest } from '@/common/shared/decorators';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { RoleService } from '@/modules/core/iam/role/admin/services/role.service';
 
 @Controller('admin/roles')
 export class RoleController {
-  constructor(
-    private readonly service: RoleService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly service: RoleService) {}
 
   @Permission('role.manage')
   @Get()
@@ -42,8 +39,8 @@ export class RoleController {
   @Permission('role.manage')
   @Post()
   async create(@Body() dto: any) {
-    // Sử dụng AuthService thay vì @Req() decorator
-    const userId = this.auth.id();
+    // Auth.id() lấy user ID từ RequestContext
+    const userId = Auth.id();
     if (!userId) {
       throw new Error('User not logged in');
     }
@@ -54,8 +51,8 @@ export class RoleController {
   @Permission('role.manage')
   @Put(':id')
   async update(@Param('id') id: any, @Body() dto: any) {
-    // Sử dụng AuthService trong hàm
-    if (!this.auth.isLogin()) {
+    // Auth.isLogin() kiểm tra từ RequestContext
+    if (!Auth.isLogin()) {
       throw new Error('User not logged in');
     }
     return this.service.update(id, dto);

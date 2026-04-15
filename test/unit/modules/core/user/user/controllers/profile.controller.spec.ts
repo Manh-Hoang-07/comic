@@ -7,6 +7,7 @@ import { UnauthorizedException } from '@nestjs/common';
 jest.mock('@/common/auth/utils', () => ({
   Auth: {
     id: jest.fn(),
+    user: jest.fn(),
   },
 }));
 
@@ -40,10 +41,12 @@ describe('ProfileController', () => {
     });
 
     it('should return profile from service', async () => {
+      const fakeUser = { id: 1, name: 'Me' };
       (Auth.id as jest.Mock).mockReturnValue(1);
-      service.getProfile.mockResolvedValue({ id: 1, name: 'Me' });
+      (Auth.user as jest.Mock).mockReturnValue(fakeUser);
+      service.getProfile.mockResolvedValue(fakeUser);
       const result = await controller.getMe();
-      expect(service.getProfile).toHaveBeenCalledWith(1, undefined);
+      expect(service.getProfile).toHaveBeenCalledWith(1, fakeUser);
       expect(result.name).toBe('Me');
     });
   });

@@ -25,8 +25,17 @@ export class GroupContextMiddleware implements NestMiddleware {
   private extractGroupId(req: Request): string | null {
     const raw = req.headers['x-group-id'] ?? req.headers['group-id'] ?? null;
 
-    if (Array.isArray(raw)) return raw[0] || null;
-    if (typeof raw === 'string' && raw.trim().length > 0) return raw.trim();
+    if (Array.isArray(raw)) return this.sanitizeGroupId(raw[0]);
+    if (typeof raw === 'string') return this.sanitizeGroupId(raw);
     return null;
+  }
+
+  private sanitizeGroupId(val: string | undefined): string | null {
+    if (!val) return null;
+    const trimmed = val.trim();
+    if (trimmed.length === 0 || trimmed.length > 36) return null;
+    // Only allow numeric or UUID format
+    if (!/^[0-9a-f\-]+$/i.test(trimmed)) return null;
+    return trimmed;
   }
 }

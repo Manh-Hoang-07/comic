@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminContextController } from '@/modules/core/context/context/admin/controllers/context.controller';
 import { AdminContextService } from '@/modules/core/context/context/admin/services/context.service';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { ForbiddenException } from '@nestjs/common';
 
 describe('AdminContextController', () => {
   let controller: AdminContextController;
   let service: any;
-  let auth: any;
 
   beforeEach(async () => {
     service = {
@@ -18,15 +17,12 @@ describe('AdminContextController', () => {
       deleteContext: jest.fn(),
     };
 
-    auth = {
-      id: jest.fn().mockReturnValue(1),
-    };
+    jest.spyOn(Auth, 'id').mockReturnValue(1);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminContextController],
       providers: [
         { provide: AdminContextService, useValue: service },
-        { provide: AuthService, useValue: auth },
       ],
     }).compile();
 
@@ -39,7 +35,7 @@ describe('AdminContextController', () => {
 
   describe('create', () => {
     it('should throw ForbiddenException if no userId', async () => {
-      auth.id.mockReturnValue(null);
+      jest.spyOn(Auth, 'id').mockReturnValue(null);
       await expect(
         controller.create({ type: 'test', name: 'Test' }),
       ).rejects.toThrow(ForbiddenException);

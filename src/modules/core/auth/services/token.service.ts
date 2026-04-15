@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
-import * as jwt from 'jsonwebtoken';
 import { RedisUtil } from '@/core/utils/redis.util';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
 
@@ -70,16 +69,14 @@ export class TokenService {
     const accessTtlSec = this.getAccessTtlSec();
 
     const jti = this.generateJti();
-    const issuer = this.getJwtIssuer();
-    const audience = this.getJwtAudience();
-    const refreshSecret = this.getRefreshSecret();
-    const refreshExpiresIn = (this.config.get<string>('jwt.refreshExpiresIn') ||
-      '1d') as any;
+    const refreshExpiresIn = this.config.get<string>('jwt.refreshExpiresIn') || '1d';
 
-    const refreshToken = jwt.sign({ sub: userId, email, jti }, refreshSecret, {
-      expiresIn: refreshExpiresIn,
-      issuer,
-      audience,
+    const refreshPayload = { sub: userId, email, jti } as Record<string, unknown>;
+    const refreshToken = this.jwtService.sign(refreshPayload, {
+      secret: this.getRefreshSecret(),
+      expiresIn: refreshExpiresIn as any,
+      issuer: this.getJwtIssuer(),
+      audience: this.getJwtAudience(),
     });
 
     const refreshTtlSec = this.getRefreshTtlSec();
@@ -93,17 +90,15 @@ export class TokenService {
   }
 
   verifyRefreshToken(refreshToken: string) {
-    const refreshSecret = this.getRefreshSecret();
-    const audience = this.getJwtAudience();
-    const issuer = this.getJwtIssuer();
-    return jwt.verify(refreshToken, refreshSecret, {
-      audience,
-      issuer,
-    }) as jwt.JwtPayload & {
+    return this.jwtService.verify<{
       sub: PrimaryKey;
       jti?: string;
       email?: string;
-    };
+    }>(refreshToken, {
+      secret: this.getRefreshSecret(),
+      audience: this.getJwtAudience(),
+      issuer: this.getJwtIssuer(),
+    });
   }
 
   decodeRefresh(refreshToken: string) {

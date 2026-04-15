@@ -10,7 +10,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { MenuService } from '@/modules/core/menu/admin/services/menu.service';
 import { CreateMenuDto } from '@/modules/core/menu/admin/dtos/create-menu.dto';
 import { UpdateMenuDto } from '@/modules/core/menu/admin/dtos/update-menu.dto';
@@ -19,10 +19,7 @@ import { LogRequest } from '@/common/shared/decorators';
 
 @Controller('admin/menus')
 export class AdminMenuController {
-  constructor(
-    private readonly service: MenuService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly service: MenuService) {}
 
   @Permission('menu.manage')
   @Get()
@@ -52,7 +49,7 @@ export class AdminMenuController {
   @Permission('menu.manage')
   @Post()
   async create(@Body() dto: CreateMenuDto) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     return this.service.createWithUser(dto, userId ?? undefined);
   }
 
@@ -60,7 +57,7 @@ export class AdminMenuController {
   @Permission('menu.manage')
   @Put(':id')
   async update(@Param('id') id: any, @Body() dto: UpdateMenuDto) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     return this.service.updateById(id, dto, userId ?? undefined);
   }
 

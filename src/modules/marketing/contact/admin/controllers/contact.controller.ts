@@ -14,14 +14,10 @@ import { CreateContactDto } from '@/modules/marketing/contact/admin/dtos/create-
 import { UpdateContactDto } from '@/modules/marketing/contact/admin/dtos/update-contact.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
 
 @Controller('admin/contacts')
 export class ContactController {
-  constructor(
-    private readonly contactService: ContactService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly contactService: ContactService) {}
 
   @Permission('contact.manage')
   @LogRequest()

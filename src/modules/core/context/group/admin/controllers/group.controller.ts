@@ -10,7 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { AdminGroupService } from '../services/group.service';
 import { RequestContext } from '@/common/shared/utils';
 
@@ -20,10 +20,7 @@ import { RequestContext } from '@/common/shared/utils';
  */
 @Controller('admin/groups')
 export class AdminGroupController {
-  constructor(
-    private readonly groupService: AdminGroupService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly groupService: AdminGroupService) {}
 
   /**
    * Tạo group mới (chỉ system admin)
@@ -41,7 +38,7 @@ export class AdminGroupController {
       context_id: any;
     },
   ) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }
@@ -102,7 +99,7 @@ export class AdminGroupController {
     @Param('id') id: any,
     @Body() body: Partial<{ name: string; description: string; metadata: any }>,
   ) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }
@@ -124,7 +121,7 @@ export class AdminGroupController {
   @Permission('group.manage')
   @Delete(':id')
   async deleteGroup(@Param('id') id: any) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }

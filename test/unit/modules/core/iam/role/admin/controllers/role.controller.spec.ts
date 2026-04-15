@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RoleController } from '@/modules/core/iam/role/admin/controllers/role.controller';
 import { RoleService } from '@/modules/core/iam/role/admin/services/role.service';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 
 describe('RoleController', () => {
   let controller: RoleController;
   let service: any;
-  let auth: any;
 
   beforeEach(async () => {
     service = {
@@ -19,16 +18,13 @@ describe('RoleController', () => {
       assignPermissions: jest.fn(),
     };
 
-    auth = {
-      id: jest.fn().mockReturnValue(BigInt(1)),
-      isLogin: jest.fn().mockReturnValue(true),
-    };
+    jest.spyOn(Auth, 'id').mockReturnValue(BigInt(1));
+    jest.spyOn(Auth, 'isLogin').mockReturnValue(true);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RoleController],
       providers: [
         { provide: RoleService, useValue: service },
-        { provide: AuthService, useValue: auth },
       ],
     }).compile();
 
@@ -47,7 +43,7 @@ describe('RoleController', () => {
     });
 
     it('should throw error if not authenticated', async () => {
-      auth.id.mockReturnValue(null);
+      jest.spyOn(Auth, 'id').mockReturnValue(null);
       await expect(controller.create({})).rejects.toThrow('User not logged in');
     });
   });

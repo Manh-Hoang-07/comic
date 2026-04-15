@@ -63,7 +63,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (cachedUser) {
       try {
         const parsed = JSON.parse(cachedUser) as Record<string, unknown>;
-        if ('profile' in parsed) {
+        if ('profile' in parsed && parsed.id === String(userId)) {
+          if (parsed.status !== 'active') return null;
           return parsed;
         }
       } catch {
@@ -78,9 +79,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return null;
     }
 
-    const userPayload = userEntityToJwtPayload(
-      user as unknown as Record<string, unknown>,
-    );
+    const raw = user as unknown as Record<string, unknown>;
+    if (raw.status !== 'active') return null;
+
+    const userPayload = userEntityToJwtPayload(raw);
 
     await this.redis.set(cacheKey, JSON.stringify(userPayload), 3600);
 

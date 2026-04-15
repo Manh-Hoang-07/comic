@@ -65,6 +65,10 @@ export class RbacPermissionIndexService
     return this.grants(need, (code) => assignedCodes.has(code));
   }
 
+  /**
+   * Returns true if the user has **at least one** of the required permissions (OR logic).
+   * Example: `@Permission('comic.manage', 'user.manage')` = user needs ONE of them, not both.
+   */
   hasAnyRequiredFromAssigned(
     assignedCodes: Set<string>,
     required: string[],
@@ -88,14 +92,15 @@ export class RbacPermissionIndexService
     this.permissionIndexRefreshInFlight = (async () => {
       const byCode = new Map<string, PermissionNode>();
       const nodes = await this.permissionRepo.findActiveForRbacIndex();
-      const byId = new Map<string, { code: string; parent_id: any | null }>();
-      for (const n of nodes as any[]) {
+      type PermRow = { id: unknown; code: string; parent_id?: unknown };
+      const byId = new Map<string, { code: string; parent_id: string | null }>();
+      for (const n of nodes as PermRow[]) {
         byId.set(String(n.id), {
           code: n.code,
-          parent_id: n.parent_id ?? null,
+          parent_id: n.parent_id != null ? String(n.parent_id) : null,
         });
       }
-      for (const n of nodes as any[]) {
+      for (const n of nodes as PermRow[]) {
         const parent =
           n.parent_id != null ? byId.get(String(n.parent_id)) : null;
         if (n.code)

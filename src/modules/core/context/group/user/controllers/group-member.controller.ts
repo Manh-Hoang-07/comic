@@ -9,7 +9,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { AuthService } from '@/common/auth/services';
+import { Auth } from '@/common/auth/utils';
 import { UserGroupService } from '../services/group.service';
 
 /**
@@ -21,10 +21,7 @@ import { UserGroupService } from '../services/group.service';
  */
 @Controller('groups')
 export class GroupMemberController {
-  constructor(
-    private readonly groupService: UserGroupService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly groupService: UserGroupService) {}
 
   /**
    * Thêm member vào group (owner hoặc user có permission trong context)
@@ -35,7 +32,7 @@ export class GroupMemberController {
     @Param('id') groupId: any,
     @Body() body: { user_id: any; role_ids: any[] },
   ) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }
@@ -59,7 +56,7 @@ export class GroupMemberController {
     @Param('memberId') memberId: any,
     @Body() body: { role_ids: any[] },
   ) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }
@@ -82,7 +79,7 @@ export class GroupMemberController {
     @Param('id') groupId: any,
     @Param('memberId') memberId: any,
   ) {
-    const userId = this.auth.id();
+    const userId = Auth.id();
     if (!userId) {
       throw new ForbiddenException('Authentication required');
     }

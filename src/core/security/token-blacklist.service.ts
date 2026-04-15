@@ -11,6 +11,7 @@ import { TokenLocalStore } from './token-local-store';
 const MAX_ENTRIES = 10_000;
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const REDIS_KEY_PREFIX = 'auth:blacklist:';
+const LOCAL_SYNC_TTL_SECONDS = 300; // 5 minutes — safe default when syncing from Redis
 
 @Injectable()
 export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
@@ -72,8 +73,8 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
     if (this.redis?.isEnabled()) {
       const val = await this.redis.get(this.redisKey(token));
       if (val) {
-        // Sync back to local store for future fast checks if found in Redis
-        // Note: ttl is unknown here, but can put a safe default if needed
+        // Sync back to local store so future checks are fast (skip Redis round-trip)
+        this.localStore.add(token, LOCAL_SYNC_TTL_SECONDS);
         return true;
       }
     }

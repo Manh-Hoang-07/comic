@@ -3,16 +3,15 @@ import {
   Controller,
   Get,
   Patch,
-  Req,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
 import { ProfileService } from '../services/profile.service';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
 import { UserChangePasswordDto } from '../dtos/user-change-password.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
+import { Auth } from '@/common/auth/utils';
 
 @ApiTags('User / Profile')
 @ApiBearerAuth('access-token')
@@ -25,20 +24,20 @@ export class ProfileController {
   @ApiOperation({ summary: 'Lấy thông tin cá nhân' })
   @Permission('user')
   @Get()
-  async getMe(@Req() req: Request) {
-    const userId = (req.user as any)?.id;
+  async getMe() {
+    const userId = Auth.id();
     if (!userId) {
       throw new UnauthorizedException('Auth required');
     }
-    return this.service.getProfile(userId, req.user);
+    return this.service.getProfile(userId, Auth.user());
   }
 
   @ApiOperation({ summary: 'Cập nhật thông tin cá nhân' })
   @Permission('user')
   @LogRequest({ fileBaseName: 'user_update_profile' })
   @Patch()
-  async updateMe(@Req() req: Request, @Body() dto: UpdateProfileDto) {
-    const userId = (req.user as any)?.id;
+  async updateMe(@Body() dto: UpdateProfileDto) {
+    const userId = Auth.id();
     return this.service.updateProfile(userId, dto);
   }
 
@@ -46,8 +45,8 @@ export class ProfileController {
   @Permission('user')
   @LogRequest({ fileBaseName: 'user_change_password' })
   @Patch('change-password')
-  async changePassword(@Req() req: Request, @Body() dto: UserChangePasswordDto) {
-    const userId = (req.user as any)?.id;
-    return this.service.changePassword(userId, dto.old_password, dto.password);
+  async changePassword(@Body() dto: UserChangePasswordDto) {
+    const userId = Auth.id();
+    return this.service.changePassword(userId!, dto.old_password, dto.password);
   }
 }

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { RequestContext } from '@/common/shared/utils';
 import { AdminGroupService } from '@/modules/core/context/group/admin/services/group.service';
 import { NullableRbacId } from '@/modules/core/rbac/rbac.types';
@@ -9,6 +14,8 @@ import { NullableRbacId } from '@/modules/core/rbac/rbac.types';
  */
 @Injectable()
 export class RbacAuthorizationOrchestrator {
+  private readonly logger = new Logger(RbacAuthorizationOrchestrator.name);
+
   constructor(private readonly groupService: AdminGroupService) {}
 
   /**
@@ -34,9 +41,17 @@ export class RbacAuthorizationOrchestrator {
       return cachedScope;
     }
 
-    const group = await this.groupService
-      .getContextSnapshot(groupId)
-      .catch(() => null);
+    let group: Awaited<
+      ReturnType<AdminGroupService['getContextSnapshot']>
+    > | null;
+    try {
+      group = await this.groupService.getContextSnapshot(groupId);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to resolve group scope for groupId=${groupId}: ${(err as Error)?.message}`,
+      );
+      throw new InternalServerErrorException('Failed to resolve group scope');
+    }
     if (!group) throw new BadRequestException('Group not found');
     if (!this.isActive(group))
       throw new BadRequestException('Group is inactive');

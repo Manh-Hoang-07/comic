@@ -118,7 +118,10 @@ export class RbacPermissionIndexService
   private grants(need: string, has: (code: string) => boolean): boolean {
     if (has(PERM.SYSTEM.MANAGE)) return true;
     if (has(need)) return true;
+    const visited = new Set<string>();
     for (let cur = this.permissionByCode.get(need); cur?.parentCode; ) {
+      if (visited.has(cur.parentCode)) break;
+      visited.add(cur.parentCode);
       const parent = this.permissionByCode.get(cur.parentCode);
       if (!parent) break;
       if (parent.code && has(parent.code)) return true;

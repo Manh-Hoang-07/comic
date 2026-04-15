@@ -8,18 +8,13 @@ import {
   Delete,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { GalleryService } from '@/modules/introduction/gallery/admin/services/gallery.service';
 import { CreateGalleryDto } from '@/modules/introduction/gallery/admin/dtos/create-gallery.dto';
 import { UpdateGalleryDto } from '@/modules/introduction/gallery/admin/dtos/update-gallery.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/gallery')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class GalleryController {
   constructor(private readonly galleryService: GalleryService) {}
 

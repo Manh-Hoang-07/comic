@@ -9,7 +9,6 @@ import {
   Query,
   Patch,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { ProjectService } from '@/modules/introduction/project/admin/services/project.service';
 import { CreateProjectDto } from '@/modules/introduction/project/admin/dtos/create-project.dto';
@@ -18,11 +17,7 @@ import { GetProjectsDto } from '@/modules/introduction/project/admin/dtos/get-pr
 import { ProjectStatus } from '@/shared/enums/types/project-status.enum';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/projects')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 

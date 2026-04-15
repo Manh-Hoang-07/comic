@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostCommentController } from '@/modules/post/comment/public/controllers/comment.controller';
 import { PostCommentService } from '@/modules/post/comment/public/services/comment.service';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 
 describe('PostCommentController (Public)', () => {
   let controller: PostCommentController;
@@ -21,16 +19,8 @@ describe('PostCommentController (Public)', () => {
           provide: PostCommentService,
           useValue: service,
         },
-        // Satisfy JwtAuthGuard constructor deps when overridden
-        {
-          provide: TokenBlacklistService,
-          useValue: { has: jest.fn().mockResolvedValue(false) },
-        },
       ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    }).compile();
 
     controller = module.get<PostCommentController>(PostCommentController);
   });

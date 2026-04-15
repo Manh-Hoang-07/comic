@@ -4,6 +4,7 @@ import {
   OnModuleDestroy,
   Logger,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { RedisUtil } from '@/core/utils/redis.util';
 import { TokenLocalStore } from './token-local-store';
 
@@ -95,6 +96,7 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
   // ── Private ────────────────────────────────────────────────────────────────
 
   private redisKey(token: string): string {
-    return `${REDIS_KEY_PREFIX}${token}`;
+    const hash = createHash('sha256').update(token).digest('hex');
+    return `${REDIS_KEY_PREFIX}${hash}`;
   }
 }

@@ -2,7 +2,6 @@ import {
   ExecutionContext,
   Injectable,
   HttpException,
-  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -21,8 +20,6 @@ import { Auth } from '@/common/auth/utils';
 
 @Injectable()
 export class SecurityGuard extends AuthGuard('jwt') {
-  private readonly logger = new Logger(SecurityGuard.name);
-
   constructor(
     private readonly reflector: Reflector,
     private readonly tokenBlacklist: TokenBlacklistService,
@@ -39,19 +36,20 @@ export class SecurityGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest();
     const token = extractBearerToken(request.headers.authorization);
 
-    // 1. Get metadata (Public and Permissions)
-    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    // 1. Get permission metadata
     const permissions =
       this.reflector.getAllAndOverride<string[]>(PERMS_REQUIRED_KEY, [
         context.getHandler(),
         context.getClass(),
       ]) || [];
 
-    // 2. Handle Public Routes
-    if (isPublic || permissions.includes(PUBLIC_PERMISSION)) {
+    // 2. Default deny: no @Permission() decorator → 403
+    if (!permissions.length) {
+      throw new HttpException(ResponseUtil.forbidden('Access denied.'), 403);
+    }
+
+    // 3. Handle Public Routes
+    if (permissions.includes(PUBLIC_PERMISSION)) {
       if (token) {
         // Optional login for public routes (e.g., to record user_id)
         await this.handlePassportAuth(context).catch(() => true);
@@ -65,14 +63,12 @@ export class SecurityGuard extends AuthGuard('jwt') {
       return true;
     }
 
-    // 3. Handle Protected Routes
+    // 4. Handle Protected Routes
     const isUserOnly = permissions.some((p) =>
       [RbacPermission.USER, 'user'].includes(p as any),
     );
 
     // Parallelize all checks to minimize latency
-    this.logger.warn(`[JWT-DEBUG] url=${request.url} token=${token ? 'YES' : 'NO'} perms=${JSON.stringify(permissions)}`);
-
     const authPromise = this.handlePassportAuth(context);
     const blacklistPromise =
       token && this.tokenBlacklist
@@ -80,7 +76,7 @@ export class SecurityGuard extends AuthGuard('jwt') {
         : Promise.resolve(false);
 
     // Only run RBAC logic if permissions beyond 'user' are required
-    const needsRbac = permissions.length > 0 && !isUserOnly;
+    const needsRbac = !isUserOnly;
     const groupPromise = needsRbac
       ? this.rbacAuthz.resolveActiveGroupScopeForRbac()
       : Promise.resolve(null);
@@ -100,18 +96,14 @@ export class SecurityGuard extends AuthGuard('jwt') {
       RequestContext.set('user', request.user);
       RequestContext.set('userId', request.user.id ?? null);
     }
-
-    this.logger.warn(`[JWT-DEBUG] isAuthOk=${isAuthOk} isBlocked=${isBlocked} request.user=${request.user ? 'id=' + request.user.id : 'NULL'}`);
     tracker?.addCheckpoint('security_auth_parallel_end');
 
-    // 4. Validate Results
+    // 5. Validate Results
     if (!isAuthOk) {
-      this.logger.warn(`[JWT-DEBUG] REJECTED: isAuthOk=false for ${request.url}`);
       throw new HttpException(ResponseUtil.unauthorized('Auth required'), 401);
     }
 
     if (isBlocked) {
-      this.logger.warn(`[JWT-DEBUG] REJECTED: token blacklisted for ${request.url}`);
       this.clearAuth(request);
       throw new HttpException(
         ResponseUtil.unauthorized('Token is blacklisted'),
@@ -119,7 +111,7 @@ export class SecurityGuard extends AuthGuard('jwt') {
       );
     }
 
-    // 5. Final RBAC Check
+    // 6. Final RBAC Check
     if (needsRbac) {
       const userId = Auth.id(context) || request.user?.id;
       if (!userId)

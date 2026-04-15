@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { RedisUtil } from '@/core/utils/redis.util';
 import type { PrimaryKey } from '@/common/core/utils/primary-key.util';
@@ -60,7 +61,7 @@ export class TokenService {
   }
 
   private generateJti(): string {
-    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    return randomUUID();
   }
 
   generateTokens(userId: PrimaryKey, email?: string) {

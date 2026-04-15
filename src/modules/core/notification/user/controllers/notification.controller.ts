@@ -4,12 +4,9 @@ import {
   Patch,
   Param,
   Query,
-  UseGuards,
   Request,
   NotFoundException,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
 import { Permission } from '@/common/auth/decorators';
 import { NotificationService } from '@/modules/core/notification/admin/services/notification.service';
 import { GetNotificationsDto } from '@/modules/core/notification/user/dtos/get-notifications.dto';
@@ -18,7 +15,6 @@ import { LogRequest } from '@/common/shared/decorators';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
 @Controller('user/notifications')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 

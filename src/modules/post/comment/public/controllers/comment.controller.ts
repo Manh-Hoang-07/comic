@@ -5,11 +5,9 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   Req,
 } from '@nestjs/common';
 import { PostCommentService } from '../services/comment.service';
-import { JwtAuthGuard } from '@/common/auth/guards';
 import { Permission } from '@/common/auth/decorators';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
@@ -32,7 +30,6 @@ export class PostCommentController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @Permission('user')
   async createComment(
     @Param('postId') postId: string,

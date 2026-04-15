@@ -7,10 +7,7 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
 import { Permission } from '@/common/auth/decorators';
 import { NotificationService } from '@/modules/core/notification/admin/services/notification.service';
 import { CreateNotificationDto } from '@/modules/core/notification/admin/dtos/create-notification.dto';
@@ -19,7 +16,6 @@ import { GetNotificationsDto } from '@/modules/core/notification/admin/dtos/get-
 import { LogRequest } from '@/common/shared/decorators';
 
 @Controller('admin/notifications')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 

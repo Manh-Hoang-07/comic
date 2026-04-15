@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminPostCommentController } from '@/modules/post/comment/admin/controllers/comment.controller';
 import { AdminPostCommentService } from '@/modules/post/comment/admin/services/comment.service';
-import { RbacGuard } from '@/common/auth/guards';
 
 describe('AdminPostCommentController', () => {
   let controller: AdminPostCommentController;
@@ -24,10 +23,7 @@ describe('AdminPostCommentController', () => {
           useValue: service,
         },
       ],
-    })
-      .overrideGuard(RbacGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    }).compile();
 
     controller = module.get<AdminPostCommentController>(
       AdminPostCommentController,

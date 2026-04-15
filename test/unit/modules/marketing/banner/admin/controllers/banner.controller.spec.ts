@@ -3,9 +3,6 @@ import { BannerController } from '@/modules/marketing/banner/admin/controllers/b
 import { BannerService } from '@/modules/marketing/banner/admin/services/banner.service';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 
-import { JwtAuthGuard, RbacGuard } from '@/common/auth/guards';
-import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
-
 describe('BannerController (Admin)', () => {
   let controller: BannerController;
   let service: any;
@@ -26,18 +23,8 @@ describe('BannerController (Admin)', () => {
       controllers: [BannerController],
       providers: [
         { provide: BannerService, useValue: service },
-        // Provide TokenBlacklistService to satisfy JwtAuthGuard constructor deps
-        {
-          provide: TokenBlacklistService,
-          useValue: { has: jest.fn().mockResolvedValue(false) },
-        },
       ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(RbacGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    }).compile();
 
     controller = module.get<BannerController>(BannerController);
   });

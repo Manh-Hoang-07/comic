@@ -9,18 +9,13 @@ import {
   Query,
   Patch,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { TestimonialService } from '@/modules/introduction/testimonial/admin/services/testimonial.service';
 import { CreateTestimonialDto } from '@/modules/introduction/testimonial/admin/dtos/create-testimonial.dto';
 import { UpdateTestimonialDto } from '@/modules/introduction/testimonial/admin/dtos/update-testimonial.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/testimonials')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class TestimonialController {
   constructor(private readonly testimonialService: TestimonialService) {}
 

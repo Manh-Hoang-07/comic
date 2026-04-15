@@ -67,10 +67,10 @@ export class TokenLocalStore {
     // Cleanup expired first
     this.cleanup();
 
-    // If still at capacity, evict the oldest entry
+    // If still at capacity, evict the first (oldest inserted) entry
     if (this.map.size >= this.maxEntries) {
-      const oldest = [...this.map.entries()].sort((a, b) => a[1] - b[1])[0];
-      if (oldest) this.map.delete(oldest[0]);
+      const firstKey = this.map.keys().next().value;
+      if (firstKey !== undefined) this.map.delete(firstKey);
     }
   }
 }

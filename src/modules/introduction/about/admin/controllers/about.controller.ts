@@ -8,18 +8,13 @@ import {
   Delete,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { AboutService } from '@/modules/introduction/about/admin/services/about.service';
 import { CreateAboutDto } from '@/modules/introduction/about/admin/dtos/create-about.dto';
 import { UpdateAboutDto } from '@/modules/introduction/about/admin/dtos/update-about.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/about-sections')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class AboutController {
   constructor(private readonly aboutService: AboutService) {}
 

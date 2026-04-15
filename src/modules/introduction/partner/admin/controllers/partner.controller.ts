@@ -8,18 +8,13 @@ import {
   Delete,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { PartnerService } from '@/modules/introduction/partner/admin/services/partner.service';
 import { CreatePartnerDto } from '@/modules/introduction/partner/admin/dtos/create-partner.dto';
 import { UpdatePartnerDto } from '@/modules/introduction/partner/admin/dtos/update-partner.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/partners')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class PartnerController {
   constructor(private readonly partnerService: PartnerService) {}
 

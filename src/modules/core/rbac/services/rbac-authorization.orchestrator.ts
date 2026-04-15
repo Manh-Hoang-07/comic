@@ -60,6 +60,6 @@ export class RbacAuthorizationOrchestrator {
   }
 
   private isActive(entity: { status?: string } | null | undefined): boolean {
-    return (entity?.status ?? 'active') === 'active';
+    return entity?.status === 'active';
   }
 }

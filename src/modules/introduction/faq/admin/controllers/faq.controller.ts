@@ -8,18 +8,13 @@ import {
   Delete,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { FaqService } from '@/modules/introduction/faq/admin/services/faq.service';
 import { CreateFaqDto } from '@/modules/introduction/faq/admin/dtos/create-faq.dto';
 import { UpdateFaqDto } from '@/modules/introduction/faq/admin/dtos/update-faq.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/faqs')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class FaqController {
   constructor(private readonly faqService: FaqService) {}
 

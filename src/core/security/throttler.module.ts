@@ -19,7 +19,7 @@ import { AppThrottlerGuard } from './app-throttler.guard';
           throttlers: [
             {
               ttl: 60000, // 60 seconds = 1 phút
-              limit: 100, // Default limit: 50 request mỗi phút cho mỗi IP
+              limit: 100, // 100 request mỗi phút cho mỗi IP
             },
           ],
           storage,

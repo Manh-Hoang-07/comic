@@ -1,4 +1,5 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { RequestContext } from '@/common/shared/utils';
 import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
@@ -26,7 +27,7 @@ export class RequestContextMiddleware implements NestMiddleware {
         ? (ridHeader[0] as string)
         : typeof ridHeader === 'string' && ridHeader.length > 0
           ? ridHeader
-          : `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          : randomUUID();
 
       // Save to per-request store
       RequestContext.set('tracker', tracker);

@@ -7,15 +7,12 @@ import {
   Param,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { AdminPostCommentService } from '../services/comment.service';
-import { RbacGuard } from '@/common/auth/guards';
 import { Permission } from '@/common/auth/decorators';
 import { LogRequest } from '@/common/shared/decorators/log-request.decorator';
 
 @Controller('admin/post-comments')
-@UseGuards(RbacGuard)
 export class AdminPostCommentController {
   constructor(private readonly commentService: AdminPostCommentService) {}
 

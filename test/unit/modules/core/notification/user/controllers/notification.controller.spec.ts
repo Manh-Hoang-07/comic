@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationController } from '@/modules/core/notification/user/controllers/notification.controller';
 import { NotificationService } from '@/modules/core/notification/admin/services/notification.service';
 import { NotFoundException } from '@nestjs/common';
-import { JwtAuthGuard, RbacGuard } from '@/common/auth/guards';
 
 describe('NotificationController', () => {
   let controller: NotificationController;
@@ -19,12 +18,7 @@ describe('NotificationController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [NotificationController],
       providers: [{ provide: NotificationService, useValue: service }],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(RbacGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    }).compile();
 
     controller = module.get<NotificationController>(NotificationController);
   });

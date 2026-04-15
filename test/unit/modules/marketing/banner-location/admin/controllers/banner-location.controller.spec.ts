@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BannerLocationController } from '@/modules/marketing/banner-location/admin/controllers/banner-location.controller';
 import { BannerLocationService } from '@/modules/marketing/banner-location/admin/services/banner-location.service';
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
-import { JwtAuthGuard, RbacGuard } from '@/common/auth/guards';
 
 describe('BannerLocationController (Admin)', () => {
   let controller: BannerLocationController;
@@ -26,21 +25,8 @@ describe('BannerLocationController (Admin)', () => {
           provide: BannerLocationService,
           useValue: service,
         },
-        {
-          provide: 'JwtAuthGuard',
-          useValue: { canActivate: jest.fn(() => true) },
-        },
-        {
-          provide: 'RbacGuard',
-          useValue: { canActivate: jest.fn(() => true) },
-        },
       ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(RbacGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    }).compile();
 
     controller = module.get<BannerLocationController>(BannerLocationController);
   });

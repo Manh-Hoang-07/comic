@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { BannerLocationService } from '@/modules/marketing/banner-location/admin/services/banner-location.service';
 import { CreateBannerLocationDto } from '@/modules/marketing/banner-location/admin/dtos/create-banner-location.dto';
@@ -16,11 +15,7 @@ import { UpdateBannerLocationDto } from '@/modules/marketing/banner-location/adm
 import { BasicStatus } from '@/shared/enums/types/basic-status.enum';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/banner-locations')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class BannerLocationController {
   constructor(private readonly bannerLocationService: BannerLocationService) {}
 

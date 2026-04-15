@@ -8,18 +8,13 @@ import {
   Delete,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { CertificateService } from '@/modules/introduction/certificate/admin/services/certificate.service';
 import { CreateCertificateDto } from '@/modules/introduction/certificate/admin/dtos/create-certificate.dto';
 import { UpdateCertificateDto } from '@/modules/introduction/certificate/admin/dtos/update-certificate.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/certificates')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class CertificateController {
   constructor(private readonly certificateService: CertificateService) {}
 

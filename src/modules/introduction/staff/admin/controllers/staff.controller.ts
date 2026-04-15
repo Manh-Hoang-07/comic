@@ -8,18 +8,13 @@ import {
   Delete,
   Query,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { StaffService } from '@/modules/introduction/staff/admin/services/staff.service';
 import { CreateStaffDto } from '@/modules/introduction/staff/admin/dtos/create-staff.dto';
 import { UpdateStaffDto } from '@/modules/introduction/staff/admin/dtos/update-staff.dto';
 import { LogRequest } from '@/common/shared/decorators';
 import { Permission } from '@/common/auth/decorators';
-import { JwtAuthGuard } from '@/common/auth/guards';
-import { RbacGuard } from '@/common/auth/guards';
-
 @Controller('admin/staff')
-@UseGuards(JwtAuthGuard, RbacGuard)
 export class StaffController {
   constructor(private readonly staffService: StaffService) {}
 

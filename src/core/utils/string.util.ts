@@ -6,6 +6,8 @@ export class StringUtil {
     return str
       .toLowerCase()
       .trim()
+      .normalize('NFD') // Separate accent from letter (Vietnamese support)
+      .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
       .replace(/[^\w\s-]/g, '') // Remove non-word chars
       .replace(/[\s_-]+/g, '-') // Replace spaces, underscores and multiple hyphens with single hyphen
       .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens

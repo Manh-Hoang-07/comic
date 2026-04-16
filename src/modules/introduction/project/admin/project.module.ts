@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProjectService } from '@/modules/introduction/project/admin/services/project.service';
 import { ProjectController } from '@/modules/introduction/project/admin/controllers/project.controller';
-import { RbacModule } from '@/modules/core/rbac/rbac.module';
+import { RbacModule } from '@/modules/system/rbac/rbac.module';
 
 import { ProjectRepositoryModule } from '@/modules/introduction/project/project.repository.module';
 

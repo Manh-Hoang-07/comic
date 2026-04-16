@@ -8,7 +8,7 @@ import { CacheService } from '@/common/cache/services';
 import {
   IEmailConfigRepository,
   EMAIL_CONFIG_REPOSITORY,
-} from '@/modules/core/system-config/email/domain/repositories/email-config.repository';
+} from '@/modules/system/system-config/email/domain/repositories/email-config.repository';
 import {
   SendMailOptions,
   BulkMailItem,

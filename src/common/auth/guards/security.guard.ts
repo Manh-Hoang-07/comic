@@ -14,9 +14,9 @@ import { ResponseUtil, RequestContext } from '@/common/shared/utils';
 import { TokenBlacklistService } from '@/core/security/token-blacklist.service';
 import { CheckpointTracker } from '@/core/logger/checkpoint-tracker';
 import { extractBearerToken } from './jwt-token.helper';
-import { RbacService } from '@/modules/core/rbac/services/rbac.service';
-import { RbacAuthorizationOrchestrator } from '@/modules/core/rbac/services/rbac-authorization.orchestrator';
-import { RbacPermission } from '@/modules/core/rbac/rbac.constants';
+import { RbacService } from '@/modules/system/rbac/services/rbac.service';
+import { RbacAuthorizationOrchestrator } from '@/modules/system/rbac/services/rbac-authorization.orchestrator';
+import { RbacPermission } from '@/modules/system/rbac/rbac.constants';
 import { Auth } from '@/common/auth/utils';
 
 @Injectable()

@@ -3,7 +3,7 @@ import { PostController } from '@/modules/post/post/admin/controllers/post.contr
 import { PostService } from '@/modules/post/post/admin/services/post.service';
 import { PostActionService } from '@/modules/post/post/admin/services/post-action.service';
 import { PostRepositoryModule } from '@/modules/post/post.repository.module';
-import { RbacModule } from '@/modules/core/rbac/rbac.module';
+import { RbacModule } from '@/modules/system/rbac/rbac.module';
 
 @Module({
   imports: [RbacModule, PostRepositoryModule],

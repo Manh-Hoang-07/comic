@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CacheService } from '@/common/cache/services';
-import { ContextModule } from '@/modules/core/context/context.module';
+import { ContextModule } from '@/modules/system/context/context.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { EncryptionService } from './encryption/encryption.service';
 

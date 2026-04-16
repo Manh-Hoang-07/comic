@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BannerService } from '@/modules/marketing/banner/admin/services/banner.service';
 import { BannerController } from '@/modules/marketing/banner/admin/controllers/banner.controller';
-import { RbacModule } from '@/modules/core/rbac/rbac.module';
+import { RbacModule } from '@/modules/system/rbac/rbac.module';
 import { MarketingRepositoryModule } from '@/modules/marketing/marketing.repository.module';
 
 @Module({

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { FaqService } from '@/modules/introduction/faq/admin/services/faq.service';
 import { FaqController } from '@/modules/introduction/faq/admin/controllers/faq.controller';
-import { RbacModule } from '@/modules/core/rbac/rbac.module';
+import { RbacModule } from '@/modules/system/rbac/rbac.module';
 import { FaqRepositoryModule } from '../faq.repository.module';
 
 @Module({

@@ -24,7 +24,7 @@ import {
 import { RateLimitModule } from '@/core/security/throttler.module';
 
 // Business Logic Aggregate Modules
-import { CoreModulesModule } from '@/modules/core/core.module';
+import { SystemModule } from '@/modules/system/system.module';
 import { IntroductionModule } from '@/modules/introduction/introduction.module';
 
 // Other Domain Modules
@@ -45,7 +45,7 @@ import { ComicsModule } from '@/modules/comics/comic.module';
     RateLimitModule,
 
     // Business Logic Modules
-    CoreModulesModule,
+    SystemModule,
     IntroductionModule,
 
     // Remaining Independent Modules

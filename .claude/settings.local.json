@@ -11,7 +11,25 @@
       "Bash(xargs grep:*)",
       "Bash(grep -v \"^\\\\.\\\\.$\\\\|^\\\\.git\")",
       "Bash(npx eslint:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(grep -r @/modules/core /d/comic/src --include=*.ts)",
+      "Bash(sed \"s|/d/comic/||g\")",
+      "Read(//tmp/**)",
+      "Bash(grep -r @/modules/core /d/comic/test --include=*.ts)",
+      "Bash(cp -r src/modules/core src/modules/system)",
+      "Bash(rm -rf src/modules/core)",
+      "Bash(xargs sed:*)",
+      "Bash(cp -r test/unit/modules/core test/unit/modules/system)",
+      "Bash(rm -rf test/unit/modules/core)",
+      "Bash(cp -r test/e2e/core test/e2e/system)",
+      "Bash(rm -rf test/e2e/core)",
+      "Bash(cp -r iam/permission .)",
+      "Bash(cp -r iam/role .)",
+      "Bash(cp iam/user.repository.module.ts .)",
+      "Bash(cp -r iam/utils/iam-transform.helper.ts rbac/utils/)",
+      "Bash(mkdir -p rbac/utils)",
+      "Bash(rm -rf iam)",
+      "Bash(ls d:/comic/test/e2e/system/iam*)"
     ]
   }
 }

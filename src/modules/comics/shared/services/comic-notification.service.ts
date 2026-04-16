@@ -11,7 +11,7 @@ import {
 import {
   INotificationRepository,
   NOTIFICATION_REPOSITORY,
-} from '@/modules/core/notification/domain/notification.repository';
+} from '@/modules/system/notification/domain/notification.repository';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
 @Injectable()

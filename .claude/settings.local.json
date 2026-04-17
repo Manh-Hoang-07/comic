@@ -46,7 +46,18 @@
       "Bash(rm -rf test/unit/modules/system/context/group)",
       "Bash(cp -rf src/modules/comics/homepage/public/* src/modules/homepage/)",
       "Bash(rm -rf src/modules/comics/homepage)",
-      "Bash(node -e \"const p = require\\(''./package.json''\\); console.log\\(''typescript:'', p.devDependencies?.typescript || p.dependencies?.typescript || ''not found''\\)\")"
+      "Bash(node -e \"const p = require\\(''./package.json''\\); console.log\\(''typescript:'', p.devDependencies?.typescript || p.dependencies?.typescript || ''not found''\\)\")",
+      "Bash(node -e \"const mysql = require\\(''mysql2/promise''\\); \\(async\\(\\)=>{ try { const c = await mysql.createConnection\\({host:''localhost'',port:3306,user:''db'',password:''123456'',database:''comic'',connectTimeout:5000}\\); const [rows] = await c.execute\\(''SELECT 1 as ok''\\); console.log\\(''Connected OK:'', rows\\); await c.end\\(\\); } catch\\(e\\) { console.error\\(''Connection failed:'', e.message\\); }}\\)\\(\\)\")",
+      "Bash(node -e \"const prisma = require\\(''@prisma/client''\\); const p = new prisma.PrismaClient\\(\\); p.$connect\\(\\).then\\(\\(\\)=>{console.log\\(''Prisma connected OK''\\); return p.$disconnect\\(\\)}\\).catch\\(e=>console.error\\(''Prisma failed:'', e.message\\)\\)\")",
+      "Bash(node -e \"const {PrismaClient} = require\\(''@prisma/client''\\); const p = new PrismaClient\\(\\); p[''$connect'']\\(\\).then\\(\\(\\)=>{console.log\\(''Prisma connected OK''\\); return p[''$disconnect'']\\(\\)}\\).catch\\(e=>console.error\\(''Prisma failed:'', e.message\\)\\)\")",
+      "Bash(node -e \"const mysql = require\\(''mysql2/promise''\\); \\(async\\(\\)=>{ const c = await mysql.createConnection\\({host:''localhost'',port:3306,user:''db'',password:''123456'',database:''comic''}\\); const [rows] = await c.execute\\(\"\"SHOW STATUS LIKE ''Threads_connected''\"\"\\); console.log\\(rows\\); const [vars] = await c.execute\\(\"\"SHOW VARIABLES LIKE ''max_connections''\"\"\\); console.log\\(vars\\); await c.end\\(\\); }\\)\\(\\)\")",
+      "Bash(node -e \"const {PrismaMariaDb} = require\\(''@prisma/adapter-mariadb''\\); console.log\\(typeof PrismaMariaDb\\); console.log\\(PrismaMariaDb.toString\\(\\).substring\\(0, 200\\)\\)\")",
+      "Bash(npm ls:*)",
+      "Bash(node --eval \":*)",
+      "Bash(tasklist)",
+      "Bash(wmic process:*)",
+      "Read(//d/comic/**)",
+      "Bash(node -e \"console.log\\(process.env.DATABASE_URL\\)\")"
     ]
   }
 }

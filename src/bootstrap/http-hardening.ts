@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import helmet from 'helmet';
 import hpp from 'hpp';
 import compression from 'compression';
-import bodyParser from 'body-parser';
+import express from 'express';
 
 export function applyHttpHardening(
   app: INestApplication,
@@ -19,7 +19,7 @@ export function applyHttpHardening(
     }),
   );
   app.use(hpp());
-  app.use(bodyParser.json({ limit: payloadLimit }));
-  app.use(bodyParser.urlencoded({ limit: payloadLimit, extended: true }));
+  app.use(express.json({ limit: payloadLimit }));
+  app.use(express.urlencoded({ limit: payloadLimit, extended: true }));
   app.use(compression());
 }

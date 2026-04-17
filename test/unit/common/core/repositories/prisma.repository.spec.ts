@@ -84,7 +84,7 @@ describe('PrismaRepository', () => {
     });
 
     it('should throw error on invalid string format', () => {
-      expect(() => repository.toPrimaryKey('invalid')).toThrowError(
+      expect(() => repository.toPrimaryKey('invalid')).toThrow(
         /Invalid ID format/,
       );
     });

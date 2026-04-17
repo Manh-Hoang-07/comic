@@ -106,7 +106,7 @@ async function testQueue() {
         console.log('✅ Job processing: Check logs above');
         console.log('='.repeat(50));
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Test failed:', error.message);
         console.error(error.stack);
     } finally {

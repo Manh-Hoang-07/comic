@@ -43,7 +43,9 @@
       "Bash(cp test/unit/modules/system/context/context/user/services/context.service.spec.ts test/unit/modules/system/context/user/services/)",
       "Bash(mkdir -p test/unit/modules/system/group)",
       "Bash(cp -r test/unit/modules/system/context/group/* test/unit/modules/system/group/)",
-      "Bash(rm -rf test/unit/modules/system/context/group)"
+      "Bash(rm -rf test/unit/modules/system/context/group)",
+      "Bash(cp -rf src/modules/comics/homepage/public/* src/modules/homepage/)",
+      "Bash(rm -rf src/modules/comics/homepage)"
     ]
   }
 }

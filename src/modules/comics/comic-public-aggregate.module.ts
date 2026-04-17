@@ -5,7 +5,7 @@ import { PublicChaptersModule } from '@/modules/comics/chapter/public/chapter.mo
 import { PublicCommentsModule } from '@/modules/comics/comment/public/comment.module';
 import { PublicReviewsModule } from '@/modules/comics/review/public/review.module';
 import { PublicStatsModule } from '@/modules/comics/stats/public/public-stats.module';
-import { HomepageModule } from '@/modules/comics/homepage/public/homepage.module';
+import { HomepageModule } from '@/modules/homepage/homepage.module';
 
 @Module({
   imports: [

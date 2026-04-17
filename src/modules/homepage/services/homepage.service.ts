@@ -1,143 +1,122 @@
 import { Injectable } from '@nestjs/common';
-import { CacheService } from '@/common/cache/services';
-import { PublicProjectService } from '@/modules/introduction/project/public/services/project.service';
-import { PublicAboutService } from '@/modules/introduction/about/public/services/about.service';
-import { PublicStaffService } from '@/modules/introduction/staff/public/services/staff.service';
-import { PublicPartnerService } from '@/modules/introduction/partner/public/services/partner.service';
-import { PublicCertificateService } from '@/modules/introduction/certificate/public/services/certificate.service';
-import { PublicFaqService } from '@/modules/introduction/faq/public/services/faq.service';
+import { CacheService } from '@/common/cache/services/cache.service';
+import { PublicComicsService } from '@/modules/comics/comic/public/services/comic.service';
+import { PublicComicCategoriesService } from '@/modules/comics/comic-category/public/services/comic-category.service';
 
 @Injectable()
 export class HomepageService {
   // Cache keys cho từng block
   private readonly CACHE_KEYS = {
-    PROJECTS: 'public:homepage:projects',
-    ABOUT_SECTIONS: 'public:homepage:about_sections',
-    STAFF: 'public:homepage:staff',
-    PARTNERS: 'public:homepage:partners',
-    CERTIFICATES: 'public:homepage:certificates',
-    FAQS: 'public:homepage:faqs',
+    TOP_VIEWED: 'public:homepage:comics:top_viewed',
+    TRENDING: 'public:homepage:comics:trending',
+    POPULAR: 'public:homepage:comics:popular',
+    NEWEST: 'public:homepage:comics:newest',
+    LATEST_CHAPTERS: 'public:homepage:chapters:latest',
+    COMIC_CATEGORIES: 'public:homepage:categories:comic',
   };
 
   // Cache TTL theo từng block (giây)
   private readonly CACHE_TTL = {
-    PROJECTS: 600, // 10 phút - Dự án thay đổi không thường xuyên
-    ABOUT_SECTIONS: 3600, // 1 giờ - Giới thiệu ít thay đổi
-    STAFF: 1800, // 30 phút - Nhân viên có thể thay đổi
-    PARTNERS: 3600, // 1 giờ - Đối tác ít thay đổi
-    CERTIFICATES: 3600, // 1 giờ - Chứng chỉ ít thay đổi
-    FAQS: 1200, // 20 phút - FAQs
+    TOP_VIEWED: 420, // 7 phút - Top viewed thay đổi không quá nhanh
+    TRENDING: 420, // 7 phút - Truyện hot
+    POPULAR: 1200, // 20 phút - Truyện nổi bật (10-30 phút)
+    NEWEST: 120, // 2 phút - Truyện mới (1-3 phút)
+    LATEST_CHAPTERS: 120, // 2 phút - Chapters mới nhất (1-3 phút)
+    COMIC_CATEGORIES: 43200, // 12 giờ - Danh mục (1-24 giờ)
   };
 
   constructor(
     private readonly cacheService: CacheService,
-    private readonly projectService: PublicProjectService,
-    private readonly aboutService: PublicAboutService,
-    private readonly staffService: PublicStaffService,
-    private readonly partnerService: PublicPartnerService,
-    private readonly certificateService: PublicCertificateService,
-    private readonly faqService: PublicFaqService,
+    private readonly comicsService: PublicComicsService,
+    private readonly comicCategoriesService: PublicComicCategoriesService,
   ) {}
 
   /**
    * Lấy tất cả dữ liệu cần thiết cho trang chủ
    * Mỗi block được cache riêng với TTL khác nhau
-   * Fetch tất cả dữ liệu song song để tối ưu performance
+   * Sử dụng getList với điều kiện sort thay vì các methods riêng
    */
   async getHomepageData() {
-    // Fetch tất cả dữ liệu song song với cache riêng cho từng block
+    // Fetch dữ liệu song song
     const [
-      featuredProjects,
-      aboutSections,
-      staff,
-      partners,
-      certificates,
-      popularFaqs,
+      topViewedComics,
+      popularComics,
+      newestComics,
+      recentUpdateComics,
+      comicCategories,
     ] = await Promise.all([
-      // Featured projects - cache 10 phút
+      // Top viewed comics - cache 7 phút (Dùng chung cho Trending vì logic hiện tại giống nhau)
       this.cacheService.getOrSet(
-        this.CACHE_KEYS.PROJECTS,
+        this.CACHE_KEYS.TOP_VIEWED,
         async () => {
-          return await this.projectService.getFeatured(10);
+          const result = await this.comicsService.getList({
+            limit: 8,
+            sort: 'view_count:DESC',
+          });
+          return result.data || [];
         },
-        this.CACHE_TTL.PROJECTS,
+        this.CACHE_TTL.TOP_VIEWED,
       ),
 
-      // About sections - cache 1 giờ
+      // Popular comics
       this.cacheService.getOrSet(
-        this.CACHE_KEYS.ABOUT_SECTIONS,
+        this.CACHE_KEYS.POPULAR,
         async () => {
-          const result = await this.aboutService.getList({
+          const result = await this.comicsService.getList({
+            limit: 8,
+            sort: 'follow_count:DESC',
+          });
+          return result.data || [];
+        },
+        this.CACHE_TTL.POPULAR,
+      ),
+
+      // Newest comics
+      this.cacheService.getOrSet(
+        this.CACHE_KEYS.NEWEST,
+        async () => {
+          const result = await this.comicsService.getList({
+            limit: 8,
+            sort: 'created_at:DESC',
+          });
+          return result.data || [];
+        },
+        this.CACHE_TTL.NEWEST,
+      ),
+
+      // Recent update comics
+      this.cacheService.getOrSet(
+        this.CACHE_KEYS.LATEST_CHAPTERS,
+        async () => {
+          const result = await this.comicsService.getList({
+            limit: 8,
+            sort: 'last_chapter_updated_at:DESC',
+          });
+          return result.data || [];
+        },
+        this.CACHE_TTL.LATEST_CHAPTERS,
+      ),
+
+      // Comic categories
+      this.cacheService.getOrSet(
+        this.CACHE_KEYS.COMIC_CATEGORIES,
+        async () => {
+          const result = await this.comicCategoriesService.getList({
             limit: 20,
-            page: 1,
           });
           return result?.data || [];
         },
-        this.CACHE_TTL.ABOUT_SECTIONS,
-      ),
-
-      // Staff - cache 30 phút
-      this.cacheService.getOrSet(
-        this.CACHE_KEYS.STAFF,
-        async () => {
-          const result = await this.staffService.getList({
-            limit: 20,
-            page: 1,
-          });
-          return result?.data || [];
-        },
-        this.CACHE_TTL.STAFF,
-      ),
-
-      // Partners - cache 1 giờ
-      this.cacheService.getOrSet(
-        this.CACHE_KEYS.PARTNERS,
-        async () => {
-          const result = await this.partnerService.getList({
-            limit: 20,
-            page: 1,
-          });
-          return result?.data || [];
-        },
-        this.CACHE_TTL.PARTNERS,
-      ),
-
-      // Certificates - cache 1 giờ
-      this.cacheService.getOrSet(
-        this.CACHE_KEYS.CERTIFICATES,
-        async () => {
-          const result = await this.certificateService.getList({
-            limit: 20,
-            page: 1,
-          });
-          return result?.data || [];
-        },
-        this.CACHE_TTL.CERTIFICATES,
-      ),
-
-      // Popular FAQs - cache 20 phút
-      this.cacheService.getOrSet(
-        this.CACHE_KEYS.FAQS,
-        async () => {
-          return await this.faqService.getPopular(10);
-        },
-        this.CACHE_TTL.FAQS,
+        this.CACHE_TTL.COMIC_CATEGORIES,
       ),
     ]);
 
     return {
-      // Dự án nổi bật
-      featured_projects: featuredProjects,
-      // Giới thiệu
-      about_sections: aboutSections,
-      // Nhân viên
-      staff: staff,
-      // Đối tác
-      partners: partners,
-      // Chứng chỉ
-      certificates: certificates,
-      // FAQs phổ biến
-      popular_faqs: popularFaqs,
+      top_viewed_comics: topViewedComics,
+      trending_comics: topViewedComics, // Tạm thời dùng chung data với top viewed để tiết kiệm query
+      popular_comics: popularComics,
+      newest_comics: newestComics,
+      recent_update_comics: recentUpdateComics,
+      comic_categories: comicCategories,
     };
   }
 
@@ -158,44 +137,28 @@ export class HomepageService {
   }
 
   /**
-   * Xóa cache liên quan đến projects
+   * Xóa cache liên quan đến comics
    */
-  async clearProjectsCache(): Promise<void> {
-    await this.cacheService.del(this.CACHE_KEYS.PROJECTS);
+  async clearComicsCache(): Promise<void> {
+    await Promise.all([
+      this.cacheService.del(this.CACHE_KEYS.TOP_VIEWED),
+      this.cacheService.del(this.CACHE_KEYS.TRENDING),
+      this.cacheService.del(this.CACHE_KEYS.POPULAR),
+      this.cacheService.del(this.CACHE_KEYS.NEWEST),
+    ]);
   }
 
   /**
-   * Xóa cache liên quan đến about sections
+   * Xóa cache liên quan đến chapters
    */
-  async clearAboutCache(): Promise<void> {
-    await this.cacheService.del(this.CACHE_KEYS.ABOUT_SECTIONS);
+  async clearChaptersCache(): Promise<void> {
+    await this.cacheService.del(this.CACHE_KEYS.LATEST_CHAPTERS);
   }
 
   /**
-   * Xóa cache liên quan đến staff
+   * Xóa cache liên quan đến categories
    */
-  async clearStaffCache(): Promise<void> {
-    await this.cacheService.del(this.CACHE_KEYS.STAFF);
-  }
-
-  /**
-   * Xóa cache liên quan đến partners
-   */
-  async clearPartnersCache(): Promise<void> {
-    await this.cacheService.del(this.CACHE_KEYS.PARTNERS);
-  }
-
-  /**
-   * Xóa cache liên quan đến certificates
-   */
-  async clearCertificatesCache(): Promise<void> {
-    await this.cacheService.del(this.CACHE_KEYS.CERTIFICATES);
-  }
-
-  /**
-   * Xóa cache liên quan đến FAQs
-   */
-  async clearFaqsCache(): Promise<void> {
-    await this.cacheService.del(this.CACHE_KEYS.FAQS);
+  async clearCategoriesCache(): Promise<void> {
+    await this.cacheService.del(this.CACHE_KEYS.COMIC_CATEGORIES);
   }
 }

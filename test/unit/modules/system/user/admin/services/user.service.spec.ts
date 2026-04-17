@@ -4,7 +4,7 @@ import { PolicyService } from '@/modules/system/user/admin/services/policy.servi
 import { PasswordService } from '@/modules/system/user/admin/services/password.service';
 import { RelationService } from '@/modules/system/user/admin/services/relation.service';
 import { USER_REPOSITORY } from '@/modules/system/user/domain/user.repository';
-import { GROUP_REPOSITORY } from '@/modules/system/context/group/domain/group.repository';
+import { GROUP_REPOSITORY } from '@/modules/system/group/domain/group.repository';
 import { UserRoleScopeService } from '@/modules/system/user/admin/services/user-role-scope.service';
 jest.mock('@/common/auth/utils/auth-context.helper', () => ({
   getCurrentUserId: jest.fn().mockReturnValue(42),

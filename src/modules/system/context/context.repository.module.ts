@@ -1,8 +1,8 @@
 import { Global, Module } from '@nestjs/common';
-import { CONTEXT_REPOSITORY } from './context/domain/context.repository';
-import { ContextRepositoryImpl } from './context/infrastructure/repositories/context.repository.impl';
-import { GROUP_REPOSITORY } from './group/domain/group.repository';
-import { GroupRepositoryImpl } from './group/infrastructure/repositories/group.repository.impl';
+import { CONTEXT_REPOSITORY } from './domain/context.repository';
+import { ContextRepositoryImpl } from './infrastructure/repositories/context.repository.impl';
+import { GROUP_REPOSITORY } from '@/modules/system/group/domain/group.repository';
+import { GroupRepositoryImpl } from '@/modules/system/group/infrastructure/repositories/group.repository.impl';
 
 @Global()
 @Module({

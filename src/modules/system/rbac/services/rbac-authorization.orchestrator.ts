@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { RequestContext } from '@/common/shared/utils';
-import { AdminGroupService } from '@/modules/system/context/group/admin/services/group.service';
+import { AdminGroupService } from '@/modules/system/group/admin/services/group.service';
 import { NullableRbacId } from '@/modules/system/rbac/rbac.types';
 
 /**

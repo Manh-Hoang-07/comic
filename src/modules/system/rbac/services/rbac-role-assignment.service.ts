@@ -13,7 +13,7 @@ import { RbacId } from '@/modules/system/rbac/rbac.types';
 import {
   IGroupRepository,
   GROUP_REPOSITORY,
-} from '@/modules/system/context/group/domain/group.repository';
+} from '@/modules/system/group/domain/group.repository';
 import {
   IRoleContextRepository,
   ROLE_CONTEXT_REPOSITORY,

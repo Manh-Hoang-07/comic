@@ -2,7 +2,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserRoleScopeService } from '@/modules/system/user/admin/services/user-role-scope.service';
 import { USER_REPOSITORY } from '@/modules/system/user/domain/user.repository';
-import { GROUP_REPOSITORY } from '@/modules/system/context/group/domain/group.repository';
+import { GROUP_REPOSITORY } from '@/modules/system/group/domain/group.repository';
 import { RequestContext } from '@/common/shared/utils';
 import * as groupOwnership from '@/common/shared/utils/group-ownership.util';
 

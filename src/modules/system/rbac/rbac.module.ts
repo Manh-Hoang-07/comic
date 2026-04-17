@@ -5,7 +5,7 @@ import { RbacPermissionIndexService } from '@/modules/system/rbac/services/rbac-
 import { RbacRoleAssignmentService } from '@/modules/system/rbac/services/rbac-role-assignment.service';
 import { RbacAuthorizationOrchestrator } from '@/modules/system/rbac/services/rbac-authorization.orchestrator';
 import { RbacController } from '@/modules/system/rbac/controllers/rbac.controller';
-import { AdminGroupModule } from '@/modules/system/context/group/admin/group.module';
+import { AdminGroupModule } from '@/modules/system/group/admin/group.module';
 
 import { ContextRepositoryModule } from '@/modules/system/context/context.repository.module';
 import { RbacRepositoryModule } from './rbac.repository.module';

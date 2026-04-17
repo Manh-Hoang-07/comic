@@ -29,7 +29,21 @@
       "Bash(cp -r iam/utils/iam-transform.helper.ts rbac/utils/)",
       "Bash(mkdir -p rbac/utils)",
       "Bash(rm -rf iam)",
-      "Bash(ls d:/comic/test/e2e/system/iam*)"
+      "Bash(ls d:/comic/test/e2e/system/iam*)",
+      "Bash(cp -r src/modules/system/context/context/admin src/modules/system/context/context/domain src/modules/system/context/context/infrastructure src/modules/system/context/context/user /tmp/context_inner/)",
+      "Bash(mkdir -p /tmp/context_inner)",
+      "Bash(rm -rf src/modules/system/context/context src/modules/system/context/group)",
+      "Bash(cp -r /tmp/context_inner/admin /tmp/context_inner/domain /tmp/context_inner/infrastructure /tmp/context_inner/user src/modules/system/context/)",
+      "Bash(find src/ -name \"*.ts\" -exec grep -l \"@/modules/system/context/context/\\\\|@/modules/system/context/group/\" {})",
+      "Bash(find test/ -name \"*.ts\" -exec grep -l \"@/modules/system/context/context/\\\\|@/modules/system/context/group/\" {})",
+      "Bash(mkdir -p test/unit/modules/system/context/admin/controllers test/unit/modules/system/context/admin/services test/unit/modules/system/context/user/controllers test/unit/modules/system/context/user/services)",
+      "Bash(cp test/unit/modules/system/context/context/admin/controllers/context.controller.spec.ts test/unit/modules/system/context/admin/controllers/)",
+      "Bash(cp test/unit/modules/system/context/context/admin/services/context.service.spec.ts test/unit/modules/system/context/admin/services/)",
+      "Bash(cp test/unit/modules/system/context/context/user/controllers/context.controller.spec.ts test/unit/modules/system/context/user/controllers/)",
+      "Bash(cp test/unit/modules/system/context/context/user/services/context.service.spec.ts test/unit/modules/system/context/user/services/)",
+      "Bash(mkdir -p test/unit/modules/system/group)",
+      "Bash(cp -r test/unit/modules/system/context/group/* test/unit/modules/system/group/)",
+      "Bash(rm -rf test/unit/modules/system/context/group)"
     ]
   }
 }

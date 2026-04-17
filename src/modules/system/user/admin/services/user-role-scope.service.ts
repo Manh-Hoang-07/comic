@@ -14,7 +14,7 @@ import {
 import {
   GROUP_REPOSITORY,
   IGroupRepository,
-} from '@/modules/system/context/group/domain/group.repository';
+} from '@/modules/system/group/domain/group.repository';
 
 /** Nhóm active dùng cho UI role tree (đọc thẳng DB). */
 export type RbacUiGroup = {

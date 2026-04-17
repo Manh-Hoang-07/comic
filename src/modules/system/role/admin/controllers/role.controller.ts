@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
 import { LogRequest } from '@/common/shared/decorators';
-import { Auth } from '@/common/auth/utils';
 import { RoleService } from '@/modules/system/role/admin/services/role.service';
 
 @Controller('admin/roles')
@@ -39,11 +38,6 @@ export class RoleController {
   @Permission('role.manage')
   @Post()
   async create(@Body() dto: any) {
-    // Auth.id() lấy user ID từ RequestContext
-    const userId = Auth.id();
-    if (!userId) {
-      throw new Error('User not logged in');
-    }
     return this.service.create(dto);
   }
 
@@ -51,10 +45,6 @@ export class RoleController {
   @Permission('role.manage')
   @Put(':id')
   async update(@Param('id') id: any, @Body() dto: any) {
-    // Auth.isLogin() kiểm tra từ RequestContext
-    if (!Auth.isLogin()) {
-      throw new Error('User not logged in');
-    }
     return this.service.update(id, dto);
   }
 

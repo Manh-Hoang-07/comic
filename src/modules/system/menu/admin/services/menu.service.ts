@@ -60,10 +60,6 @@ export class MenuService extends BaseService<any, IMenuRepository> {
     return this.update(id, data);
   }
 
-  async deleteById(id: any) {
-    return this.delete(id);
-  }
-
   // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
   protected async beforeCreate(data: any) {

@@ -6,11 +6,9 @@ import {
   Delete,
   Body,
   Param,
-  ForbiddenException,
   Query,
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { Auth } from '@/common/auth/utils';
 import { AdminContextService } from '../services/context.service';
 
 /**
@@ -24,7 +22,7 @@ export class AdminContextController {
   /**
    * Tạo context mới (chỉ system admin)
    */
-  @Permission('group.manage')
+  @Permission('context.manage')
   @Post()
   async create(
     @Body()
@@ -36,11 +34,7 @@ export class AdminContextController {
       status?: string;
     },
   ) {
-    const userId = Auth.id();
-    if (!userId) {
-      throw new ForbiddenException('Authentication required');
-    }
-    return this.contextService.createContext(body, userId);
+    return this.contextService.create(body);
   }
 
   /**
@@ -48,16 +42,16 @@ export class AdminContextController {
    * - Hỗ trợ query chuẩn: page, limit, sort
    * - Hỗ trợ filters[type], filters[status], ...
    */
-  @Permission('public')
+  @Permission('context.manage')
   @Get()
-  async getContexts(@Query() query: any) {
+  async getList(@Query() query: any) {
     return this.contextService.getList(query);
   }
 
   /**
    * Lấy danh sách context (đơn giản cho dropdown)
    */
-  @Permission('public')
+  @Permission('context.manage')
   @Get('simple')
   async getSimpleList(@Query() query: any) {
     return this.contextService.getSimpleList(query);
@@ -66,7 +60,7 @@ export class AdminContextController {
   /**
    * Lấy context theo ID
    */
-  @Permission('public')
+  @Permission('context.manage')
   @Get(':id')
   async getOne(@Param('id') id: any) {
     return this.contextService.findById(id);
@@ -75,32 +69,22 @@ export class AdminContextController {
   /**
    * Update context (chỉ system admin)
    */
-  @Permission('group.manage')
+  @Permission('context.manage')
   @Put(':id')
   async updateContext(
     @Param('id') id: any,
     @Body() body: Partial<{ name: string; code: string; status: string }>,
   ) {
-    const userId = Auth.id();
-    if (!userId) {
-      throw new ForbiddenException('Authentication required');
-    }
-
-    return this.contextService.updateContext(id, body, userId);
+    return this.contextService.update(id, body);
   }
 
   /**
    * Xóa context (chỉ system admin)
    */
-  @Permission('group.manage')
+  @Permission('context.manage')
   @Delete(':id')
   async deleteContext(@Param('id') id: any) {
-    const userId = Auth.id();
-    if (!userId) {
-      throw new ForbiddenException('Authentication required');
-    }
-
-    await this.contextService.deleteContext(id);
+    await this.contextService.delete(id);
     return { message: 'Context deleted successfully' };
   }
 }

@@ -6,7 +6,6 @@ import { RbacService } from '@/modules/system/rbac/services/rbac.service';
 import {
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from '@nestjs/common';
 
 describe('AdminContextService', () => {
@@ -61,25 +60,13 @@ describe('AdminContextService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('createContext', () => {
-    it('should throw ForbiddenException if user is not system admin', async () => {
-      rbacService.isSystemAdmin.mockResolvedValue(false);
-      rbacService.hasPermissions.mockResolvedValue(false);
-      await expect(service.createContext({}, 1)).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('should call create if user is system admin', async () => {
-      rbacService.hasPermissions.mockResolvedValue(true);
+  describe('create', () => {
+    it('should call repository create', async () => {
       contextRepo.findByTypeAndRefId.mockResolvedValue(null);
       contextRepo.findByCode.mockResolvedValue(null);
       contextRepo.create.mockResolvedValue({ id: 2 });
 
-      const result = await service.createContext(
-        { type: 'test', code: 'T1' },
-        1,
-      );
+      const result = await service.create({ type: 'test', code: 'T1' });
       expect(contextRepo.create).toHaveBeenCalled();
       expect(result.id).toBe(2);
     });

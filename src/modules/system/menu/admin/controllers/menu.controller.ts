@@ -65,6 +65,6 @@ export class AdminMenuController {
   @Permission('menu.manage')
   @Delete(':id')
   async delete(@Param('id') id: any) {
-    return this.service.deleteById(id);
+    return this.service.delete(id);
   }
 }

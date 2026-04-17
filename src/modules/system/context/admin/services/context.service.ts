@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
   Inject,
 } from '@nestjs/common';
 import {
@@ -19,7 +18,6 @@ import {
   SYSTEM_CONTEXT_CODE,
 } from '@/modules/system/rbac/rbac.constants';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
-import { RequestContext } from '@/common/shared/utils';
 
 @Injectable()
 export class AdminContextService extends BaseService<any, IContextRepository> {
@@ -69,14 +67,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
     return this.transform(context);
   }
 
-  async createContext(data: any, _requesterUserId: any) {
-    const context = RequestContext.get<any>('context');
-    if (context?.type !== 'system') {
-      throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
-    }
-    return this.create(data);
-  }
-
   protected async beforeCreate(data: any) {
     const existing = await this.contextRepo.findByTypeAndRefId(
       data.type,
@@ -105,14 +95,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
   protected async afterCreate(): Promise<void> {
     this.systemContextCache = null;
-  }
-
-  async updateContext(id: any, data: any, _requesterUserId: any) {
-    const context = RequestContext.get<any>('context');
-    if (context?.type !== 'system') {
-      throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
-    }
-    return this.update(id, data);
   }
 
   protected async beforeUpdate(id: any, data: any) {
@@ -144,10 +126,6 @@ export class AdminContextService extends BaseService<any, IContextRepository> {
 
   protected async afterUpdate(): Promise<void> {
     this.systemContextCache = null;
-  }
-
-  async deleteContext(id: any) {
-    return this.delete(id);
   }
 
   protected async beforeDelete(id: any): Promise<boolean> {

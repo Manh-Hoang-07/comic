@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminContextController } from '@/modules/system/context/admin/controllers/context.controller';
 import { AdminContextService } from '@/modules/system/context/admin/services/context.service';
-import { Auth } from '@/common/auth/utils';
-import { ForbiddenException } from '@nestjs/common';
 
 describe('AdminContextController', () => {
   let controller: AdminContextController;
@@ -10,14 +8,13 @@ describe('AdminContextController', () => {
 
   beforeEach(async () => {
     service = {
-      createContext: jest.fn(),
+      create: jest.fn(),
       getList: jest.fn(),
+      getSimpleList: jest.fn(),
       findById: jest.fn(),
-      updateContext: jest.fn(),
-      deleteContext: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     };
-
-    jest.spyOn(Auth, 'id').mockReturnValue(1);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminContextController],
@@ -34,25 +31,32 @@ describe('AdminContextController', () => {
   });
 
   describe('create', () => {
-    it('should throw ForbiddenException if no userId', async () => {
-      jest.spyOn(Auth, 'id').mockReturnValue(null);
-      await expect(
-        controller.create({ type: 'test', name: 'Test' }),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('should call service.createContext', async () => {
+    it('should call service.create', async () => {
       const body = { type: 'test', name: 'Test' };
       await controller.create(body);
-      expect(service.createContext).toHaveBeenCalledWith(body, 1);
+      expect(service.create).toHaveBeenCalledWith(body);
     });
   });
 
-  describe('getContexts', () => {
+  describe('getList', () => {
     it('should call service.getList', async () => {
       const query = { page: 1 };
-      await controller.getContexts(query);
+      await controller.getList(query);
       expect(service.getList).toHaveBeenCalledWith(query);
+    });
+  });
+
+  describe('updateContext', () => {
+    it('should call service.update', async () => {
+      await controller.updateContext(1, { name: 'New' });
+      expect(service.update).toHaveBeenCalledWith(1, { name: 'New' });
+    });
+  });
+
+  describe('deleteContext', () => {
+    it('should call service.delete', async () => {
+      await controller.deleteContext(1);
+      expect(service.delete).toHaveBeenCalledWith(1);
     });
   });
 });

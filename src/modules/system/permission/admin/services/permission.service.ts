@@ -61,6 +61,10 @@ export class PermissionService extends BaseService<any, IPermissionRepository> {
     return payload;
   }
 
+  protected override async afterCreate() {
+    await this.rbacCache.bumpVersion().catch(() => undefined);
+  }
+
   protected override async afterUpdate() {
     await this.rbacCache.bumpVersion().catch(() => undefined);
   }

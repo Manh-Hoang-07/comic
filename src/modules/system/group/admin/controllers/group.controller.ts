@@ -6,13 +6,10 @@ import {
   Delete,
   Body,
   Param,
-  ForbiddenException,
   Query,
 } from '@nestjs/common';
 import { Permission } from '@/common/auth/decorators';
-import { Auth } from '@/common/auth/utils';
 import { AdminGroupService } from '../services/group.service';
-import { RequestContext } from '@/common/shared/utils';
 
 /**
  * Controller cho System Admin quản lý Groups
@@ -36,20 +33,10 @@ export class AdminGroupController {
       description?: string;
       metadata?: any;
       context_id: any;
+      owner_id?: any;
     },
   ) {
-    const userId = Auth.id();
-    if (!userId) {
-      throw new ForbiddenException('Authentication required');
-    }
-
-    return this.groupService.createGroup(
-      {
-        ...body,
-        owner_id: userId, // Tự động set owner là user hiện tại
-      },
-      userId, // Pass requester user ID để check system admin
-    );
+    return this.groupService.create(body);
   }
 
   /**
@@ -57,7 +44,7 @@ export class AdminGroupController {
    * - Hỗ trợ query chuẩn: page, limit, sort
    * - Hỗ trợ filters[type], filters[status], ...
    */
-  @Permission('public')
+  @Permission('group.manage')
   @Get()
   async getGroups(@Query() query: any) {
     return this.groupService.getList(query);
@@ -66,7 +53,7 @@ export class AdminGroupController {
   /**
    * Lấy danh sách group (đơn giản cho dropdown)
    */
-  @Permission('public')
+  @Permission('group.manage')
   @Get('simple')
   async getSimpleList(@Query() query: any) {
     return this.groupService.getSimpleList(query);
@@ -75,7 +62,7 @@ export class AdminGroupController {
   /**
    * Lấy danh sách groups theo type
    */
-  @Permission('public')
+  @Permission('group.manage')
   @Get('type/:type')
   async getGroupsByType(@Param('type') type: string, @Query() query: any) {
     return this.groupService.getList({ ...query, type });
@@ -84,7 +71,7 @@ export class AdminGroupController {
   /**
    * Lấy group theo ID
    */
-  @Permission('public')
+  @Permission('group.manage')
   @Get(':id')
   async getGroup(@Param('id') id: any) {
     return this.groupService.getOne(id);
@@ -99,19 +86,6 @@ export class AdminGroupController {
     @Param('id') id: any,
     @Body() body: Partial<{ name: string; description: string; metadata: any }>,
   ) {
-    const userId = Auth.id();
-    if (!userId) {
-      throw new ForbiddenException('Authentication required');
-    }
-
-    // Check system context
-    const context = RequestContext.get<any>('context');
-    if (context?.type !== 'system') {
-      throw new ForbiddenException(
-        'Groups can only be updated under the system context',
-      );
-    }
-
     return this.groupService.update(id, body);
   }
 
@@ -121,19 +95,6 @@ export class AdminGroupController {
   @Permission('group.manage')
   @Delete(':id')
   async deleteGroup(@Param('id') id: any) {
-    const userId = Auth.id();
-    if (!userId) {
-      throw new ForbiddenException('Authentication required');
-    }
-
-    // Check system context
-    const context = RequestContext.get<any>('context');
-    if (context?.type !== 'system') {
-      throw new ForbiddenException(
-        'Groups can only be deleted under the system context',
-      );
-    }
-
     await this.groupService.delete(id);
     return { message: 'Group deleted successfully' };
   }

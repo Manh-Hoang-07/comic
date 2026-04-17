@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
   Inject,
 } from '@nestjs/common';
 import {
@@ -15,7 +14,6 @@ import {
 } from '@/modules/system/context/domain/context.repository';
 import { RbacService } from '@/modules/system/rbac/services/rbac.service';
 import { BaseService } from '@/common/core/services';
-import { RequestContext } from '@/common/shared/utils';
 import { GroupActionService } from './group-action.service';
 import { toPrimaryKey } from '@/common/core/repositories/prisma-query.helper';
 
@@ -95,16 +93,6 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
     return transformed;
   }
 
-  async createGroup(data: any, _requesterUserId: any) {
-    const context = RequestContext.get<any>('context');
-    if (context?.type !== 'system') {
-      throw new ForbiddenException(
-        'Groups can only be created under the system context',
-      );
-    }
-    return this.create(data);
-  }
-
   async findByCode(code: string) {
     const group = await this.groupRepo.findByCode(code);
     return this.transform(group);
@@ -141,10 +129,6 @@ export class AdminGroupService extends BaseService<any, IGroupRepository> {
       await this.groupAction.syncGroupOwner(group.id, group.owner_id);
     }
   }
-
-  protected async afterUpdate(): Promise<void> {}
-
-  protected async afterDelete(): Promise<void> {}
 
   // ── Transformation ─────────────────────────────────────────────────────────
 

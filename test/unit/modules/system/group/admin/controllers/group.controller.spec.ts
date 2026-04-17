@@ -2,8 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AdminGroupController } from '@/modules/system/group/admin/controllers/group.controller';
 import { AdminGroupService } from '@/modules/system/group/admin/services/group.service';
 import { Auth } from '@/common/auth/utils';
-import { RequestContext } from '@/common/shared/utils';
-import { ForbiddenException } from '@nestjs/common';
 
 describe('AdminGroupController', () => {
   let controller: AdminGroupController;
@@ -11,12 +9,12 @@ describe('AdminGroupController', () => {
 
   beforeEach(async () => {
     service = {
-      createGroup: jest.fn(),
+      create: jest.fn(),
       getList: jest.fn(),
-      findById: jest.fn(),
-      isSystemAdmin: jest.fn(),
+      getSimpleList: jest.fn(),
+      getOne: jest.fn(),
       update: jest.fn(),
-      deleteGroup: jest.fn(),
+      delete: jest.fn(),
     };
     jest.spyOn(Auth, 'id').mockReturnValue(1);
 
@@ -35,44 +33,26 @@ describe('AdminGroupController', () => {
   });
 
   describe('createGroup', () => {
-    it('should throw ForbiddenException if no userId', async () => {
-      jest.spyOn(Auth, 'id').mockReturnValue(null);
-      await expect(
-        controller.createGroup({
-          type: 'T',
-          code: 'C',
-          name: 'N',
-          context_id: 1,
-        }),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('should call service.createGroup with userId as owner', async () => {
+    it('should call service.create with owner_id from Auth', async () => {
       const body = { type: 'T', code: 'C', name: 'N', context_id: 1 };
       await controller.createGroup(body);
-      expect(service.createGroup).toHaveBeenCalledWith(
+      expect(service.create).toHaveBeenCalledWith(
         expect.objectContaining({ owner_id: 1 }),
-        1,
       );
     });
   });
 
   describe('updateGroup', () => {
-    it('should throw ForbiddenException if not system admin', async () => {
-      service.isSystemAdmin.mockResolvedValue(false);
-      await expect(controller.updateGroup(10, { name: 'New' })).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('should call update if system admin', async () => {
-      service.isSystemAdmin.mockResolvedValue(true);
-      jest.spyOn(RequestContext, 'get').mockImplementation((key: string) => {
-        if (key === 'context') return { type: 'system' };
-        return undefined;
-      });
+    it('should call service.update', async () => {
       await controller.updateGroup(10, { name: 'New' });
       expect(service.update).toHaveBeenCalledWith(10, { name: 'New' });
+    });
+  });
+
+  describe('deleteGroup', () => {
+    it('should call service.delete', async () => {
+      await controller.deleteGroup(10);
+      expect(service.delete).toHaveBeenCalledWith(10);
     });
   });
 });

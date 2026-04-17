@@ -1,8 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import helmet from 'helmet';
-import * as hpp from 'hpp';
-import * as compression from 'compression';
-import * as bodyParser from 'body-parser';
+import hpp from 'hpp';
+import compression from 'compression';
+import bodyParser from 'body-parser';
 
 export function applyHttpHardening(
   app: INestApplication,

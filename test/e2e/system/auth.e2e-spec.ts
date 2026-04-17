@@ -1,4 +1,4 @@
-import * as request from 'supertest';
+import request from 'supertest';
 import { TestHelper } from '../../test-helper';
 import { RedisUtil } from '@/core/utils/redis.util';
 

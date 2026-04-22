@@ -11,6 +11,7 @@ import { SystemConfigModule } from './system-config/system-config.module';
 import { ContentTemplateModule } from './content-template/content-template.module';
 import { QueueWorkerModule } from './queue/queue.module';
 import { LocationModule } from './location/location.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { LocationModule } from './location/location.module';
     ContentTemplateModule,
     QueueWorkerModule,
     LocationModule,
+    UserModule,
   ],
   exports: [
     AuthModule,
@@ -40,6 +42,7 @@ import { LocationModule } from './location/location.module';
     ContentTemplateModule,
     QueueWorkerModule,
     LocationModule,
+    UserModule,
   ],
 })
 export class SystemModule {}

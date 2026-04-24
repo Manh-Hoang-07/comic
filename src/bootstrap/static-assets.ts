@@ -61,25 +61,31 @@ export function setupStaticAssets(
     }
 
     // Serve static files with CORS headers in setHeaders
+    const staticSetHeaders = (res: Response) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      if (appConfig.corsEnabled) {
+        const hasWildcard = appConfig.corsOrigins.includes('*');
+        if (hasWildcard) {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+        }
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader(
+          'Access-Control-Allow-Headers',
+          'Content-Type, Accept, Origin',
+        );
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      }
+    };
+
     app.useStaticAssets(join(process.cwd(), localDestination), {
       prefix: localBaseUrl,
-      setHeaders: (res: Response) => {
-        // Prevent MIME sniffing (important for uploaded content)
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-        // Set CORS headers when serving static files
-        if (appConfig.corsEnabled) {
-          const hasWildcard = appConfig.corsOrigins.includes('*');
-          if (hasWildcard) {
-            res.setHeader('Access-Control-Allow-Origin', '*');
-          }
-          res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-          res.setHeader(
-            'Access-Control-Allow-Headers',
-            'Content-Type, Accept, Origin',
-          );
-          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        }
-      },
+      setHeaders: staticSetHeaders,
+    });
+
+    // Serve scraped comic images from ./storage/comics at /storage/comics
+    app.useStaticAssets(join(process.cwd(), './storage/comics'), {
+      prefix: '/storage/comics',
+      setHeaders: staticSetHeaders,
     });
   }
 }

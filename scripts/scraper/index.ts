@@ -33,36 +33,24 @@ async function main() {
     await scraper.init();
     console.log('[Init] Browser ready\n');
 
-    // Scrape comics
-    const comics = await scraper.scrapeAll();
-
-    console.log(`\n=== STEP 3: Saving to database ===`);
-    console.log(`Total comics scraped: ${comics.length}`);
-
-    // Insert comics (skip if already exists)
-    let successCount = 0;
-    let skippedCount = 0;
-    for (let i = 0; i < comics.length; i++) {
-      const comic = comics[i];
-      try {
+    // Scrape comics and insert to DB immediately after each one
+    const { successCount, skippedCount, totalChapters, totalPages } = await scraper.scrapeAll(
+      async (comic) => {
         if (await comicExists(comic.slug)) {
-          console.log(`[DB ${i + 1}/${comics.length}] Skipped (already exists): ${comic.title}`);
-          skippedCount++;
-          continue;
+          console.log(`  [DB] Skipped (already exists): ${comic.title}`);
+          return false;
         }
-        console.log(`[DB ${i + 1}/${comics.length}] Inserting: ${comic.title} (${comic.chapters.length} chapters)`);
+        console.log(`  [DB] Inserting: ${comic.title} (${comic.chapters.length} chapters)`);
         await insertComic(comic);
-        successCount++;
-      } catch (err) {
-        console.error(`[DB] Failed to insert ${comic.title}: ${(err as Error).message}`);
-      }
-    }
+        return true;
+      },
+    );
 
     console.log('\n===========================================');
     console.log(`  DONE!`);
     console.log(`  Comics inserted: ${successCount}, skipped: ${skippedCount}`);
-    console.log(`  Total chapters: ${comics.reduce((sum, c) => sum + c.chapters.length, 0)}`);
-    console.log(`  Total pages: ${comics.reduce((sum, c) => sum + c.chapters.reduce((s, ch) => s + ch.pages.length, 0), 0)}`);
+    console.log(`  Total chapters: ${totalChapters}`);
+    console.log(`  Total pages: ${totalPages}`);
     console.log('===========================================');
   } catch (err) {
     console.error('\n[FATAL]', (err as Error).message);

@@ -4,8 +4,8 @@ import { parseListingPage, parseDetailPage, parseChapterPage } from './page-pars
 import { downloadWithRetry } from './image-downloader';
 import type { ScrapedComic, ScrapedChapter, ScraperConfig } from './types';
 
-const CONCURRENT_COMICS = 3;
-const IMAGE_CONCURRENCY = 20;
+const CONCURRENT_COMICS = 2;
+const IMAGE_CONCURRENCY = 5;
 
 export class ScraperService {
   private browser: Browser | null = null;
@@ -39,7 +39,9 @@ export class ScraperService {
     return page;
   }
 
-  async scrapeAll(): Promise<ScrapedComic[]> {
+  async scrapeAll(
+    onComicScraped?: (comic: ScrapedComic) => Promise<boolean>,
+  ): Promise<{ successCount: number; skippedCount: number; totalChapters: number; totalPages: number }> {
     if (!this.browser) throw new Error('Browser not initialized. Call init() first.');
 
     // Step 1: Get comic list from listing pages
@@ -59,40 +61,50 @@ export class ScraperService {
     const comicsToScrape = comicList.slice(0, this.config.maxComics);
     console.log(`\nTotal comics to scrape: ${comicsToScrape.length}`);
 
-    // Step 2: Scrape comics in parallel batches
-    console.log('\n=== STEP 2: Scraping comic details (3 concurrent) ===');
-    const results: ScrapedComic[] = [];
-    let completedCount = 0;
+    // Step 2: Scrape comics in parallel batches, insert to DB immediately
+    console.log('\n=== STEP 2: Scraping comic details (2 concurrent) ===');
+    let successCount = 0;
+    let skippedCount = 0;
+    let totalChapters = 0;
+    let totalPages = 0;
 
     for (let i = 0; i < comicsToScrape.length; i += CONCURRENT_COMICS) {
       const batch = comicsToScrape.slice(i, i + CONCURRENT_COMICS);
-      const batchResults = await Promise.allSettled(
+      await Promise.allSettled(
         batch.map(async (comic, batchIdx) => {
           const idx = i + batchIdx;
           const page = await this.createPage();
           try {
             console.log(`\n[Comic ${idx + 1}/${comicsToScrape.length}] ${comic.title}`);
             const result = await this.scrapeComic(page, comic.url, idx + 1, comicsToScrape.length);
-            completedCount++;
-            console.log(`  [Done ${completedCount}/${comicsToScrape.length}] ${comic.title}`);
-            return result;
+
+            // Insert to DB immediately
+            if (onComicScraped) {
+              try {
+                const inserted = await onComicScraped(result);
+                if (inserted) {
+                  successCount++;
+                  totalChapters += result.chapters.length;
+                  totalPages += result.chapters.reduce((s, ch) => s + ch.pages.length, 0);
+                } else {
+                  skippedCount++;
+                }
+              } catch (err) {
+                console.error(`  [DB ERROR] ${comic.title}: ${(err as Error).message}`);
+              }
+            }
           } catch (err) {
             console.error(`  [ERROR] Failed to scrape ${comic.title}: ${(err as Error).message}`);
-            throw err;
           } finally {
             await page.close();
           }
         }),
       );
 
-      for (const r of batchResults) {
-        if (r.status === 'fulfilled') results.push(r.value);
-      }
-
       await this.delay();
     }
 
-    return results;
+    return { successCount, skippedCount, totalChapters, totalPages };
   }
 
   private async scrapeComic(page: Page, comicUrl: string, currentIdx: number, totalComics: number): Promise<ScrapedComic> {
@@ -181,6 +193,10 @@ export class ScraperService {
             : { pageNumber: pg.pageNumber, imageUrl: pg.imageUrl };
         }),
       );
+      // Small delay between image batches to avoid throttling
+      if (i + IMAGE_CONCURRENCY < pages.length) {
+        await new Promise((r) => setTimeout(r, 200));
+      }
     }
 
     return results;

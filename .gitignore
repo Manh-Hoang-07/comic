@@ -49,3 +49,5 @@ lerna-debug.log*
 
 
 src/generated/prisma
+
+storage/comics

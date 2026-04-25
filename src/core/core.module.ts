@@ -104,7 +104,7 @@ import { AppQueueModule } from '@/core/queue/queue.module';
           .default(900), // 15 minutes
 
         // Storage
-        STORAGE_TYPE: Joi.string().valid('local', 's3').default('local'),
+        STORAGE_TYPE: Joi.string().valid('local', 's3', 'cloudinary').default('local'),
         STORAGE_MAX_FILE_SIZE: Joi.number()
           .min(1024)
           .max(104857600)

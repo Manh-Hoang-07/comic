@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('storage', () => ({
-  // Storage type: 'local' or 's3'
+  // Storage type: 'local', 's3', or 'cloudinary'
   type: process.env.STORAGE_TYPE || 'local',
 
   // Max file size (bytes), default 10MB
@@ -15,6 +15,13 @@ export default registerAs('storage', () => ({
   local: {
     destination: process.env.VERCEL ? '/tmp/uploads' : './storage/uploads', // `/tmp` is the only writable directory on Vercel
     baseUrl: '/uploads', // Hardcoded - not sensitive
+  },
+
+  // Cloudinary
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
 
   // Remote object storage (S3/MinIO/compatible)

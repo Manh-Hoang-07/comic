@@ -5,6 +5,7 @@ import { UploadService } from './services/upload.service';
 import { FileValidationService } from './services/file-validation.service';
 import { LocalStorageStrategy } from './strategies/local-storage.strategy';
 import { S3StorageStrategy } from './strategies/s3-storage.strategy';
+import { CloudinaryStorageStrategy } from './strategies/cloudinary-storage.strategy';
 
 @Module({
   imports: [ConfigModule],
@@ -14,17 +15,26 @@ import { S3StorageStrategy } from './strategies/s3-storage.strategy';
     FileValidationService,
     LocalStorageStrategy,
     S3StorageStrategy,
+    CloudinaryStorageStrategy,
     {
       provide: 'UPLOAD_STRATEGY',
       useFactory: (
         config: ConfigService,
         local: LocalStorageStrategy,
         s3: S3StorageStrategy,
+        cloudinary: CloudinaryStorageStrategy,
       ) => {
         const type = config.get('STORAGE_TYPE') || 'local';
-        return type === 's3' ? s3 : local;
+        if (type === 'cloudinary') return cloudinary;
+        if (type === 's3') return s3;
+        return local;
       },
-      inject: [ConfigService, LocalStorageStrategy, S3StorageStrategy],
+      inject: [
+        ConfigService,
+        LocalStorageStrategy,
+        S3StorageStrategy,
+        CloudinaryStorageStrategy,
+      ],
     },
   ],
 

@@ -1,7 +1,7 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer';
-import * as path from 'path';
 import { parseListingPage, parseDetailPage, parseChapterPage } from './page-parser';
-import { downloadWithRetry } from './image-downloader';
+import { downloadToBufferWithRetry } from './image-downloader';
+import { getUploader } from './storage-uploader';
 import type { ScrapedComic, ScrapedChapter, ScraperConfig } from './types';
 
 const CONCURRENT_COMICS = 2;
@@ -175,11 +175,15 @@ export class ScraperService {
     if (!imageUrl) return '';
 
     const ext = this.getImageExt(imageUrl);
-    const localPath = path.join(this.config.storagePath, slug, `cover${ext}`);
-    const relativePath = `/storage/comics/${slug}/cover${ext}`;
+    const key = `${slug}/cover${ext}`;
+    const mimetype = this.getMimetype(ext);
 
-    await downloadWithRetry(imageUrl, localPath);
-    return relativePath;
+    const buffer = await downloadToBufferWithRetry(imageUrl);
+    if (!buffer) return '';
+
+    const uploader = getUploader();
+    const result = await uploader.upload(buffer, key, mimetype);
+    return result.url;
   }
 
   private async downloadChapterImages(
@@ -188,6 +192,7 @@ export class ScraperService {
     pages: { pageNumber: number; imageUrl: string }[],
   ): Promise<{ pageNumber: number; imageUrl: string }[]> {
     const results: { pageNumber: number; imageUrl: string }[] = new Array(pages.length);
+    const uploader = getUploader();
 
     for (let i = 0; i < pages.length; i += IMAGE_CONCURRENCY) {
       const batch = pages.slice(i, i + IMAGE_CONCURRENCY);
@@ -195,13 +200,16 @@ export class ScraperService {
         batch.map(async (pg, batchIdx) => {
           const idx = i + batchIdx;
           const ext = this.getImageExt(pg.imageUrl);
-          const localPath = path.join(this.config.storagePath, slug, `chapter-${chapterIndex}`, `${pg.pageNumber}${ext}`);
-          const relativePath = `/storage/comics/${slug}/chapter-${chapterIndex}/${pg.pageNumber}${ext}`;
+          const key = `${slug}/chapter-${chapterIndex}/${pg.pageNumber}${ext}`;
+          const mimetype = this.getMimetype(ext);
 
-          const success = await downloadWithRetry(pg.imageUrl, localPath);
-          results[idx] = success
-            ? { pageNumber: pg.pageNumber, imageUrl: relativePath }
-            : { pageNumber: pg.pageNumber, imageUrl: pg.imageUrl };
+          const buffer = await downloadToBufferWithRetry(pg.imageUrl);
+          if (buffer) {
+            const result = await uploader.upload(buffer, key, mimetype);
+            results[idx] = { pageNumber: pg.pageNumber, imageUrl: result.url };
+          } else {
+            results[idx] = { pageNumber: pg.pageNumber, imageUrl: pg.imageUrl };
+          }
         }),
       );
       // Small delay between image batches to avoid throttling
@@ -216,6 +224,17 @@ export class ScraperService {
   private getImageExt(url: string): string {
     const match = url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i);
     return match ? `.${match[1].toLowerCase()}` : '.jpg';
+  }
+
+  private getMimetype(ext: string): string {
+    const map: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+    };
+    return map[ext] || 'image/jpeg';
   }
 
   private async delay(): Promise<void> {

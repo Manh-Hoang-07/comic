@@ -16,7 +16,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            cd /var/www/thuelai2
+            set -e
+            cd ~/comic
             git pull origin master
             npm install --production
             npx prisma generate

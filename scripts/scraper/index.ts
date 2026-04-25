@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { ScraperService } from './scraper.service';
 import { comicExists, insertComic, disconnect } from './database.service';
+import { getStorageType } from './storage-uploader';
 import type { ScraperConfig } from './types';
 
 const config: ScraperConfig = {
@@ -22,7 +23,8 @@ async function main() {
   console.log(`  Max comics: ${config.maxComics}`);
   console.log(`  Max chapters/comic: ${config.maxChaptersPerComic}`);
   console.log(`  Delay: ${config.delayMin}-${config.delayMax}ms`);
-  console.log(`  Storage: ${config.storagePath}`);
+  console.log(`  Storage type: ${getStorageType()}`);
+  console.log(`  Local path: ${config.storagePath}`);
   console.log('');
 
   const scraper = new ScraperService(config);

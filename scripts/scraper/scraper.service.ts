@@ -41,6 +41,7 @@ export class ScraperService {
 
   async scrapeAll(
     onComicScraped?: (comic: ScrapedComic) => Promise<boolean>,
+    shouldSkip?: (slug: string) => Promise<boolean>,
   ): Promise<{ successCount: number; skippedCount: number; totalChapters: number; totalPages: number }> {
     if (!this.browser) throw new Error('Browser not initialized. Call init() first.');
 
@@ -73,6 +74,20 @@ export class ScraperService {
       await Promise.allSettled(
         batch.map(async (comic, batchIdx) => {
           const idx = i + batchIdx;
+
+          // Skip comics that already exist before scraping
+          if (shouldSkip) {
+            try {
+              if (await shouldSkip(comic.slug)) {
+                console.log(`\n[Comic ${idx + 1}/${comicsToScrape.length}] Skipped (already exists): ${comic.title}`);
+                skippedCount++;
+                return;
+              }
+            } catch (err) {
+              console.error(`  [DB ERROR] Check exists ${comic.title}: ${(err as Error).message}`);
+            }
+          }
+
           const page = await this.createPage();
           try {
             console.log(`\n[Comic ${idx + 1}/${comicsToScrape.length}] ${comic.title}`);
@@ -81,14 +96,10 @@ export class ScraperService {
             // Insert to DB immediately
             if (onComicScraped) {
               try {
-                const inserted = await onComicScraped(result);
-                if (inserted) {
-                  successCount++;
-                  totalChapters += result.chapters.length;
-                  totalPages += result.chapters.reduce((s, ch) => s + ch.pages.length, 0);
-                } else {
-                  skippedCount++;
-                }
+                await onComicScraped(result);
+                successCount++;
+                totalChapters += result.chapters.length;
+                totalPages += result.chapters.reduce((s, ch) => s + ch.pages.length, 0);
               } catch (err) {
                 console.error(`  [DB ERROR] ${comic.title}: ${(err as Error).message}`);
               }

@@ -36,14 +36,11 @@ async function main() {
     // Scrape comics and insert to DB immediately after each one
     const { successCount, skippedCount, totalChapters, totalPages } = await scraper.scrapeAll(
       async (comic) => {
-        if (await comicExists(comic.slug)) {
-          console.log(`  [DB] Skipped (already exists): ${comic.title}`);
-          return false;
-        }
         console.log(`  [DB] Inserting: ${comic.title} (${comic.chapters.length} chapters)`);
         await insertComic(comic);
         return true;
       },
+      (slug) => comicExists(slug),
     );
 
     console.log('\n===========================================');

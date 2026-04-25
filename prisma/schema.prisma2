@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 // ============================================
@@ -27,7 +27,7 @@ model User {
   created_user_id   BigInt?
   updated_user_id   BigInt?
   created_at        DateTime  @default(now()) @db.Timestamp(0)
-  updated_at        DateTime  @updatedAt @db.Timestamp(0)
+  updated_at        DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   profile               Profile?
   user_groups           UserGroup[]
@@ -60,7 +60,7 @@ model Profile {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime  @default(now()) @db.Timestamp(0)
-  updated_at      DateTime  @updatedAt @db.Timestamp(0)
+  updated_at      DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -84,7 +84,7 @@ model Context {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   groups        Group[]
   role_contexts RoleContext[]
@@ -106,7 +106,7 @@ model Group {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   context               Context              @relation(fields: [context_id], references: [id], onDelete: Restrict)
   user_groups           UserGroup[]
@@ -143,7 +143,7 @@ model Permission {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   parent           Permission?         @relation("PermissionHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
   children         Permission[]        @relation("PermissionHierarchy")
@@ -165,7 +165,7 @@ model Role {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   parent                Role?                @relation("RoleHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
   children              Role[]               @relation("RoleHierarchy")
@@ -255,7 +255,7 @@ model GeneralConfig {
   created_user_id       BigInt?
   updated_user_id       BigInt?
   created_at            DateTime @default(now()) @db.Timestamp(0)
-  updated_at            DateTime @updatedAt @db.Timestamp(0)
+  updated_at            DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@map("general_configs")
 }
@@ -273,7 +273,7 @@ model EmailConfig {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@map("email_configs")
 }
@@ -304,7 +304,7 @@ model Menu {
   created_user_id        BigInt?
   updated_user_id        BigInt?
   created_at             DateTime @default(now()) @db.Timestamp(0)
-  updated_at             DateTime @updatedAt @db.Timestamp(0)
+  updated_at             DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   parent              Menu?            @relation("MenuHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
   children            Menu[]           @relation("MenuHierarchy")
@@ -343,7 +343,7 @@ model BannerLocation {
   description String?  @db.Text
   status      String   @default("active") @db.VarChar(30)
   created_at  DateTime @default(now()) @db.Timestamp(0)
-  updated_at  DateTime @updatedAt @db.Timestamp(0)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   banners Banner[]
 
@@ -370,7 +370,7 @@ model Banner {
   start_date   DateTime? @db.Timestamp(0)
   end_date     DateTime? @db.Timestamp(0)
   created_at   DateTime  @default(now()) @db.Timestamp(0)
-  updated_at   DateTime  @updatedAt @db.Timestamp(0)
+  updated_at   DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   location BannerLocation @relation(fields: [location_id], references: [id], onDelete: Cascade)
 
@@ -406,7 +406,7 @@ model Notification {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime  @default(now()) @db.Timestamp(0)
-  updated_at      DateTime  @updatedAt @db.Timestamp(0)
+  updated_at      DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -437,7 +437,7 @@ model PostCategory {
   created_user_id  BigInt?
   updated_user_id  BigInt?
   created_at       DateTime @default(now()) @db.Timestamp(0)
-  updated_at       DateTime @updatedAt @db.Timestamp(0)
+  updated_at       DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   parent        PostCategory?      @relation("PostCategoryHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
   children      PostCategory[]     @relation("PostCategoryHierarchy")
@@ -467,7 +467,7 @@ model PostTag {
   created_user_id  BigInt?
   updated_user_id  BigInt?
   created_at       DateTime @default(now()) @db.Timestamp(0)
-  updated_at       DateTime @updatedAt @db.Timestamp(0)
+  updated_at       DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   posts PostPosttag[]
 
@@ -509,7 +509,7 @@ model Post {
   created_user_id         BigInt?
   updated_user_id         BigInt?
   created_at              DateTime  @default(now()) @db.Timestamp(0)
-  updated_at              DateTime  @updatedAt @db.Timestamp(0)
+  updated_at              DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   post_comments PostComment[]    @relation("PostToPostComments")
   stats         PostStats?
@@ -596,7 +596,7 @@ model PostComment {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   // Relations
   post    Post          @relation("PostToPostComments", fields: [post_id], references: [id], onDelete: Cascade)
@@ -626,7 +626,7 @@ model Contact {
   replied_at DateTime? @db.Timestamp(0)
   replied_by BigInt?
   created_at DateTime  @default(now()) @db.Timestamp(0)
-  updated_at DateTime  @updatedAt @db.Timestamp(0)
+  updated_at DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([email], map: "contacts_idx_contacts_email")
   @@index([status], map: "contacts_idx_contacts_status")
@@ -652,7 +652,7 @@ model Country {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   provinces Province[]
 
@@ -674,7 +674,7 @@ model Province {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   country Country @relation(fields: [country_id], references: [id], onDelete: Restrict)
   wards   Ward[]
@@ -694,7 +694,7 @@ model Ward {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   province Province @relation(fields: [province_id], references: [id], onDelete: Cascade)
 
@@ -739,7 +739,7 @@ model Project {
   created_user_id   BigInt?
   updated_user_id   BigInt?
   created_at        DateTime  @default(now()) @db.Timestamp(0)
-  updated_at        DateTime  @updatedAt @db.Timestamp(0)
+  updated_at        DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   testimonials Testimonial[]
 
@@ -769,7 +769,7 @@ model AboutSection {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([slug], map: "about_sections_idx_about_sections_slug")
   @@index([section_type], map: "about_sections_idx_about_sections_type")
@@ -795,7 +795,7 @@ model Staff {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([status], map: "staff_idx_staff_status")
   @@index([sort_order], map: "staff_idx_staff_sort_order")
@@ -822,7 +822,7 @@ model Testimonial {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   project Project? @relation(fields: [project_id], references: [id], onDelete: SetNull)
 
@@ -849,7 +849,7 @@ model Partner {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([type], map: "partners_idx_partners_type")
   @@index([status], map: "partners_idx_partners_status")
@@ -870,7 +870,7 @@ model Gallery {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([slug], map: "gallery_idx_gallery_slug")
   @@index([status], map: "gallery_idx_gallery_status")
@@ -902,7 +902,7 @@ model Certificate {
   created_user_id    BigInt?
   updated_user_id    BigInt?
   created_at         DateTime  @default(now()) @db.Timestamp(0)
-  updated_at         DateTime  @updatedAt @db.Timestamp(0)
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([type], map: "certificates_idx_certificates_type")
   @@index([status], map: "certificates_idx_certificates_status")
@@ -921,7 +921,7 @@ model Faq {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([status], map: "faqs_idx_faqs_status")
   @@index([sort_order], map: "faqs_idx_faqs_sort_order")
@@ -958,7 +958,7 @@ model ContentTemplate {
 
   status     String   @default("active") @db.VarChar(30)
   created_at DateTime @default(now()) @db.Timestamp(0)
-  updated_at DateTime @updatedAt @db.Timestamp(0)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   @@index([code], map: "idx_content_templates_code")
   @@index([status], map: "idx_content_templates_status")
@@ -978,7 +978,7 @@ model Comic {
   created_user_id         BigInt?
   updated_user_id         BigInt?
   created_at              DateTime  @default(now()) @db.Timestamp(0)
-  updated_at              DateTime  @updatedAt @db.Timestamp(0)
+  updated_at              DateTime  @default(now()) @updatedAt @db.Timestamp(0)
   last_chapter_id         BigInt?
   last_chapter_updated_at DateTime? @db.Timestamp(0)
   is_featured             Boolean   @default(false)
@@ -1049,7 +1049,7 @@ model Chapter {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
   group_id        BigInt?
 
   comic             Comic            @relation(fields: [comic_id], references: [id], onDelete: Cascade)
@@ -1081,7 +1081,7 @@ model ComicCategory {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
   group_id        BigInt?
 
   comics ComicCategoryOnComic[]
@@ -1116,7 +1116,7 @@ model ComicComment {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   comic   Comic          @relation(fields: [comic_id], references: [id], onDelete: Cascade)
   chapter Chapter?       @relation(fields: [chapter_id], references: [id], onDelete: SetNull)
@@ -1146,7 +1146,7 @@ model ComicReview {
   created_user_id BigInt?
   updated_user_id BigInt?
   created_at      DateTime @default(now()) @db.Timestamp(0)
-  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   comic Comic @relation(fields: [comic_id], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -1223,7 +1223,7 @@ model ReadingHistory {
   comic_id   BigInt
   chapter_id BigInt
   created_at DateTime @default(now()) @db.Timestamp(0)
-  updated_at DateTime @updatedAt @db.Timestamp(0)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   comic   Comic   @relation(fields: [comic_id], references: [id], onDelete: Cascade)

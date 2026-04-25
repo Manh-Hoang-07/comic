@@ -17,7 +17,7 @@ jobs:
           port: 22
           script: |
             set -e
-            cd ~/comic
+            cd /var/www/thuelai2
             git pull origin master
             npm install --production
             npx prisma generate

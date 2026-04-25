@@ -19,7 +19,7 @@ jobs:
             set -e
             cd /var/www/thuelai2
             git pull origin master
-            npm install --production
+            npm install
             npx prisma generate
             npm run build
             pm2 restart api --update-env
